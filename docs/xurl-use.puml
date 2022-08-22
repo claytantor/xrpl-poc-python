@@ -1,0 +1,11 @@
+@startuml
+Seller->(Creates xURL)
+(Creates xURL)-->(POST Stateful Reference)
+
+Buyer->(Scans xURL)
+(Scans xURL)-->(GET Stateful Reference)
+(Scans xURL)-->(Generate Payment Request)
+Buyer-->(Pay Payment Request)
+Buyer-->(GET Callback)
+
+@enduml

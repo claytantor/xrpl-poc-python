@@ -1,0 +1,5 @@
+xrpl-py
+python-dotenv
+Flask
+ecdsa
+bech32
