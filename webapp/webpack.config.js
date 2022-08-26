@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+// const RemarkHTML = require("remark-html");
 const webpack = require("webpack");
 
 const dotenv = require('dotenv')
@@ -69,6 +70,26 @@ module.exports = {
         include: path.resolve(__dirname, "src"),
         use: ["style-loader", "css-loader", "postcss-loader"],
       },
+      // {
+      //   test: /\.html$/i,
+      //   loader: "html-loader",
+      // },
+      // {
+      //   test: /\.md$/,
+      //   use: [
+      //     {
+      //       loader: "html-loader",
+      //     },
+      //     {
+      //       loader: "remark-loader",
+      //       options: {
+      //         remarkOptions: {
+      //           plugins: [RemarkHTML],
+      //         },
+      //       },
+      //     },
+      //   ],
+      // },
     ],
   },
   plugins: [

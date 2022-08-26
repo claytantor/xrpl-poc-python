@@ -4,6 +4,7 @@ import QRCode from "react-qr-code";
 import Page  from "../components/Page"
 import { WalletService } from "../services/WalletService"
 
+// import helloHtml from "../assets/html/hello.html"
 
 const WhitePaper = ({useStore}) => {
 
@@ -16,6 +17,9 @@ const WhitePaper = ({useStore}) => {
                 <p className="text-lg">
                     This is the white paper.
                 </p>
+                <div>
+
+                </div>
             </div>
         </Page> 
         </>
