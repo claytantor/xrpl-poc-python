@@ -1,5 +1,12 @@
 const path = require("path");
+const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
+
+const dotenv = require('dotenv')
+
+// this will update the process.env with environment variables in .env file
+dotenv.config();
 
 module.exports = {
 
@@ -7,7 +14,21 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
+    filename: 'index.bundle.js',
+  },
+  resolve: {
+    fallback: { 
+      // "https": require.resolve("https-browserify"),
+      // "crypto": require.resolve("crypto-browserify"),
+      // "http": require.resolve("stream-http"),
+      // "buffer": require.resolve("buffer")
+      "buffer": require.resolve("buffer/")
+      // "https": false,
+      // "crypto": false,
+      // "http": false,
+      // "buffer": false
+      
+     },
   },
   devServer: {
     static: {
@@ -18,6 +39,12 @@ module.exports = {
     hot: true,
     compress: true,
     historyApiFallback: true,
+    https:{
+      key: fs.readFileSync("cert.key"),
+      cert: fs.readFileSync("cert.crt"),
+      ca: fs.readFileSync("ca.crt"),
+      
+    }
   },
 
 
@@ -44,5 +71,15 @@ module.exports = {
       },
     ],
   },
-  plugins: [new HtmlWebpackPlugin({ template: "./src/index.html" })],
+  plugins: [
+    new HtmlWebpackPlugin({ template: "./src/index.html" }),
+    new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env)
+    }),
+    // Work around for Buffer is undefined:
+    // https://github.com/webpack/changelog-v5/issues/10
+    new webpack.ProvidePlugin({
+        Buffer: ['buffer', 'Buffer'],
+    }),
+  ],
 };

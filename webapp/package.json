@@ -1,5 +1,5 @@
 {
-  "name": "webapp",
+  "name": "xurl-web",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -12,8 +12,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.27.2",
+    "buffer": "^6.0.3",
+    "dotenv": "^16.0.1",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "jwt-decode": "^3.1.2",
+    "moment": "^2.29.4",
+    "net": "^1.0.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.4.0",
+    "react-qr-code": "^2.0.7",
+    "react-qr-reader": "^3.0.0-beta-1",
+    "react-router-dom": "^6.2.0",
+    "tls": "^0.0.1",
+    "url": "^0.11.0",
+    "zustand": "^4.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.13",

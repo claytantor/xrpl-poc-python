@@ -3,3 +3,7 @@ python-dotenv
 Flask
 ecdsa
 bech32
+shortuuid
+Flask-SQLAlchemy
+Flask-Migrate
+pyjwt

@@ -1,6 +1,38 @@
 import React from "react"
-import ReactDom from "react-dom"
+import ReactDOM from "react-dom/client";
+
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+
 import App from "./App"
+import Home from "./pages/Home"
+
 import './style.css';
 
-ReactDom.render(<App />, document.getElementById('app'))
+
+const root = ReactDOM.createRoot(document.getElementById('app'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// const root = ReactDOM.createRoot(
+//   document.getElementById("app")
+// );
+// root.render(
+//     <>Foo
+//  <BrowserRouter>
+//   <Routes>
+//     <Route path="/" element={<App />}>
+//       <Route index element={<Home />} />
+//     </Route>
+//   </Routes>
+// </BrowserRouter> 
+    
+//     </>
+
+// );
