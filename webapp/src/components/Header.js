@@ -35,7 +35,7 @@ const Header = ({
                     <SiXrp className="w-8 h-8 text-white mr-2" />
                         <span className="font-semibold text-xl tracking-tight text-white" onClick={()=>navigate('/')}>xurlpay.org</span></div>
                 <div className="flex flex-row md:w-1/2 justify-end w-full">
-                    <div className="mr-3" onClick={()=>navigate('/whitepaper')}>
+                    <div className="mr-3" onClick={()=>window.location.href='https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md'}>
                         <button className="block mt-4 md:inline-block md:mt-0 text-white hover:underline cursor-pointer">
                         White Paper
                         </button> 
