@@ -24,6 +24,10 @@ export AWS_SECRET_ACCESS_KEY=$3
 export ETL_LOCAL=$(pwd)/etl
 export ETL_HOME=/etl
 
+# cleanup previous deployments
+docker system prune -a
+
+# login to docker
 aws ecr get-login-password \
     --region us-west-2 \
 | docker login \
