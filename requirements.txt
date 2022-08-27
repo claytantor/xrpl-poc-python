@@ -6,4 +6,5 @@ bech32
 shortuuid
 Flask-SQLAlchemy
 Flask-Migrate
+Flask-Cors
 pyjwt
