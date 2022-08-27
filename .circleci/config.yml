@@ -1,0 +1,38 @@
+# CircleCI Firebase Deployment Config
+version: 2.1
+orbs:
+  aws-cli: circleci/aws-cli@0.1.18
+  aws-ecr: circleci/aws-ecr@8.0.0
+  python: circleci/python@1.4.0
+  
+workflows:
+  test_build_and_push_images:
+    jobs:
+      - build-and-test
+      - aws-ecr/build-and-push-image:
+          repo: ${ECR_REPO_NAME_APP}
+          region: ${AWS_DEFAULT_REGION}
+          tag: ${CIRCLE_BRANCH}
+          push-image: true
+          dockerfile: docker/Dockerfile.app
+          executor: aws-ecr/default
+          public-registry: false
+          registry-id: AWS_ACCOUNT_ID
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - dev
+                - main
+      
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.8
+    parallelism: 2
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
