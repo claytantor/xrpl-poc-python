@@ -2,10 +2,5 @@ __pycache__
 .env
 webapp/node_modules
 webapp/dist
-config/
-config/*.env
-config/*.json
-config/*.yml
-config/*.yaml
-
-
+env/
+env/*.env

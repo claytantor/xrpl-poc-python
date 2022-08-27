@@ -1,0 +1,22 @@
+version: '2'
+
+services:
+  xrpl-poc-python-app:
+    image: 705212546939.dkr.ecr.us-west-2.amazonaws.com/claytantor/xrpl-poc-python:${BRANCH_TAG}
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_APP=application
+      - APP_ENV=${ENV}
+      - APP_CONFIG=/env/xrpl-poc-python-app.env
+      - ETL_HOME=${ETL_HOME}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=us-west-2
+
+    volumes:
+      - ${DEVOPS_BASEDIR}/env/${ENV}:/env
+      - ${DEVOPS_BASEDIR}/etl/${ENV}:${ETL_HOME}
+    dns:
+      - 8.8.8.8
+
