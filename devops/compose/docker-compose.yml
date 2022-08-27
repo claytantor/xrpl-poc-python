@@ -6,7 +6,7 @@ services:
     ports:
       - 5000:5000
     environment:
-      - FLASK_APP=application
+      - FLASK_APP=api
       - APP_ENV=${ENV}
       - APP_CONFIG=/env/xrpl-poc-python-app.env
       - ETL_HOME=${ETL_HOME}

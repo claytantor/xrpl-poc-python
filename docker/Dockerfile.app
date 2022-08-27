@@ -36,7 +36,6 @@ WORKDIR /app
 COPY --chown=1000:1000 api /app/api
 COPY --chown=1000:1000 migrations /app/migrations
 ENV PYTHONPATH "${PYTHONPATH}:/app/api"
-ENV FLASK_APP "api"
 
 EXPOSE 5200
 

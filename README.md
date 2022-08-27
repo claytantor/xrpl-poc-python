@@ -27,3 +27,4 @@ FLASK_APP=api APP_CONFIG=config/local.env flask db init
 FLASK_APP=api APP_CONFIG=config/local.env flask db migrate
 
 FLASK_APP=api APP_CONFIG=config/local.env flask db upgrade
+
