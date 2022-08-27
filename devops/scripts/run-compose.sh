@@ -32,5 +32,5 @@ aws ecr get-login-password \
 
 docker pull 705212546939.dkr.ecr.us-west-2.amazonaws.com/claytantor/$PROJECT_NAME:$BRANCH_TAG
 
-docker-compose -f $DEVOPS_BASEDIR/docker/docker-compose.yml --env-file env/$ENV/compose.env pull
-docker-compose -f $DEVOPS_BASEDIR/docker/docker-compose.yml --env-file env/$ENV/compose.env up -d
+docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/compose.env pull
+docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/compose.env up -d
