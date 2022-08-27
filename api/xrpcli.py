@@ -1,8 +1,6 @@
 
 import os, sys
-from tkinter import W
 import shortuuid
-
 
 from xrpl.clients import JsonRpcClient
 from xrpl.models.transactions import Payment
