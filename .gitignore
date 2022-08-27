@@ -4,3 +4,5 @@ webapp/node_modules
 webapp/dist
 env/
 env/*.env
+data/
+data/*

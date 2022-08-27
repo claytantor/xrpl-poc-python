@@ -16,7 +16,7 @@ services:
 
     volumes:
       - ${DEVOPS_BASEDIR}/env/${ENV}:/env
-      - ${DEVOPS_BASEDIR}/etl/${ENV}:${ETL_HOME}
+      - ${DEVOPS_BASEDIR}/data:/data # the url is already set in the env file
     dns:
       - 8.8.8.8
 
