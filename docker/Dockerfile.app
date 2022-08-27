@@ -1,5 +1,5 @@
 # Build image
-FROM python:3.7 as builder
+FROM python:3.8 as builder
 
 # Setup virtualenv
 ENV VIRTUAL_ENV=/opt/venv
@@ -18,13 +18,13 @@ RUN python -m pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
 
 # Production image
-# FROM python:3.7-slim as xurlpay-api
-FROM ubuntu:20.04 as xurlpay-api
+FROM python:3.8 as xurlpay-api
+# FROM ubuntu:20.04 as xurlpay-api
 
-RUN apt-get update && apt-get install -y software-properties-common gcc && \
-    add-apt-repository -y ppa:deadsnakes/ppa
+# RUN apt-get update && apt-get install -y software-properties-common gcc && \
+#     add-apt-repository -y ppa:deadsnakes/ppa
 
-RUN apt-get update && apt-get install -y python3.7 python3-distutils python3-pip python3-apt
+# RUN apt-get update && apt-get install -y python3.7 python3-distutils python3-pip python3-apt
 
 
 # Run as non-root

@@ -25,7 +25,7 @@ export ETL_LOCAL=$(pwd)/etl
 export ETL_HOME=/etl
 
 # cleanup previous deployments
-docker system prune -a
+# docker system prune -a -f
 
 # login to docker
 aws ecr get-login-password \
@@ -36,5 +36,5 @@ aws ecr get-login-password \
 
 docker pull 705212546939.dkr.ecr.us-west-2.amazonaws.com/claytantor/$PROJECT_NAME:$BRANCH_TAG
 
-docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/compose.env pull
-docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/compose.env up -d
+docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/xrpl-poc-python-app.env pull
+docker-compose -f $DEVOPS_BASEDIR/devops/compose/docker-compose.yml --env-file env/$ENV/xrpl-poc-python-app.env up -d
