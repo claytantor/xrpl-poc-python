@@ -102,25 +102,27 @@ const SendPayment = ({useStore}) => {
     return (
         <>
         <Page useStore={useStore}> 
-            <div className="p-4"> 
+            <div className="p-1 m:p-4"> 
             
                
                 { counter=== 0 && scanned === false && <div className="flex justify-center w-full">
                 
-                    <div className="text-center w-1/2 bg-gray-300 p-2 rounded-md" id="qr-reader">
+                    <div className="text-center w-full md:w-1/2 p-1 md:p2" id="qr-reader">
                     <div className="text-2xl">Scan To Send Payment</div>
-                    <QrReader
-                        scanDelay={delayScan}
-                        onError={(err) => console.error(err)}               
-                        constraints={ constraints }
-                        onResult={(result, error) => {
-                            
-                            if (!!result && counter === 0)  { 
-                                counter = counter + 1;
-                                handleScan({'payment_request':result?.text});
-                            } 
-                        }}
-                    />
+                    <div className="border-4 rounded-md h-fit border-dashed p-1 border-slate-300">
+                        <QrReader
+                            scanDelay={delayScan}
+                            onError={(err) => console.error(err)}               
+                            constraints={ constraints }
+                            onResult={(result, error) => {
+                                
+                                if (!!result && counter === 0)  { 
+                                    counter = counter + 1;
+                                    handleScan({'payment_request':result?.text});
+                                } 
+                            }}
+                        />
+                    </div>
                     </div>
                 </div>}
 

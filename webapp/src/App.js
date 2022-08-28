@@ -19,7 +19,6 @@ import Login from "./pages/Login";
 import {getAccessTokenInfo, getUser} from "./services/AuthenticationService";
 
 import "./App.css"
-import WhitePaper from "./pages/WhitePaper";
 
 
 const useStore = create(
@@ -49,10 +48,9 @@ const App = () => (
     <BrowserRouter>
         <Routes>
 
-            {/* <Route exact path="/wallet" element={<PrivateRoute />}>
+            <Route exact path="/wallet" element={<PrivateRoute />}>
                 <Route exact path="/wallet" element={<Wallet useStore={useStore}/>} />
-            </Route> */}
-            {/* <Route exact path="/wallet" element={<Wallet useStore={useStore}/>} />  */}
+            </Route>
             <Route exact path="/send" element={<PrivateRoute />}>
                 <Route exact path="/send" element={<SendPayment useStore={useStore}/>} />
             </Route>
@@ -60,11 +58,9 @@ const App = () => (
                 <Route exact path="/receive" element={<ReceivePayment useStore={useStore}/>} />
             </Route>
 
-            <Route path="/wallet" element={<Wallet />} />
             <Route path="/about" element={<About />} />
             <Route path="/create" element={<CreateWallet />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/whitepaper" element={<WhitePaper />} />
             <Route path="/" element={<Home />} />
         </Routes>
     </BrowserRouter>

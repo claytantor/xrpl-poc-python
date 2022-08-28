@@ -16,9 +16,9 @@ export const backendBaseUrl = (() => {
     case 'local':
       return 'https://localhost:5000'; //use the local api server
     case 'dev':
-      return 'https://devapi.xurlpay.org/v1';
+      return 'https://devapi.xurlpay.org';
     case 'prd':
-      return 'https://api.xurlpay.org/v1';
+      return 'https://api.xurlpay.org';
   }
 })();
 

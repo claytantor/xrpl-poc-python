@@ -6,3 +6,4 @@ env/
 env/*.env
 data/
 data/*
+webapp/environment/deployment.json
