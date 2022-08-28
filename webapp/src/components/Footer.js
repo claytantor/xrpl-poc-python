@@ -5,7 +5,6 @@ import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
 
-
 const Footer = () => {
 
     let [version, setVersion] = useState();
@@ -32,12 +31,11 @@ const Footer = () => {
 
                     <div className="mb-6">
                         <h5 className="mb-2.5 font-bold uppercase text-slate-300">Links</h5>
-
-                            <ul className="mb-0 list-none space-y-2">
-                                <li><a href="https://github.com/claytantor/xrpl-poc-python" target="_new" className="text-slate-200 underline flex justify-left items-center"> <FaGithubAlt className="mr-1"/> Github Repo</a></li>
-                                <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <IoIosPaper className="mr-1"/> Whitepaper</a></li>
-                                <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/LICENCE.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <TbCertificate className="mr-1"/> License</a></li>
-                            </ul>
+                        <ul className="mb-0 list-none space-y-2">
+                            <li><a href="https://github.com/claytantor/xrpl-poc-python" target="_new" className="text-slate-200 underline flex justify-left items-center"> <FaGithubAlt className="mr-1"/> Github Repo</a></li>
+                            <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <IoIosPaper className="mr-1"/> Whitepaper</a></li>
+                            <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/LICENCE.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <TbCertificate className="mr-1"/> License</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
