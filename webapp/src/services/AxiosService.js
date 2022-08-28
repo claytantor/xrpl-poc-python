@@ -4,8 +4,8 @@ import { getUser, getAccessTokenInfo } from "./AuthenticationService";
 
 
 let cachedUser = {};
-let backendBaseUrl = "https://localhost:5000/";
 
+import { backendBaseUrl } from '../env';
 
 const handleAxiosError = (error) => {
     let error_model = {
@@ -72,13 +72,13 @@ axiosInstance.interceptors.request.use((config) => {
         const info = getAccessTokenInfo(cachedUser);
         if (info.expirationDate && info.expirationDate.isBefore(moment.utc().add(1, 'minutes'))) {
             console.log('token expired, refreshing');
-            return refreshToken().then((r) => {
-                console.log('refreshed token', r.data);
-                const { access_token, refresh_token } = r.data;
-                let settings = [];
-                setUser({ ...cachedUser, access_token, refresh_token, settings });
-                return config;
-            });
+            // return refreshToken().then((r) => {
+            //     console.log('refreshed token', r.data);
+            //     const { access_token, refresh_token } = r.data;
+            //     let settings = [];
+            //     setUser({ ...cachedUser, access_token, refresh_token, settings });
+            //     return config;
+            // });
         }
     }
     config.headers.authorization = cachedUser.access_token;

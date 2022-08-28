@@ -43,8 +43,7 @@ module.exports = {
     https:{
       key: fs.readFileSync("cert.key"),
       cert: fs.readFileSync("cert.crt"),
-      ca: fs.readFileSync("ca.crt"),
-      
+      ca: fs.readFileSync("ca.crt"),     
     }
   },
 
@@ -70,30 +69,14 @@ module.exports = {
         include: path.resolve(__dirname, "src"),
         use: ["style-loader", "css-loader", "postcss-loader"],
       },
-      // {
-      //   test: /\.html$/i,
-      //   loader: "html-loader",
-      // },
-      // {
-      //   test: /\.md$/,
-      //   use: [
-      //     {
-      //       loader: "html-loader",
-      //     },
-      //     {
-      //       loader: "remark-loader",
-      //       options: {
-      //         remarkOptions: {
-      //           plugins: [RemarkHTML],
-      //         },
-      //       },
-      //     },
-      //   ],
-      // },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      },
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: "./src/index.html" }),
+    new HtmlWebpackPlugin({ template: "./src/index.html", favicon: "./src/favicon.ico" }),
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env)
     }),
