@@ -7,3 +7,5 @@ env/*.env
 data/
 data/*
 webapp/environment/deployment.json
+out/
+out/*
