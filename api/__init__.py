@@ -39,6 +39,15 @@ def create_app():
     logging.basicConfig(level=lookup[app.config["APP_LOG_LEVEL"]])
 
     app.logger.info(f"=== create_app {__name__} ===")
+
+    from os import walk
+
+    filenames = next(walk(os.getenv("APP_CONFIG")), (None, None, []))[2]  # [] if no file
+    for filename in filenames:
+        app.logger().info(f"Loading {filename} for {os.getenv('APP_CONFIG')}")
+
+
+
     app.logger.info(json.dumps(config, indent=4))
 
     from os import walk
