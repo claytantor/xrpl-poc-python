@@ -1,4 +1,4 @@
-@startuml payment reqest sequence
+@startuml payment_request_sequence
 
 actor Requestor as Requestor
 actor Payer as Payer
