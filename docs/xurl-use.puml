@@ -1,11 +1,39 @@
-@startuml
-Seller->(Creates xURL)
+@startuml xurl_usecase
+
+skinparam usecase {
+    BackgroundColor<< xInvoice >> #ffabb0
+}
+
+package "XRP App" {
+    (Scans xURL)
+    (Pay xInvoice\nPayment Request) as (PayInvoice)<<xInvoice>>
+}
+
+package "xInvoice Backend" {
+    (GET Callback)
+    (Creates xURL)
+    (Generate xInvoice\nPayment Request) as (GenerateInvoice)<<xInvoice>>
+    (POST Stateful Reference)
+    (Perform Orchestration or\nFiat Conversion) as (Orchestrate)
+    (GET Stateful Reference)
+}
+
+Seller-->(Creates xURL)
 (Creates xURL)-->(POST Stateful Reference)
 
-Buyer->(Scans xURL)
+Buyer-->(Scans xURL)
 (Scans xURL)-->(GET Stateful Reference)
-(Scans xURL)-->(Generate Payment Request)
-Buyer-->(Pay Payment Request)
-Buyer-->(GET Callback)
+(GET Stateful Reference)-->(Orchestrate)
+(GET Stateful Reference)-->(GenerateInvoice)
+
+Buyer-->(PayInvoice)
+(PayInvoice)-->(GET Callback)
+
+note "these are the same use\ncase as xInvoice " as N2
+(GenerateInvoice) .. N2
+N2 .. (PayInvoice)
 
 @enduml
+
+
+

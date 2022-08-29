@@ -1,11 +1,40 @@
-@startuml
-Seller->(Creates xURL)
-(Creates xURL)-->(POST Stateful Reference)
+@startuml xinvoice_use
 
-Buyer->(Scans xURL)
-(Scans xURL)-->(GET Stateful Reference)
-(Scans xURL)-->(Generate Payment Request)
-Buyer-->(Pay Payment Request)
-Buyer-->(GET Callback)
+actor :Requestor: as Requestor
+actor :Payer: as Payer
+actor :xInvoice Backend\n(system): as Backend
+
+package "XRP App" {
+    (Creates and\nSigns xInvoice)
+    (Scans xInvoice)
+    (Signs and Pays Invoice)
+}
+
+package "XRP Ledger" {
+    (Updates Ledger\nTransaction State)
+}
+
+package "xInvoice Backend" {
+    (Listens For xInvoice Payment)
+    (Creates xInvoice State\nas PENDING)
+    (Updates xInvoice\nState to PAID)
+}
+
+'creation
+Requestor-->(Creates and\nSigns xInvoice)
+(Creates and\nSigns xInvoice)-->(Creates xInvoice State\nas PENDING)
+
+' payment
+Payer-->(Scans xInvoice)
+(Scans xInvoice)-->(Signs and Pays Invoice)
+(Signs and Pays Invoice)->(Updates Ledger\nTransaction State)
+
+'backend updates
+Backend-->(Listens For xInvoice Payment)
+Backend-->(Updates xInvoice\nState to PAID)
+(Listens For xInvoice Payment)-->(Updates Ledger\nTransaction State)
+
+
+
 
 @enduml
