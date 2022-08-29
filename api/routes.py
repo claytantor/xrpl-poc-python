@@ -59,6 +59,7 @@ def post_access_token():
   
     classic_address = json_body['classic_address']
     private_key = json_body['private_key']
+    app.logger.debug(f"auth body: {json_body}")
     wallet = db.session.query(Wallet).filter_by(classic_address=classic_address, private_key=private_key).first()
     
     # dont let them know the wallet_id is wrong
@@ -111,7 +112,11 @@ def get_auth(wallet, username, test_phrase, pass_phrase, scopes, scopes_refresh)
 @verify_user_jwt_scopes(scopes['wallet_owner'])
 @cross_origin()
 def get_wallet():
-    wallet = Wallet.query.first()
+    # lookup the wallet by the classic address in the jwt
+    classic_address = get_token_sid(dict(request.headers)["Authorization"])    
+    wallet = db.session.query(Wallet).filter_by(classic_address=classic_address).first()
+    if wallet is None:
+        return jsonify({"message":"wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
 
     # now get account info
     xurl_wallet = XUrlWallet(seed=wallet.seed)

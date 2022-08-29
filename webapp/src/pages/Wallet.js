@@ -1,11 +1,9 @@
 import React, {useEffect, useState } from "react"
-import QRCode from "react-qr-code";
 
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"
 import { WalletService } from "../services/WalletService"
 
-import { AiOutlineEye } from "react-icons/ai"
 import { SiXrp } from "react-icons/si"
 
 const AccountInfo = ({accountInfo}) => {

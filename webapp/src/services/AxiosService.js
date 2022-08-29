@@ -68,17 +68,17 @@ axiosInstance.interceptors.request.use((config) => {
 
 
     } else if (cachedUser) {
-        // console.log('cached user found', config, cachedUser);
+        console.log('cached user found', config, cachedUser);
         const info = getAccessTokenInfo(cachedUser);
         if (info.expirationDate && info.expirationDate.isBefore(moment.utc().add(1, 'minutes'))) {
             console.log('token expired, refreshing');
-            // return refreshToken().then((r) => {
-            //     console.log('refreshed token', r.data);
-            //     const { access_token, refresh_token } = r.data;
-            //     let settings = [];
-            //     setUser({ ...cachedUser, access_token, refresh_token, settings });
-            //     return config;
-            // });
+            return refreshToken().then((r) => {
+                console.log('refreshed token', r.data);
+                const { access_token, refresh_token } = r.data;
+                let settings = [];
+                setUser({ ...cachedUser, access_token, refresh_token, settings });
+                return config;
+            });
         }
     }
     config.headers.authorization = cachedUser.access_token;

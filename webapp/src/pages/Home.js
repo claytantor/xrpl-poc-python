@@ -65,7 +65,7 @@ const Home = ({useStore}) => {
                             <div className="ml-4"><span className="font-bold text-pink-500">xURL</span> automation of payment request creation by a live backend automation empowering payment with POS, instant currency conversion, and non expiring "scan to pay" capabilities.</div>
                             </li>
                         </ul>
-                        <div>This site gives you everything you need to use the prosed protocols on the <a className="underline" href="https://testnet.xrpl.org/" target="_new">XRP testnet</a>. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
+                        <div>This site gives you everything you need to use the proposed protocols on the <a className="underline" href="https://testnet.xrpl.org/" target="_new">XRP testnet</a>. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
                         </div>
                         <div className="pt-8 text-base font-semibold leading-7">
                         <div className="text-gray-900">Want to dig deeper into <span className="font-bold text-pink-500">xInvoice</span> and the <span className="font-bold text-pink-500">xURL</span> protocol specification?</div>

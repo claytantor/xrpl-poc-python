@@ -24,6 +24,7 @@ const LoginForm = ({ setAccessToken }) => {
         AuthenticationService.login(formState['classic_address'],formState['private_key']).then(r => {
             let user = r.data;
             user.classic_address = formState['classic_address'];
+            console.log("logged in user",user);
             setUser(user);
             navigate("/wallet");
 
