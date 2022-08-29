@@ -10,7 +10,7 @@ Requestor -> xInvoiceApp: Create Wallet
 group Payment Request Creation
 xInvoiceApp -> "XRP Ledger": Create Wallet
 note left: the app could be a mobile\napp like xumm or a web app\nlike xurlpay.org
-Requestor -> xInvoiceApp: Enter Payment\nRequest Details
+Requestor -> xInvoiceBackend: Enter Payment\nRequest Details
 xInvoiceApp -> xInvoiceBackend: Generate xInvoice
 xInvoiceApp -> xInvoiceBackend: Create Payload
 xInvoiceApp -> xInvoiceBackend: Sign Payload

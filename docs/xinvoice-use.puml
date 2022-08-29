@@ -5,7 +5,7 @@ actor :Payer: as Payer
 actor :xInvoice Backend\n(system): as Backend
 
 package "XRP App" {
-    (Creates and\nSigns xInvoice)
+    
     (Scans xInvoice)
     (Signs and Pays Invoice)
 }
@@ -15,6 +15,7 @@ package "XRP Ledger" {
 }
 
 package "xInvoice Backend" {
+    (Creates and\nSigns xInvoice)
     (Listens For xInvoice Payment)
     (Creates xInvoice State\nas PENDING)
     (Updates xInvoice\nState to PAID)
@@ -27,7 +28,7 @@ Requestor-->(Creates and\nSigns xInvoice)
 ' payment
 Payer-->(Scans xInvoice)
 (Scans xInvoice)-->(Signs and Pays Invoice)
-(Signs and Pays Invoice)->(Updates Ledger\nTransaction State)
+(Signs and Pays Invoice)-->(Updates Ledger\nTransaction State)
 
 'backend updates
 Backend-->(Listens For xInvoice Payment)
