@@ -4,10 +4,16 @@ skinparam usecase {
     BackgroundColor<< xInvoice >> #ffabb0
 }
 
-package "XRP App" {
+package "xInvoice App" {
     (Scans xURL)
     (Pay xInvoice\nPayment Request) as (PayInvoice)<<xInvoice>>
 }
+note right
+this is the mobile wallet or 
+webapp that scans the xURL 
+and pays the invoice, current 
+proposal is a xumm app plugin
+end note
 
 package "xInvoice Backend" {
     (GET Callback)
@@ -18,15 +24,15 @@ package "xInvoice Backend" {
     (GET Stateful Reference)
 }
 
-Seller-->(Creates xURL)
+Requestor-->(Creates xURL)
 (Creates xURL)-->(POST Stateful Reference)
 
-Buyer-->(Scans xURL)
+Payer-->(Scans xURL)
 (Scans xURL)-->(GET Stateful Reference)
 (GET Stateful Reference)-->(Orchestrate)
 (GET Stateful Reference)-->(GenerateInvoice)
 
-Buyer-->(PayInvoice)
+Payer-->(PayInvoice)
 (PayInvoice)-->(GET Callback)
 
 note "these are the same use\ncase as xInvoice " as N2

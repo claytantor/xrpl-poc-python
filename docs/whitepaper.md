@@ -66,17 +66,17 @@ This is represented as to base64 encoded strings with a (`:`) separator.
 `eyJhbW91bnQiOiAxMS4yLCAicHVibGljX2tleSI6ICJFRDA2RjQ0OTkyOTAxNUI4RkQ5MjQyNjAzRDI3NTVCMzk3ODZENEEzNzhGODlEOUIxNTREMEJBMjI4REUwNUIyRUQiLCAiYWRkcmVzcyI6ICJybmZrSHhGSDNRVHNyd1lieURMUFM3Z3Q2R054RXdtYmFpIiwgImV4cGlyZXMiOiAxNjYxNzI3NjUwLjkwNzYxNCwgIm1lbW8iOiAiaXRzIGZvciB0aGUga2lkcyBtYW4iLCAicmVxdWVzdF9oYXNoIjogIm1WeG1YYUVUdTZlRmdnVHhYOVRjbk0ifQ==:VBa3MLl6kF3qTqMqQj+wDPNyOq9f2XY3UD7n+En/fRHbCrpBxMbLbRv8L3OiMNr/NYklSwT+TOgzSphKQSV+DA==`
 
 ## xInvoice Use Case Activities and Actors
-![xInvoice Sequence](./images/xinvoice_use.png)
+![xInvoice Sequence](./images/xinvoice-use/xinvoice_use.png)
 
 ## xInvoice Generation and Use Sequence
-![xInvoice Sequence](./images/xinvoice_sequence.png)
+![xInvoice Sequence](./images/xinvoice-sequence/xinvoice_sequence.png)
 
 # xURL
 Essentially xUrl extends the xInvoice protocol by adding a backend process to automate the generation of an xInvoice. The backend process is a simple HTTP server that accepts a POST request with the xInvoice payload and returns the xInvoice payload via a callback encoded into the xURL.
 
 ## xURL Use Case Activities and Actors
-![xInvoice Sequence](./images/xurl_usecase.png)
+![xInvoice Sequence](./images/xurl-use/xurl_usecase.png)
 
 ## xURL Generation and Use Sequence
-![xInvoice Sequence](./images/xurl_sequence.png)
+![xInvoice Sequence](./images/xurl-sequence/xurl_sequence.png)
 

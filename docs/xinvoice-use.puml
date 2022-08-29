@@ -4,11 +4,16 @@ actor :Requestor: as Requestor
 actor :Payer: as Payer
 actor :xInvoice Backend\n(system): as Backend
 
-package "XRP App" {
-    
+package "xInvoice App" {
     (Scans xInvoice)
     (Signs and Pays Invoice)
 }
+note right
+this is the mobile wallet or 
+webapp that scans the xURL 
+and pays the invoice, current 
+proposal is a xumm app plugin
+end note
 
 package "XRP Ledger" {
     (Updates Ledger\nTransaction State)
