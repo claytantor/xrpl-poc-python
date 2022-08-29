@@ -5,18 +5,17 @@ actor Payer as Payer
 participant "xInvoice Enabled App" as xInvoiceApp
 participant "xInvoice App Backend" as xInvoiceBackend
 
-Requestor -> xInvoiceApp: Create Wallet
+Requestor -> "XRP Ledger": Create Wallet
 
 group Payment Request Creation
-xInvoiceApp -> "XRP Ledger": Create Wallet
-note left: the app could be a mobile\napp like xumm or a web app\nlike xurlpay.org
-Requestor -> xInvoiceBackend: Enter Payment\nRequest Details
-xInvoiceApp -> xInvoiceBackend: Generate xInvoice
-xInvoiceApp -> xInvoiceBackend: Create Payload
-xInvoiceApp -> xInvoiceBackend: Sign Payload
-xInvoiceApp -> xInvoiceBackend: Create xInvoice and\nSave Request State\nas "PENDING"
-xInvoiceBackend -> xInvoiceApp: Return xInvoice
-xInvoiceApp -> Requestor: Return xInvoice
+    Requestor -> xInvoiceBackend: Use Wallet Credentials to Create Payment Request
+    Requestor -> xInvoiceBackend: Enter Payment\nRequest Details
+    note left: the backend allows for new invoices\nto be created and tracked
+    xInvoiceBackend -> xInvoiceBackend: Generate xInvoice
+    xInvoiceBackend -> xInvoiceBackend: Create Payload
+    xInvoiceBackend -> xInvoiceBackend: Sign Payload
+    xInvoiceBackend -> xInvoiceBackend: Create xInvoice and\nSave Request State\nas "PENDING"
+    xInvoiceBackend -> Requestor: Return xInvoice
 end
 
 group Payment
