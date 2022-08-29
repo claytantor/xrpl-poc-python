@@ -69,7 +69,7 @@ This is represented as to base64 encoded strings with a (`:`) separator.
 ![xInvoice Sequence](./images/xinvoice_use.png)
 
 ## xInvoice Generation and Use Sequence
-![xInvoice Sequence](./images/payment_request_sequence.png)
+![xInvoice Sequence](./images/xinvoice_sequence.png)
 
 # xURL
 Essentially xUrl extends the xInvoice protocol by adding a backend process to automate the generation of an xInvoice. The backend process is a simple HTTP server that accepts a POST request with the xInvoice payload and returns the xInvoice payload via a callback encoded into the xURL.
@@ -78,4 +78,5 @@ Essentially xUrl extends the xInvoice protocol by adding a backend process to au
 ![xInvoice Sequence](./images/xurl_usecase.png)
 
 ## xURL Generation and Use Sequence
+![xInvoice Sequence](./images/xurl_sequence.png)
 
