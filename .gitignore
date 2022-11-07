@@ -9,3 +9,5 @@ data/*
 webapp/environment/deployment.json
 out/
 out/*
+.python-version
+node_modules/
