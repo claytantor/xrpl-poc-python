@@ -3,8 +3,10 @@ import React, {useEffect, useState } from "react"
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"
 import { WalletService } from "../services/WalletService"
+import {syntaxHighlight} from "../utils/format"
 
 import { SiXrp } from "react-icons/si"
+import {BiLinkExternal} from "react-icons/bi"
 
 const AccountInfo = ({accountInfo}) => {
     return (
@@ -13,7 +15,7 @@ const AccountInfo = ({accountInfo}) => {
             <div className="bg-slate-700 p-1 rounded-md m-2">
                 <div className="font-mono mt-2">
                     <div className="text-pink-300 text-xs break-words">
-                    {JSON.stringify(accountInfo, null, 2)}
+                    <pre>{JSON.stringify(accountInfo, null, 2)}</pre>
                     </div>
                 </div>
                 </div>
@@ -51,8 +53,8 @@ const Wallet = ({useStore}) => {
                 <h2 className="text-2xl">Wallet</h2>
                 {walletInfo ? <div className="flex flex-col">
                     <div className="flex md:flex-row justify-between">
-                        <div className="grow flex flex-col md:flex-row md:justify-between">
-                            <button className="sm:text-sm md:text-lg font-mono underline hover:text-pink-600 cursor-pointer" onClick={()=>window.location.href=`https://testnet.xrpl.org/accounts/${walletInfo.classic_address}`}>{walletInfo.classic_address}</button>
+                        <div className="grow flex flex-col md:flex-row md:justify-between items-center ">
+                            <button className="flex sm:text-sm md:text-lg font-mono underline hover:text-pink-600 cursor-pointer" onClick={()=>window.location.href=`https://testnet.xrpl.org/accounts/${walletInfo.classic_address}`}>{walletInfo.classic_address}<BiLinkExternal className="items-center ml-1 mt-1"/></button>
 
                             <div className="shrink text-3xl font-mono font-bold text-pink-600 flex link-align-center md:text-right">{dropsToXrp(parseInt(walletInfo.account_info.account_data.Balance))} <SiXrp className="ml-1"/></div>
 

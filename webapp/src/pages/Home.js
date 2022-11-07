@@ -7,29 +7,6 @@ import { WalletService } from "../services/WalletService"
 
 const Home = ({useStore}) => {
     const [version, setVersion] = useState();
-    // const [paymentRequest, setPaymentRequest] = useState();
-
-    // useEffect(() => {
-    //     WalletService.getVersion().then(r => {
-    //         setVersion(r.data.version)
-    //     }).catch(error => {
-    //         console.log(error)
-    //     }).finally(() => {
-    //         console.log("finally")
-    //     });
-    // } , [version])
-
-    // useEffect(() => {
-    //     WalletService.getPayRequest().then(r => {
-    //         setPaymentRequest(r.data.paymentRequest)
-    //     }).catch(error => {
-    //         console.log(error)
-    //     }).finally(() => {
-    //         // console.log("finally")
-    //     });
-    // } , [])
-
-
 
     return (
         <>

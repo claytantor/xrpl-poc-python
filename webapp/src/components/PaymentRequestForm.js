@@ -76,7 +76,7 @@ const PaymentRequestForm = ({ setPaymentRequest }) => {
               <div className="w-full px-3">
                 <label
                   className="block uppercase tracking-wide text-gray-800 text-xs font-bold mb-2"
-                  for="grid-password"
+                  htmlFor="grid-password"
                 >
                   Memo
                 </label>
