@@ -7,3 +7,8 @@ env/*.env
 data/
 data/*
 .python-version
+webapp/environment/deployment.json
+out/
+out/*
+.python-version
+node_modules/

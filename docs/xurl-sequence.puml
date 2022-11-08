@@ -1,3 +1,30 @@
-@startuml
-A->(b)
+@startuml xurl_sequence
+
+actor Requestor as Requestor
+actor Payer as Payer
+participant "xInvoice Backend" as xInvoiceBackend
+participant "xInvoice Enabled App" as xInvoiceApp
+
+group xURL Creation
+    Requestor -> xInvoiceBackend: Create xURL
+    xInvoiceBackend -> xInvoiceBackend: Create stateful\nxURL in Store
+end
+
+group xURL "Scan To Pay"
+    Payer-> xInvoiceApp: Scans xURL
+    xInvoiceApp->xInvoiceBackend: Retrieve xURL from Store
+    xInvoiceBackend->xInvoiceBackend: Do any ochestration\nor fiat conversions 
+    group xInvoice Sequence 
+        xInvoiceBackend -> xInvoiceBackend: Retrieve Payment\nRequest Details
+        xInvoiceBackend -> xInvoiceBackend: Create Payload
+        xInvoiceBackend -> xInvoiceBackend: Sign Payload
+        xInvoiceBackend -> xInvoiceBackend: Create xInvoice and\nSave Request State\nas "PENDING"
+        xInvoiceBackend -> xInvoiceApp: Send xInvoice to\nPayer
+        xInvoiceApp -> "XRP Ledger": Verify signature of \nxInvoice using\naccount public key
+        xInvoiceApp -> "XRP Ledger": Pay Invoice
+    end
+    note left: this is the same\nprocess as the\nxInvoice Sequence
+    xInvoiceApp -> xInvoiceBackend: Callback to\nxInvoice Backend
+end
+
 @enduml

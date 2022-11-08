@@ -4,6 +4,7 @@ import QRCode from "react-qr-code";
 import Page  from "../components/Page"
 import { WalletService } from "../services/WalletService"
 import { SiXrp } from "react-icons/si"
+import {BiCopy} from "react-icons/bi"
 
 const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
     
@@ -41,7 +42,7 @@ const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
                     Thursday, Aug 25, 2022, 3:15 PM -{" "}
                     <time
                         className="italic text-slate-600"
-                        datetime="2022-08-25T22:15:11.634Z"
+                        dateTime="2022-08-25T22:15:11.634Z"
                         title="Thursday, August 25, 2022 at 3:15:11 PM"
                     >
                         in 7 hours
@@ -53,23 +54,9 @@ const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
             <div className="bg-slate-700 rounded-md p-3">
                 <div className="break-all font-bold text-sm font-mono text-pink-400">{paymentRequest.payment_request}</div>                
             </div>
-            <div className="flex justify-content-center">
-              <button className="bg-blue hover:bg-blue-600 rounded flex m-1 p-1 justify-center items-center hover:underline">
-                <svg
-                  stroke="currentColor"
-                  fill="none"
-                  stroke-width="2"
-                  viewBox="0 0 24 24"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  className="mr-1"
-                  height="1em"
-                  width="1em"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
+            <div className="flex flex-col justify-content-center">
+              <button className="bg-blue hover:bg-pink-600 hover:text-white rounded flex m-1 p-1 justify-center items-center hover:underline">
+                <BiCopy/>
                 Copy
               </button>{" "}
 

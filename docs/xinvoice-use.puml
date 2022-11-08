@@ -1,0 +1,46 @@
+@startuml xinvoice_use
+
+actor :Requestor: as Requestor
+actor :Payer: as Payer
+actor :xInvoice Backend\n(system): as Backend
+
+package "xInvoice App" {
+    (Scans xInvoice)
+    (Signs and Pays Invoice)
+}
+note right
+this is the mobile wallet or 
+webapp that scans the xURL 
+and pays the invoice, current 
+proposal is a xumm app plugin
+end note
+
+package "XRP Ledger" {
+    (Updates Ledger\nTransaction State)
+}
+
+package "xInvoice Backend" {
+    (Creates and\nSigns xInvoice)
+    (Listens For xInvoice Payment)
+    (Creates xInvoice State\nas PENDING)
+    (Updates xInvoice\nState to PAID)
+}
+
+'creation
+Requestor-->(Creates and\nSigns xInvoice)
+(Creates and\nSigns xInvoice)-->(Creates xInvoice State\nas PENDING)
+
+' payment
+Payer-->(Scans xInvoice)
+(Scans xInvoice)-->(Signs and Pays Invoice)
+(Signs and Pays Invoice)-->(Updates Ledger\nTransaction State)
+
+'backend updates
+Backend-->(Listens For xInvoice Payment)
+Backend-->(Updates xInvoice\nState to PAID)
+(Listens For xInvoice Payment)-->(Updates Ledger\nTransaction State)
+
+
+
+
+@enduml
