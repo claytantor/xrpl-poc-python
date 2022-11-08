@@ -33,7 +33,8 @@ scopes = {
         'wallet_owner_refresh':['wallet.refresh'],
     }
 
-@app.route("/")
+@app.route("/", methods=['GET','OPTIONS'])
+@cross_origin()
 def hello_world():
     return jsonify({'message':"Hello xURL"}), 200
 
@@ -46,6 +47,13 @@ def api_version():
 @app.route('/auth/access_token', methods=['POST','OPTIONS'])
 @cross_origin(origins=['*','https://rapaygo.com','https://dev.rapaygo.com/'])
 def post_access_token():
+
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
+                                                'Access-Control-Allow-Headers':'Content-Type, Authorization',
+                                                'Access-Control-Allow-Methods':'POST, OPTIONS'}
+
     json_body = request.json
     # app.logger.info(json.dumps(json_body, indent=4))
     if json_body is None:
@@ -108,10 +116,17 @@ def get_auth(wallet, username, test_phrase, pass_phrase, scopes, scopes_refresh)
                         'refresh_token':refresh_token,
                         "wallet_id":wallet.wallet_id}), 200, {'subject':token} 
 
-@app.route("/wallet", methods=['GET'])
+@app.route("/wallet", methods=['GET','OPTIONS'])
 @verify_user_jwt_scopes(scopes['wallet_owner'])
 @cross_origin()
 def get_wallet():
+
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
+                                                'Access-Control-Allow-Headers':'Content-Type, Authorization',
+                                                'Access-Control-Allow-Methods':'POST, OPTIONS'}
+
     # lookup the wallet by the classic address in the jwt
     classic_address = get_token_sid(dict(request.headers)["Authorization"])    
     wallet = db.session.query(Wallet).filter_by(classic_address=classic_address).first()
@@ -126,9 +141,16 @@ def get_wallet():
 
     return jsonify(wallet_model), 200
 
-@app.route("/wallet", methods=['POST'])
+@app.route("/wallet", methods=['POST', 'OPTIONS'])
 @cross_origin()
 def create_wallet():
+
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
+                                                'Access-Control-Allow-Headers':'Content-Type, Authorization',
+                                                'Access-Control-Allow-Methods':'POST, OPTIONS'}
+
     json_body = request.get_json()
     seed = None
     # generate a new wallet
@@ -153,11 +175,17 @@ def create_wallet():
     return jsonify(xurl_wallet_n.serialize()), 200
 
 
-@app.route("/pay_request", methods=['POST'])
+@app.route("/pay_request", methods=['POST', 'OPTIONS'])
 @cross_origin()
 def create_pay_request():
-    json_body = request.get_json()
 
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
+                                                'Access-Control-Allow-Headers':'Content-Type, Authorization',
+                                                'Access-Control-Allow-Methods':'POST, OPTIONS'}
+
+    json_body = request.get_json()
 
     # lookup the wallet by the classic address in the jwt
     classic_address = get_token_sid(dict(request.headers)["Authorization"])    
@@ -179,9 +207,16 @@ def create_pay_request():
 
     return jsonify({'body':payment_request_dict, 'payment_request':payment_request}), 200
 
-@app.route("/send_payment", methods=['POST'])
+@app.route("/send_payment", methods=['POST', 'OPTIONS'])
 @cross_origin()
 def send_payment():
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
+                                                'Access-Control-Allow-Headers':'Content-Type, Authorization',
+                                                'Access-Control-Allow-Methods':'POST, OPTIONS'}
+
+
     json_body = request.get_json()
     # json_body = json.loads(json_body['data'])
     # print("==== send payment",json.loads(json_body['data']))
