@@ -42,8 +42,7 @@ def hello_world():
 @app.route("/version", methods=['GET'])
 @cross_origin()
 def api_version():
-    app.logger.info(f"version: {config['APP_VERSION']}")
-    return jsonify({'version':config['APP_VERSION']}), 200
+    return jsonify({'version':"0.1.2"}), 200
 
 
 @app.route('/auth/access_token', methods=['POST','OPTIONS'])
