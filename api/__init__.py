@@ -6,8 +6,7 @@ from flask import g
 import os
 import json
 import logging
-# from . import models
-# from . import routes
+
 
 from dotenv import dotenv_values
 config = {
@@ -18,6 +17,8 @@ config = {
 db = SQLAlchemy()
 
 def create_app():
+
+    
 
     """Construct the core application."""
     app = Flask(__name__, instance_relative_config=False)
@@ -37,7 +38,6 @@ def create_app():
     }
     logging.basicConfig(level=lookup[app.config["APP_LOG_LEVEL"]])
 
-
     app.logger.info(f"=== create_app {__name__} ===")
 
     from os import walk
@@ -50,6 +50,12 @@ def create_app():
 
     app.logger.info(json.dumps(config, indent=4))
 
+    from os import walk
+
+    filenames = next(walk(os.getenv("APP_CONFIG")), (None, None, []))[2]  # [] if no file
+    for filename in filenames:
+        app.logger().info(f"Loading {filename} for {os.getenv('APP_CONFIG')}")
+
 
     db.init_app(app)
     migrate = Migrate()
@@ -60,6 +66,11 @@ def create_app():
 
         from . import routes  # Import routes
         from . import models
+
+        # ## attempt to list all the wallets in the database
+        # for wallet in models.Wallet.query.all():
+        #     app.logger.info(f"Wallet: {wallet.classic_address}")
+
 
         app.logger.info('app setup successfully.')
         

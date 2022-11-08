@@ -7,3 +7,6 @@ env/*.env
 data/
 data/*
 .python-version
+webapp/environment/deployment.json
+out/
+out/*

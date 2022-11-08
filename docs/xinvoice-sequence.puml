@@ -1,0 +1,36 @@
+@startuml xinvoice_sequence
+
+actor Requestor as Requestor
+actor Payer as Payer
+participant "xInvoice Enabled App" as xInvoiceApp
+participant "xInvoice App Backend" as xInvoiceBackend
+
+Requestor -> "XRP Ledger": Create Wallet
+
+group Payment Request Creation
+    Requestor -> xInvoiceBackend: Use Wallet Credentials to Create Payment Request
+    Requestor -> xInvoiceBackend: Enter Payment\nRequest Details
+    note left: the backend allows for new invoices\nto be created and tracked
+    xInvoiceBackend -> xInvoiceBackend: Generate xInvoice
+    xInvoiceBackend -> xInvoiceBackend: Create Payload
+    xInvoiceBackend -> xInvoiceBackend: Sign Payload
+    xInvoiceBackend -> xInvoiceBackend: Create xInvoice and\nSave Request State\nas "PENDING"
+    xInvoiceBackend -> Requestor: Return xInvoice
+end
+
+group Payment
+Requestor -> "Payer": Sends xInvoice
+Payer -> xInvoiceApp: Scans xInvoice
+note left: the app could be a mobile\napp like xumm or a web app\nlike xurlpay.org
+
+xInvoiceApp -> "XRP Ledger": Verify signature of \nxInvoice using\naccount public key
+xInvoiceApp -> "XRP Ledger": Pay Invoice
+end
+
+group Backend Event Listener
+xInvoiceBackend -> "XRP Ledger": Listen for\n"PENDING" xInvoice\nto be paid
+xInvoiceBackend -> "xInvoice App Backend": Save xInvoice\nstate as "PAID"
+end
+
+
+@enduml
