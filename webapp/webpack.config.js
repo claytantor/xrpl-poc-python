@@ -31,11 +31,11 @@ module.exports = {
     hot: true,
     compress: true,
     historyApiFallback: true,
-    https:{
-      key: fs.readFileSync("clay-deeporb-20.local+3-key.pem"),
-      cert: fs.readFileSync("clay-deeporb-20.local+3.pem"),
-      ca: fs.readFileSync("ca.crt"),     
-    }
+    // https:{
+    //   key: fs.readFileSync("clay-deeporb-20.local+3-key.pem"),
+    //   cert: fs.readFileSync("clay-deeporb-20.local+3.pem"),
+    //   ca: fs.readFileSync("ca.crt"),     
+    // }
   },
 
 
