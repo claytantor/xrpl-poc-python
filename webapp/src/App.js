@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
   BrowserRouter,
   Routes,
@@ -17,6 +17,8 @@ import Wallet from "./pages/Wallet";
 import CreateWallet from "./pages/CreateWallet";
 import Login from "./pages/Login";
 import {getAccessTokenInfo, getUser} from "./services/AuthenticationService";
+import {XummService} from "./services/XummService";
+
 
 import "./App.css"
 
@@ -25,8 +27,13 @@ const useStore = create(
     persist(
       (set, get) => ({
         isLoading: false,
-        setIsLoading: (isLoading) => set({ isLoading }),
-        getIsLoading: () => get({ isLoading })
+        appDetails: {},
+        setIsLoading: (isLoading) => set({ isLoading: isLoading }),
+        getIsLoading: () => get({ isLoading }),
+        getXummAppDetails: () => get({ 'foo':'bar' }),
+        setXummAppDetails: (appDetails) => set({
+          appDetails: appDetails
+        }),
       }),
       {
         name: "xurlpay-storage", // unique name
@@ -43,7 +50,15 @@ const PrivateRoute = () => {
 };
 
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    XummService.ping().then((response) => {
+      useStore.getState().setXummAppDetails(response.data);
+    });    
+    
+  }, []);
+
+  return (  
     <>
     <BrowserRouter>
         <Routes>
@@ -64,8 +79,6 @@ const App = () => (
             <Route path="/" element={<Home />} />
         </Routes>
     </BrowserRouter>
-    </>
-
-);
+    </>)};
 
 export default App

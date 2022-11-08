@@ -11,6 +11,11 @@ from api.xrpcli import XUrlWallet, verify_msg, drops_to_xrp
 from api.models import Wallet
 from datetime import datetime as dt, timedelta
 import jwt
+from api.serializers import XummApplicationDetailsSerializer
+
+
+import xumm
+
 
 from . import db
 from .decorators import log_decorator, verify_user_jwt_scopes
@@ -22,6 +27,11 @@ config = {
     **dotenv_values(os.getenv("APP_CONFIG")),  # load shared development variables
     **os.environ,  # override loaded values with environment variables
 }
+
+# Or with manually provided credentials (instead of using dotenv):
+sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
+
+
 
 scopes = {
         'wallet_owner': [
@@ -41,7 +51,8 @@ def hello_world():
 @app.route("/version", methods=['GET'])
 @cross_origin()
 def api_version():
-    return jsonify({'version':"0.1.2"}), 200
+    app.logger.info(f"version: {config['APP_VERSION']}")
+    return jsonify({'version':config['APP_VERSION']}), 200
 
 
 @app.route('/auth/access_token', methods=['POST','OPTIONS'])
@@ -259,3 +270,14 @@ def send_payment():
         print("=== COULD NOT VERIFY SIG", e)
         return jsonify({'error':'could not verify'}), 400
 
+@app.route("/xumm/ping", methods=['GET'])
+@cross_origin()
+def xumm_ping():
+    try:
+        app_details = sdk.ping()
+        a_m = app_details.to_dict()
+        a_m['xapp_deeplink'] = config['XUMM_APP_DEEPLINK']
+        return jsonify(a_m), 200
+    except Exception as e:
+        app.logger.error(e)
+        return jsonify({'error':'could not ping'}), 400

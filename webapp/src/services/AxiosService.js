@@ -65,8 +65,6 @@ axiosInstance.interceptors.request.use((config) => {
     if (!cachedUser || cachedUser.access_token === undefined || cachedUser.refresh_token === undefined) {
         console.log('cached user NOT found, sending to login', config);
         return config;
-
-
     } else if (cachedUser) {
         console.log('cached user found', config, cachedUser);
         const info = getAccessTokenInfo(cachedUser);

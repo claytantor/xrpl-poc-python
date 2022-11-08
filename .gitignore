@@ -12,3 +12,5 @@ out/
 out/*
 webapp/environment/deployment.json
 webapp/src/deployment.json
+.python-version
+node_modules/

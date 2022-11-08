@@ -24,7 +24,6 @@ DATABASE_URL="sqlite:////data/xurl.db"
 APP_LOG_LEVEL="DEBUG"
 ```
 
-
 ### run the cli app
 `APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api.xrpcli`
 
@@ -50,7 +49,6 @@ A [script is provided](./app.sh) to start the flask app, or you can just start t
 
 **running the flask app**
 
-```bash
 ```bash
 #!/bin/bash
 FLASK_APP=api APP_CONFIG=env/local/xrpl-poc-python-app.env flask run  --host=0.0.0.0 --port=5000 --cert=cert.pem --key=key.pem --debugger --reload
