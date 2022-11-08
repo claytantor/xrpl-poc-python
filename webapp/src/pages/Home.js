@@ -3,7 +3,7 @@ import QRCode from "react-qr-code";
 
 import Page  from "../components/Page"
 import { WalletService } from "../services/WalletService"
-
+import {AiOutlineCheckCircle} from "react-icons/ai"
 
 const Home = ({useStore}) => {
     const [version, setVersion] = useState();
@@ -21,26 +21,19 @@ const Home = ({useStore}) => {
                         <div>This site is an online proof of concept to show how the <span className="font-bold text-pink-500">xInvoice</span> and <span className="font-bold text-pink-500">xURL</span> protocols can be applied to enable numerous payment and point of use sale cases for the XRP ecosystem:</div>
                         <ul className="space-y-4">
                             <li className="flex items-center">
-                            <svg className="h-6 w-6 flex-none fill-pink-100 stroke-pink-500 stroke-2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="11" />
-                                <path d="m8 13 2.165 2.165a1 1 0 0 0 1.521-.126L16 9" fill="none" />
-                            </svg>
-                            <div className="ml-4">Allows for signed payment request <span className="font-bold text-pink-500">xInvoices</span> that can guarantee payment to the correct requestor.</div>
+                                <AiOutlineCheckCircle className="text-pink-500 text-6xl w-1/12" />
+                                <div className="ml-2 w-11/12">Allows for signed payment request <span className="font-bold text-pink-500">xInvoices</span> that can guarantee payment to the correct requestor.</div>
                             </li>
                             <li className="flex items-center">
-                            <svg className="h-6 w-6 flex-none fill-pink-100 stroke-pink-500 stroke-2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="11" />
-                                <path d="m8 13 2.165 2.165a1 1 0 0 0 1.521-.126L16 9" fill="none" />
-                            </svg>
-                            <div className="ml-4">Provides stateful tracking of payment state for payment requests as <span className="font-bold text-pink-500">xInvoices</span> via backend.</div>
+                                <AiOutlineCheckCircle className="text-pink-500 text-6xl w-1/12" />
+                                <div className="ml-2 w-11/12">Provides stateful tracking of payment state for payment requests as <span className="font-bold text-pink-500">xInvoices</span> via backend.</div>
                             </li>
+
                             <li className="flex items-center">
-                            <svg className="h-6 w-6 flex-none fill-pink-100 stroke-pink-500 stroke-2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="11" />
-                                <path d="m8 13 2.165 2.165a1 1 0 0 0 1.521-.126L16 9" fill="none" />
-                            </svg>
-                            <div className="ml-4"><span className="font-bold text-pink-500">xURL</span> automation of payment request creation by a live backend automation empowering payment with POS, instant currency conversion, and non expiring "scan to pay" capabilities.</div>
+                                <AiOutlineCheckCircle className="text-pink-500 text-6xl w-1/12" />
+                                <div className="ml-2 w-11/12"><span className="font-bold text-pink-500">xURL</span> automation of payment request creation by a live backend automation empowering payment with POS, instant currency conversion, and non expiring "scan to pay" capabilities.</div>
                             </li>
+
                         </ul>
                         <div>This site gives you everything you need to use the proposed protocols on the <a className="underline" href="https://testnet.xrpl.org/" target="_new">XRP testnet</a>. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
                         </div>

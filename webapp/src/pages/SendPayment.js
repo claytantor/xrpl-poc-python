@@ -45,7 +45,6 @@ const PaymentResponseDetails = ({paymentResponse}) => {
 };
 
 const SendPayment = ({useStore}) => {
-    const [version, setVersion] = useState();
     const [paymentResponse, setPaymentResponse] = useState();
     const [data, setData] = useState();
     const [scanned, setScanned] = useState(false);

@@ -3,7 +3,8 @@ import React, {useEffect, useState } from "react"
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"
 import { WalletService } from "../services/WalletService"
-import {syntaxHighlight} from "../utils/format"
+import { XummService } from "../services/XummService"
+
 
 import { SiXrp } from "react-icons/si"
 import {BiLinkExternal} from "react-icons/bi"
@@ -33,6 +34,9 @@ const Wallet = ({useStore}) => {
     };
 
     useEffect(() => {
+        XummService.ping().then((res) => {
+            console.log("ping from xumm sdk",res);
+        });
         if (!walletInfo) {
             WalletService.getWallet().then(r => {
                 console.log(r.data);

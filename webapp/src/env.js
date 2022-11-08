@@ -9,6 +9,24 @@ export const wpPluginDownload = () => {
   return `${appUrl}/static/rapaygo-for-woocommerce-1.0.18.zip`
 }
 
+// API Key
+// 1b144141-440b-4fbc-a064-bfd1bdd3b0ce
+
+// API Secret
+// 7acffb42-4c95-4456-aab2-c85d1784bdf7
+export const xummConfig = (() => {
+  switch (deployment.env) {
+    case 'mock':
+      return {};
+    case 'local':
+      return {'api-key': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'api-secret': '7acffb42-4c95-4456-aab2-c85d1784bdf7'};
+    case 'dev':
+      return {'api-key': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'api-secret': '7acffb42-4c95-4456-aab2-c85d1784bdf7'};
+    case 'prd':
+      return {'api-key': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'api-secret': '7acffb42-4c95-4456-aab2-c85d1784bdf7'};
+  }
+})();
+
 export const backendBaseUrl = (() => {
   switch (deployment.env) {
     case 'mock':

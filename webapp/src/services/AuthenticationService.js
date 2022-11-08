@@ -10,6 +10,14 @@ export const AuthenticationService = {
     login(classic_address, private_key){
       return AxiosService.post(`/auth/access_token`, {classic_address, private_key});
     },
+    isCachedUser(){
+      let cachedUser = getUser();
+      if (!cachedUser || cachedUser.access_token === undefined || cachedUser.refresh_token === undefined) {
+        return false;
+      } else {
+        return true;
+      }
+    }
 };
 
 export const isBrowser = () => typeof window !== 'undefined';

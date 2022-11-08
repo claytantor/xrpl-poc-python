@@ -5,7 +5,7 @@ import { SiXrp } from 'react-icons/si';
 
 import icon32 from "../assets/favicon_io/favicon-32x32.png"
 
-import { getUser, setUser, getAccessTokenInfo, disconnect } from '../services/AuthenticationService';
+import { AuthenticationService, getUser, setUser, getAccessTokenInfo, disconnect } from '../services/AuthenticationService';
 
 const Header = ({
     useStore,
@@ -15,9 +15,13 @@ const Header = ({
     const navigate = useNavigate();
 
     const [tokenInfo, setTokenInfo] = useState(getAccessTokenInfo(getUser()));
+    const [userIsCached, setUserIsCached] = useState();
 
     useEffect(() => {
         console.log("useEffect", tokenInfo);
+        let isCachedUser = AuthenticationService.isCachedUser();
+        setUserIsCached(isCachedUser);
+
     } , [tokenInfo]);
 
     let logout = (e) => {
@@ -31,7 +35,7 @@ const Header = ({
 
     return (
       <div className="w-full">
-            {/* {tokenInfo ? <>IN</> : <>OUT</>} */}
+            
             <nav className="flex flex-col md:flex-row items-center justify-between bg-pink-700 p-3">
                 <div className="flex w-full md:w-1/2">
                     <img src={icon32} alt="icon32" className="w-12" />
@@ -42,9 +46,12 @@ const Header = ({
                         White Paper
                         </button> 
                     </div>
+                    <div className="mr-3 text-white">
+                        {userIsCached ? <>User Is Cached</> : <>User Not Cached</>} 
+                    </div>
 
                     {/* ==== IN ==== */}
-                    {tokenInfo  && tokenInfo.active ? <>
+                    {userIsCached ? <>
                             <div><button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={(e)=>logout(e)}>Logout</button ></div>
                         </> :
                         <><div><button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={()=>navigate('/create')}>Create Wallet</button></div>

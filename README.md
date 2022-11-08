@@ -24,7 +24,6 @@ DATABASE_URL="sqlite:////data/xurl.db"
 APP_LOG_LEVEL="DEBUG"
 ```
 
-
 ### run the cli app
 `APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api.xrpcli`
 
@@ -87,18 +86,3 @@ This will start the react app with the local deployment configuration and use th
 
 [https://localhost:3001/](https://localhost:3001/)
 
-
-
-(xrpl) (base) clay@orion-lap:~/data/github.com/claytantor/xrpl-poc-python/webapp$ curl 'https://localhost:5000/wallet'   -H 'sec-ch-ua: "Google Chrome";v="107", "Chromium";v="107", "Not=A?Brand";v="24"'   -H 'Accept: application/json, text/plain, */*'   -H 'Content-Type: application/json'   -H 'Referer: https://localhost:3001/'   -H 'sec-ch-ua-mobile: ?0'   -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'   -H 'sec-ch-ua-platform: "Linux"'   --data-raw '{"headers":{"Accept":"*/*","Content-Type":"application/json"},"data":{}}'   --compressed -k
-{"account_info":{"account_data":{"Account":"rPfFWRTn1gLzvghfv3MjvTvtNraoWhv42c","Balance":"1000000000","Flags":0,"LedgerEntryType":"AccountRoot","OwnerCount":0,"PreviousTxnID":"3B421C2EAD8C6CD7945403D4034E3304BB46595C0BEB04074B4BA9D4C4E05F2E","PreviousTxnLgrSeq":32650027,"Sequence":32650027,"index":"16D0BD1E7C2B0E7D37DE63C05A0550A0BB8A700FB6DBC09E36597AAE45609B56"},"ledger_current_index":32650029,"queue_data":{"txn_count":0},"validated":false},"classic_address":"rPfFWRTn1gLzvghfv3MjvTvtNraoWhv42c","private_key":"ED8FA5B9C31B340E40029F0B413F438EB160EB318A0A4E24A3F84B034CD4D4819F","public_key":"EDFACCF19C054522BAE948BB4ED3C0C0050917A9A7FEB3C20EB3E78B3D8671F87C","seed":"sEdSb7wrzyy3xBNgre6rKSDAbV9wW4n"}
-
-
-Wallet created. Save this info now!
-classic address
-rBEybSc8wps5gSUnr5ZimYrjcQDKUfubTG
-private key
-ED41CD44DB572247F931F8EC0EB75CD58419D7348D380F8E8168591A30DB5AB3FD
-public key
-ED48E6400384A639B33761CB76FCE434D9FB8A20D4600C709B00E33D6757E05DE7
-seed
-sEdTMVSRi37P7jHeMp93sv2y9Dv1cSU

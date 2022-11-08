@@ -4,8 +4,10 @@ import { WalletService } from "../services/WalletService"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
+import QRCode from "react-qr-code";
 
-const Footer = () => {
+
+const Footer = ({xummAppDetails}) => {
 
     let [version, setVersion] = useState();
 
@@ -20,6 +22,7 @@ const Footer = () => {
 
     return (
         <footer className="sticky top-[100vh] text-white bg-slate-900">
+            {/* {xummAppDetails ? <>got details</> : <>no details</>} */}
 
             <div className="p-6 w-full">
                 <div className="grid gap-x-0.8 grid-cols-1 md:grid-cols-2">
@@ -27,6 +30,23 @@ const Footer = () => {
                         <h5 className="text-pink-300 font-bold text-lg">xurlpay.org</h5>
                         <div className="font-bold font-mono text-slate-400">v{version}</div>
                         <div>Everything you need to use the <span className="font-bold text-pink-500">xInvoice</span> and <span className="font-bold text-pink-500">xURL</span> protocols on the XRP testnet. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
+                    
+                    
+                        {xummAppDetails && <>
+                        <div className="flex flex-col">
+                            <div className="text-sm flex flex-row">
+                                <div>xumm app name:</div>
+                                <div className="ml-1 text-pink-500">{xummAppDetails.application.name}</div>
+                            </div>
+                            <div className="text-sm flex flex-row">
+                                <div>xumm app id:</div>
+                                <div className="ml-1 text-pink-500">{xummAppDetails.application.uuidv4}</div>
+                            </div>
+                        
+                        </div>
+                        </>}                    
+                    
+                    
                     </div>
 
                     <div className="mb-6">
@@ -36,8 +56,15 @@ const Footer = () => {
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <IoIosPaper className="mr-1"/> Whitepaper</a></li>
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/LICENCE.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <TbCertificate className="mr-1"/> License</a></li>
                         </ul>
+                        {xummAppDetails && <div>
+                            {xummAppDetails.xapp_deeplink}
+                            <QRCode className="m-2" value={`${xummAppDetails.xapp_deeplink}`} size={200} />
+                            {/* <QRCode className="m-2" value={xummAppDetails.xapp_deeplink} size={200} /> */}
+                        </div>}
+
                     </div>
                 </div>
+
             </div>
 
         </footer>
