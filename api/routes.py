@@ -13,10 +13,6 @@ from datetime import datetime as dt, timedelta
 import jwt
 from api.serializers import XummApplicationDetailsSerializer
 
-
-import xumm
-
-
 from . import db
 from .decorators import log_decorator, verify_user_jwt_scopes
 from .jwtauth import is_token_valid, has_all_scopes, get_token_sid
@@ -27,11 +23,6 @@ config = {
     **dotenv_values(os.getenv("APP_CONFIG")),  # load shared development variables
     **os.environ,  # override loaded values with environment variables
 }
-
-# Or with manually provided credentials (instead of using dotenv):
-sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
-
-
 
 scopes = {
         'wallet_owner': [
@@ -270,14 +261,3 @@ def send_payment():
         print("=== COULD NOT VERIFY SIG", e)
         return jsonify({'error':'could not verify'}), 400
 
-@app.route("/xumm/ping", methods=['GET'])
-@cross_origin()
-def xumm_ping():
-    try:
-        app_details = sdk.ping()
-        a_m = app_details.to_dict()
-        a_m['xapp_deeplink'] = config['XUMM_APP_DEEPLINK']
-        return jsonify(a_m), 200
-    except Exception as e:
-        app.logger.error(e)
-        return jsonify({'error':'could not ping'}), 400
