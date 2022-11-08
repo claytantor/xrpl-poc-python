@@ -15,21 +15,11 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    // filename: 'index.bundle.js',
     filename: '[name].[contenthash].js',
   },
   resolve: {
     fallback: { 
-      // "https": require.resolve("https-browserify"),
-      // "crypto": require.resolve("crypto-browserify"),
-      // "http": require.resolve("stream-http"),
-      // "buffer": require.resolve("buffer")
-      "buffer": require.resolve("buffer/")
-      // "https": false,
-      // "crypto": false,
-      // "http": false,
-      // "buffer": false
-      
+      "buffer": require.resolve("buffer/")     
      },
   },
   devServer: {
@@ -42,8 +32,8 @@ module.exports = {
     compress: true,
     historyApiFallback: true,
     https:{
-      key: fs.readFileSync("cert.key"),
-      cert: fs.readFileSync("cert.crt"),
+      key: fs.readFileSync("clay-deeporb-20.local+3-key.pem"),
+      cert: fs.readFileSync("clay-deeporb-20.local+3.pem"),
       ca: fs.readFileSync("ca.crt"),     
     }
   },
