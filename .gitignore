@@ -11,3 +11,4 @@ out/
 out/*
 .python-version
 node_modules/
+*.pem

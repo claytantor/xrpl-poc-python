@@ -86,3 +86,16 @@ This will start the react app with the local deployment configuration and use th
 
 [https://localhost:3001/](https://localhost:3001/)
 
+## generating certs and keys for flask app
+
+```bash
+sudo apt install libnss3-tools -y
+sudo apt install openssl -y
+
+wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
+sudo cp mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
+
+openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365 -subj "/C=US/ST=Oregon/L=Portland/O=XurlPay.org/CN=dev-xurlpay.org"
+
+```
