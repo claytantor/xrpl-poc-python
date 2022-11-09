@@ -13,3 +13,4 @@ out/*
 .python-version
 node_modules/
 *.pem
+deployment.json
