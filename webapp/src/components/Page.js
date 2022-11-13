@@ -2,40 +2,43 @@ import React, {useEffect, useState} from "react"
 
 import Header from "./Header"
 import Footer from "./Footer"
+import Sidebar from "./Sidebar"
 
-const Page = ({useStore, children,}) => {
+import { useStore } from "../store"
 
-  let [appDetails, setAppDetails] = useState();
+const Page = ({
+    withSidenav=false,
+    children,
+  }) => {
 
-  useEffect(() => {
-    if (useStore) {
-      console.log(`useStore get app details ${JSON.stringify(useStore.getState())}`);
-      setAppDetails(useStore.getState().appDetails);
-    }
+  // let [appDetails, setAppDetails] = useState();
 
-  }, [useStore]);
+  // useEffect(() => {
+  //   if (useStore) {
+  //     console.log(`useStore get app details ${JSON.stringify(useStore.getState())}`);
+  //     setAppDetails(useStore.getState().appDetails);
+  //   }
+
+  // }, [useStore]);
 
 
   return (
     <>
-      {/* <div id="container" className="flex min-h-screen flex-col">
-          <Header useStore={useStore} />
-          <div>{children}</div>
-          <Footer/>  */}
-          
-          <div id="container" className="flex min-h-screen flex-col">
-              <div id="header" className="flex"><Header useStore={useStore}/></div>
-              <div id="main" className="flex flex-grow flex-col md:flex-row">
-                  <div className="flex-grow">{children}</div>
-              </div>
-              <div id="footer" className="p-0 bg-black color-white">
-              
-              <Footer xummAppDetails={appDetails}/>
-              </div>
-          </div>  
+      <div id="container" className="flex min-h-screen flex-col">
+        <div id="header" className="flex"><Header useStore={useStore}/></div>
+        {withSidenav ? <div id="main" className="flex flex-grow flex-col md:flex-row">
+          <div className="flex bg-gray-900  md:bg-gray-800 text-white"><Sidebar useStore={useStore}/></div>
+          <div className="flex-grow">{children}</div>
+        </div>:
+        <div id="main" className="flex flex-grow flex-col md:flex-row">
+            <div className="flex-grow">{children}</div>
+        </div>
+        }
+        <div id="footer" className="p-0 bg-black color-white">
+         <Footer/>
+        </div>
+      </div>   
 
-
-      {/* </div> */}
     </>
   );
 };

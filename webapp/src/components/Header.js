@@ -1,37 +1,36 @@
 import React, {useState, useEffect} from "react"
 import { useNavigate } from "react-router-dom";
-
 import { SiXrp } from 'react-icons/si';
-
+import { FaUserCircle } from 'react-icons/fa';
+// import {XummPkce} from 'xumm-oauth2-pkce';
 import icon32 from "../assets/favicon_io/favicon-32x32.png"
 
-import { AuthenticationService, getUser, setUser, getAccessTokenInfo, disconnect } from '../services/AuthenticationService';
+
+import { useStore } from "../store";
+
 
 const Header = ({
-    useStore,
     children,
   }) => {
 
     const navigate = useNavigate();
+    const xummAuthState = useStore((state) => state.xummState);
+    const setXummState = useStore((state) => state.setXummState);
 
-    const [tokenInfo, setTokenInfo] = useState(getAccessTokenInfo(getUser()));
-    const [userIsCached, setUserIsCached] = useState();
 
-    useEffect(() => {
-        console.log("useEffect", tokenInfo);
-        let isCachedUser = AuthenticationService.isCachedUser();
-        setUserIsCached(isCachedUser);
+    let logout = () => {
+        console.log(`logout`, xummAuthState);
+        setXummState(null);
+    };
 
-    } , [tokenInfo]);
+    let login = () => {
+        navigate("/login");
+    };
 
-    let logout = (e) => {
-        e.preventDefault();
-        disconnect();
-        // setUser(null);
-        setTokenInfo(null);
-        // window.location.reload();
-        navigate("/");
-    }
+    let wallet = () => {
+        console.log(`wallet`);
+        navigate("/wallet");
+    };
 
     return (
       <div className="w-full">
@@ -46,29 +45,39 @@ const Header = ({
                         White Paper
                         </button> 
                     </div>
-                    <div className="mr-3 text-white">
-                        {userIsCached ? <>User Is Cached</> : <>User Not Cached</>} 
-                    </div>
 
                     {/* ==== IN ==== */}
-                    {userIsCached ? <>
-                            <div><button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={(e)=>logout(e)}>Logout</button ></div>
+                    {xummAuthState && xummAuthState.me  ? <>
+                            <div>
+
+                                <div className="dropdown inline-block relative">
+                                    <button className="hover:text-white text-white font-semibold py-2 px-4 border rounded-xl inline-flex items-center">
+
+                                            <FaUserCircle className='mr-1'/><span className="mr-1">{xummAuthState.me ? `${xummAuthState.me.sub}` : ""}</span>
+                                            <svg className="fill-current h-4 w-4 " xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/> 
+                                            </svg>
+                                    </button>
+                                    <ul className="dropdown-menu pt-1">
+                                        <li className=""><button onClick={wallet} className="hover:underline font-semibold cursor-pointer text-white rounded-t py-2 px-4 block whitespace-no-wrap">Wallet</button></li>
+                                        {/* <li className=""><button onClick={()=>navigate('/settings')} className="hover:underline font-semibold cursor-pointer text-white rounded-t py-2 px-4 block whitespace-no-wrap">Settings</button></li> */}
+                                        <li className=""><button onClick={()=>logout()} className="hover:underline font-semibold cursor-pointer text-white rounded-b py-2 px-4 block whitespace-no-wrap">Logout</button></li>
+                                    </ul>
+                                </div>
+
+
+
+
+                            </div>
                         </> :
-                        <><div><button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={()=>navigate('/create')}>Create Wallet</button></div>
-                        <div><button className="inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={()=>navigate('/login')}>Login</button></div></>
+                        <>
+
+                        <div><button className="inline-block text-sm px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-500 hover:bg-white mt-4 md:mt-0" onClick={()=>login()}>Login</button></div></>
                     }                   
                 </div>
 
         
             </nav>
-            {tokenInfo  && tokenInfo.active &&
-            <div className="w-full bg-pink-200 flex flex-wrap justify-end p-1">
-                <button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-slate-800 border-slate-800 hover:border-transparent hover:text-pink-100 hover:bg-slate-800 mt-4 md:mt-0" onClick={()=>navigate('/wallet')}>Wallet</button >
-                <button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-slate-800 border-slate-800 hover:border-transparent hover:text-pink-100 hover:bg-slate-800 mt-4 md:mt-0" onClick={()=>navigate('/receive')}>Payment Request</button >
-                <button className="mr-1 inline-block text-sm px-4 py-2 leading-none border rounded-xl text-black border-black hover:border-transparent hover:text-pink-100 hover:bg-slate-800 mt-4 md:mt-0" onClick={()=>navigate('/send')}>Scan To Pay</button >
-                
-                
-            </div>}
 
 
 

@@ -1,5 +1,5 @@
 import React, {useEffect, useState } from "react"
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 
 import Page  from "../components/Page"
 import PaymentRequest from "../components/PaymentRequest";
@@ -14,7 +14,7 @@ const ReceivePayment = ({useStore}) => {
 
     return (
         <>
-        <Page useStore={useStore}> 
+        <Page useStore={useStore} withSidenav={true}> 
             <div className="p-4"> 
                 <div className="p-1 flex w-full justify-center">
                 {paymentRequest ? <PaymentRequest paymentRequest={paymentRequest} setPaymentRequest={setPaymentRequest}/>:

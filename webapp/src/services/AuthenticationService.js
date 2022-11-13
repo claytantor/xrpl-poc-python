@@ -1,24 +1,25 @@
 import jwtdecode from 'jwt-decode';
 import moment from 'moment';
 import Axios from 'axios';
-// import { backendBaseUrl, deploymentEnv } from '../env';
+
 import {AxiosService} from './AxiosService';
+// import {useStore} from "../store";
 
 Axios.defaults.withCredentials = false; 
 
-export const AuthenticationService = {
-    login(classic_address, private_key){
-      return AxiosService.post(`/auth/access_token`, {classic_address, private_key});
-    },
-    isCachedUser(){
-      let cachedUser = getUser();
-      if (!cachedUser || cachedUser.access_token === undefined || cachedUser.refresh_token === undefined) {
-        return false;
-      } else {
-        return true;
-      }
-    }
-};
+// export const AuthenticationService = {
+//     login(classic_address, private_key){
+//       return AxiosService.post(`/auth/access_token`, {classic_address, private_key});
+//     },
+//     isCachedUser(){
+//       let cachedUser = getUser();
+//       if (!cachedUser || cachedUser.access_token === undefined || cachedUser.refresh_token === undefined) {
+//         return false;
+//       } else {
+//         return true;
+//       }
+//     }
+// };
 
 export const isBrowser = () => typeof window !== 'undefined';
 
@@ -27,29 +28,35 @@ export const disconnect = () => {
   window.localStorage.removeItem('xurlUser');
 };
 
-export const setUser = (user) => {
-  AxiosService.setUser(user);
-  window.localStorage.setItem('xurlUser', JSON.stringify(user));
-};
+// export const setUser = (user) => {
+//   AxiosService.setUser(user);
+//   window.localStorage.setItem('xurlUser', JSON.stringify(user));
+// };
 
-export const getUser = () => {
-  if (isBrowser() && window.localStorage.getItem('xurlUser')) {
-    let wallet = JSON.parse(window.localStorage.getItem('xurlUser'));
-    // console.log(wallet);
-    return wallet;
-  } else {
-    // console.log('cant get wallet');
-    return {};
-  }
-};
+// export const getUser = () => {
+//   if (isBrowser() && window.localStorage.getItem('xurlUser')) {
+//     let wallet = JSON.parse(window.localStorage.getItem('xurlUser'));
+//     // console.log(wallet);
+//     return wallet;
+//   } else {
+//     // console.log('cant get wallet');
+//     return {};
+//   }
+// };
 
 /*
-{ user, password, token }
+{ 
+  user, 
+  password, 
+  token 
+}
 */
-export const getAccessTokenInfo = (userInfo, caller = 'default') => {
+export const getAccessTokenInfo = (token, caller = 'default') => {
 
-  if(userInfo && userInfo.access_token !== undefined){
-    const token = userInfo.access_token;
+  console.log('getAccessTokenInfo A:', token);
+
+  if(token !== undefined){
+    // const token = userInfo.jwt;
 
     // get the decoded payload and header for kid
     const decoded_header = jwtdecode(token, { header: true });
@@ -57,6 +64,7 @@ export const getAccessTokenInfo = (userInfo, caller = 'default') => {
 
     let expirationMoment = moment(`${decoded_payload.exp}`, 'X');
     let active = moment(`${decoded_payload.exp}`, 'X').isAfter(moment.utc());
+    console.log('getAccessTokenInfo B:', decoded_payload, decoded_header, expirationMoment, active, moment.utc());
 
     return {
       header: decoded_header,
@@ -74,34 +82,34 @@ export const getAccessTokenInfo = (userInfo, caller = 'default') => {
   
 };
 
-export const getAccessToken = (code, state) => {
-  return Axios.post(`${AxiosService.backendBaseUrl}/auth/access_token`, {
-    env: `${deploymentEnv}`,
-    code: code,
-    state: state,
-  }).then((res) => {
-    setUser(res.data.result);
-    return res;
-  });
-};
+// export const getAccessToken = (code, state) => {
+//   return Axios.post(`${AxiosService.backendBaseUrl}/auth/access_token`, {
+//     env: `${deploymentEnv}`,
+//     code: code,
+//     state: state,
+//   }).then((res) => {
+//     setUser(res.data.result);
+//     return res;
+//   });
+// };
 
-export const refreshToken = () => {
-  console.log('refreshing tokens');
+// export const refreshToken = () => {
+//   console.log('refreshing tokens');
 
-  if(getUser().refresh_token !== undefined){
-    return Axios.post(`${AxiosService.backendBaseUrl}/auth/refresh_token`, {
-      env: `${deploymentEnv}`,
-      refresh_token: getUser().refresh_token,
-    }).then((res) => {
-      console.log('refresh token response', res);
-      const { access_token, refresh_token } = res.data;
-      setUser({ ...getUser(), access_token, refresh_token });
-      return res;
-    });
-  } else {
-    // remove the user
-    setUser(null);
-  }
-};
+//   if(getUser().refresh_token !== undefined){
+//     return Axios.post(`${AxiosService.backendBaseUrl}/auth/refresh_token`, {
+//       env: `${deploymentEnv}`,
+//       refresh_token: getUser().refresh_token,
+//     }).then((res) => {
+//       console.log('refresh token response', res);
+//       const { access_token, refresh_token } = res.data;
+//       setUser({ ...getUser(), access_token, refresh_token });
+//       return res;
+//     });
+//   } else {
+//     // remove the user
+//     setUser(null);
+//   }
+// };
 
 

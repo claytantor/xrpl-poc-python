@@ -4,19 +4,23 @@ import { WalletService } from "../services/WalletService"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 
 
 const Footer = ({xummAppDetails}) => {
 
-    let [version, setVersion] = useState();
+    let [version, setVersion] = useState("0.1.3");
+    let [count, setCount] = useState(0);
 
     useEffect(() => {
-        WalletService.getVersion().then(r => {
-            setVersion(r.data.version);
-        }).catch(e => {
-            console.log(e);
-        });
+        console.log("Footer useEffect", count);
+        let cv = count+1;
+        setCount(cv);
+        // WalletService.getVersion().then(r => {
+        //     setVersion(r.data.version);
+        // }).catch(e => {
+        //     console.log(e);
+        // });
     
     },[]);
 
@@ -32,7 +36,7 @@ const Footer = ({xummAppDetails}) => {
                         <div>Everything you need to use the <span className="font-bold text-pink-500">xInvoice</span> and <span className="font-bold text-pink-500">xURL</span> protocols on the XRP testnet. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
                     
                     
-                        {xummAppDetails && <>
+                        {xummAppDetails && xummAppDetails.application && <>
                         <div className="flex flex-col">
                             <div className="text-sm flex flex-row">
                                 <div>xumm app name:</div>
@@ -56,11 +60,11 @@ const Footer = ({xummAppDetails}) => {
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <IoIosPaper className="mr-1"/> Whitepaper</a></li>
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/LICENCE.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <TbCertificate className="mr-1"/> License</a></li>
                         </ul>
-                        {xummAppDetails && <div>
+                        {/* {xummAppDetails && <div>
                             {xummAppDetails.xapp_deeplink}
                             <QRCode className="m-2" value={`${xummAppDetails.xapp_deeplink}`} size={200} />
-                            {/* <QRCode className="m-2" value={xummAppDetails.xapp_deeplink} size={200} /> */}
-                        </div>}
+                            <QRCode className="m-2" value={xummAppDetails.xapp_deeplink} size={200} /> 
+                        </div>}*/}
 
                     </div>
                 </div>

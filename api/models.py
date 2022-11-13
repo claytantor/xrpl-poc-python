@@ -11,6 +11,8 @@ class Wallet(db.Model):
     private_key = Column(String)
     public_key = Column(String)
     classic_address = Column(String)
+    
+
 
     def __init__(self,
                  seed=None,

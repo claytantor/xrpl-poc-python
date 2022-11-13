@@ -7,63 +7,57 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import create from "zustand";
-import { persist } from "zustand/middleware";
 
 import Home from "./pages/Home"
 import ReceivePayment from "./pages/ReceivePayment"
 import SendPayment from "./pages/SendPayment";
 import Wallet from "./pages/Wallet";
-import CreateWallet from "./pages/CreateWallet";
 import Login from "./pages/Login";
-import {getAccessTokenInfo, getUser} from "./services/AuthenticationService";
-import {XummService} from "./services/XummService";
-
+import {getAccessTokenInfo} from "./services/AuthenticationService";
+import {useStore} from "./store";
 
 import "./App.css"
 
 
-const useStore = create(
-    persist(
-      (set, get) => ({
-        isLoading: false,
-        appDetails: {},
-        setIsLoading: (isLoading) => set({ isLoading: isLoading }),
-        getIsLoading: () => get({ isLoading }),
-        getXummAppDetails: () => get({ 'foo':'bar' }),
-        setXummAppDetails: (appDetails) => set({
-          appDetails: appDetails
-        }),
-      }),
-      {
-        name: "xurlpay-storage", // unique name
-        getStorage: () => localStorage, // (optional) by default, 'localStorage' is used
-      }
-    )
-  );
 
 const About = () => <div>About</div>;
 
 const PrivateRoute = () => {
-  const [tokenInfo] = useState(getAccessTokenInfo(getUser()));
-  return tokenInfo.active ? <Outlet /> : <Navigate to="/" />;
+  const xummAuthState = useStore((state) => state.xummState);
+  const setXummState = useStore((state) => state.setXummState);
+  console.log('PrivateRoute xumm state', xummAuthState);
+  if (xummAuthState && xummAuthState.jwt) {
+    console.log('PrivateRoute xumm state jwt', xummAuthState.jwt);
+    const accessTokenInfo = getAccessTokenInfo(xummAuthState.jwt);
+    console.log('PrivateRoute xumm state accessTokenInfo', accessTokenInfo);
+    if (accessTokenInfo && accessTokenInfo.active) {
+      return <Outlet />;
+    } else {
+      console.log('PrivateRoute xumm state accessTokenInfo not active');
+      setXummState(null);
+      return <Navigate to="/login" />;
+    }
+
+  } else {
+    console.log('PrivateRoute xumm state accessTokenInfo not active');
+    setXummState(null);
+    return <Navigate to="/login" />;
+  }
 };
 
 
-const App = () => {
+const App = ({timestamp}) => {
+
   useEffect(() => {
-    XummService.ping().then((response) => {
-      useStore.getState().setXummAppDetails(response.data);
-    });    
-    
-  }, []);
+    console.log(`timestamp ${timestamp}`);
+  }, [timestamp]);
 
   return (  
     <>
     <BrowserRouter>
         <Routes>
 
-            <Route exact path="/wallet" element={<PrivateRoute />}>
+            {/* <Route exact path="/wallet" element={<PrivateRoute />}>
                 <Route exact path="/wallet" element={<Wallet useStore={useStore}/>} />
             </Route>
             <Route exact path="/send" element={<PrivateRoute />}>
@@ -74,9 +68,9 @@ const App = () => {
             </Route>
 
             <Route path="/about" element={<About />} />
-            <Route path="/create" element={<CreateWallet />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Home />} />
+            <Route path="/create" element={<CreateWallet />} /> */}
+            <Route path="/login" element={<Login/>} />
+            <Route path="/" element={<Home/>} />
         </Routes>
     </BrowserRouter>
     </>)};

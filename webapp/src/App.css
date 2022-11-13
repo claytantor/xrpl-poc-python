@@ -6,3 +6,12 @@ body > footer {
   position: sticky;
   top: 100vh;
 }
+
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+a.dropdown-item {
+  color: black;
+}

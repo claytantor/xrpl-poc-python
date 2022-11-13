@@ -1,38 +1,54 @@
-import React from "react"
+import React from "react";
 import ReactDOM from "react-dom/client";
-
 import {
-  BrowserRouter,
-  Routes,
+  createBrowserRouter,
+  RouterProvider,
   Route,
 } from "react-router-dom";
 
-import App from "./App"
-import Home from "./pages/Home"
+import Home from "./pages/Home";
+import ErrorPage from "./pages/ErrorPage";
+import "./index.css"
 
-import './style.css';
 
+const router = createBrowserRouter([
 
-const root = ReactDOM.createRoot(document.getElementById('app'));
-root.render(
+  {
+    path: "/",
+    element: <Home/>,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "/foo",
+    element: <div>Hello world!</div>,
+    errorElement: <ErrorPage />,
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById("app")).render(
   <React.StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </React.StrictMode>
 );
 
-// const root = ReactDOM.createRoot(
-//   document.getElementById("app")
-// );
-// root.render(
-//     <>Foo
-//  <BrowserRouter>
-//   <Routes>
-//     <Route path="/" element={<App />}>
-//       <Route index element={<Home />} />
-//     </Route>
-//   </Routes>
-// </BrowserRouter> 
-    
-//     </>
 
+// import React from "react"
+// import ReactDOM from "react-dom/client";
+// import App from "./App"
+
+// import './style.css';
+
+// const root = ReactDOM.createRoot(document.getElementById('app'));
+ 
+// const isStrictMode = true; //this causes the re-rendering of the entire app
+
+// root.render(
+//   <> 
+//   {isStrictMode ? 
+//     <React.StrictMode>
+//       <App timestamp={new Date().valueOf()} />
+//     </React.StrictMode>:
+//     <App timestamp={new Date().valueOf()} />}
+//   </>
 // );
+

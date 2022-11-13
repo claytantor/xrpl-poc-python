@@ -1,0 +1,28 @@
+@startuml xumm_xurl_sequence
+
+actor Requestor as Requestor
+actor Payer as Payer
+participant "Mobile Phone" as Mobile
+participant "XRP Exchange" as Exchange
+participant "xInvoice Backend" as xInvoiceBackend
+participant "xInvoice Enabled App" as xInvoiceApp
+participant "xumm" as XUMM
+
+group xURL Creation
+    Requestor -> xInvoiceBackend: Create xURL
+    xInvoiceBackend -> xInvoiceBackend: Create stateful\nxURL in Store
+end
+
+group xURL "Scan To Pay"
+    Payer-> Mobile: Scans xURL
+    Mobile -> xInvoiceApp: Opens xInvoiceApp (xurlpay)
+    xInvoiceApp -> xInvoiceBackend: Get stateful xURL data from Store
+    xInvoiceBackend -> Exchange: Prepare payment, lookup fiat rate
+    xInvoiceApp -> xInvoiceApp: Generates Payload
+    xInvoiceApp -> Mobile: Generates xApp link
+    Mobile -> XUMM: Opens xApp link
+    note left of XUMM: hopefully this\n can directly open\n the xumm app with\n the payload
+    Payer -> XUMM: Approves payment
+end
+
+@enduml

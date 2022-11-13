@@ -1,16 +1,15 @@
-import React, {useEffect, useState } from "react"
-import QRCode from "react-qr-code";
+import React, { useState } from "react"
+// import QRCode from "react-qr-code";
 
 import Page  from "../components/Page"
 import { WalletService } from "../services/WalletService"
 import {AiOutlineCheckCircle} from "react-icons/ai"
 
-const Home = ({useStore}) => {
-    const [version, setVersion] = useState();
+const Home = () => {
 
     return (
         <>
-        <Page useStore={useStore}> 
+        <Page> 
             <div className="p-1"> 
                 <div className="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50">
                 <div className="relative bg-white px-6 pt-6 pb-6 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:max-w-lg sm:rounded-lg sm:px-10">

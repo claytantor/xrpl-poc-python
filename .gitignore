@@ -14,3 +14,5 @@ out/*
 node_modules/
 *.pem
 deployment.json
+logs/
+logs/*

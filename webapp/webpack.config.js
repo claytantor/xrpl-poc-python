@@ -15,22 +15,27 @@ module.exports = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '[name].[contenthash].js',
+    // filename: '[name].[contenthash].js',
+    filename: 'index_bundle.js',
+    publicPath: '/'
   },
-  resolve: {
-    fallback: { 
-      "buffer": require.resolve("buffer/")     
-     },
-  },
+  // resolve: {
+  //   fallback: { 
+  //     "buffer": require.resolve("buffer/")     
+  //   },
+  //   // alias: {
+  //   //   react: path.resolve('./node_modules/react'),
+  //   // },
+  // },
   devServer: {
     static: {
       directory: path.resolve(__dirname, 'dist'),
     },
-    port: 3000,
-    open: true,
-    hot: true,
+    port: 3001,
+    // open: true,
+    // hot: true,
     compress: true,
-    historyApiFallback: true,
+    // historyApiFallback: true,
     // https:{
     //   key: fs.readFileSync("clay-deeporb-20.local+3-key.pem"),
     //   cert: fs.readFileSync("clay-deeporb-20.local+3.pem"),
@@ -67,14 +72,17 @@ module.exports = {
     ],
   },
   plugins: [
-    new HtmlWebpackPlugin({ template: "./src/index.html", favicon: "./src/favicon.ico" }),
+    // new HtmlWebpackPlugin({ inject: false, template: "./src/index.html", favicon: "./src/favicon.ico" }),
+    new HtmlWebpackPlugin( {template: "./src/index.html"}),
+    // new HtmlWebpackPlugin(),
+    //new HtmlWebpackPlugin({ inject: true, favicon: "./src/favicon.ico" }),
     new webpack.DefinePlugin({
       'process.env': JSON.stringify(process.env)
     }),
     // Work around for Buffer is undefined:
     // https://github.com/webpack/changelog-v5/issues/10
-    new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer'],
-    }),
+    // new webpack.ProvidePlugin({
+    //     Buffer: ['buffer', 'Buffer'],
+    // }),
   ],
 };

@@ -1,11 +1,10 @@
 import Axios from "axios";
 import moment from 'moment';
-import { getUser, getAccessTokenInfo } from "./AuthenticationService";
-
-
-let cachedUser = {};
-
+import { useNavigate } from "react-router-dom";
+import {useStore} from "../store";
 import { backendBaseUrl } from '../env';
+
+Axios.defaults.withCredentials = false; 
 
 const handleAxiosError = (error) => {
     let error_model = {
@@ -48,12 +47,17 @@ const axiosInstance = Axios.create({
     responseEncoding: 'utf8'
 });
 
+
+
 axiosInstance.interceptors.request.use((config) => { 
+
+    // // const navigate = useNavigate();
+    // const xummAuthState = useStore((state) => state.xummState);
+    // const setXummState = useStore((state) => state.setXummState);
+
 
     console.log('interceptors.request.use', config);
     if (
-        config.url.endsWith('/refresh_token') ||
-        config.url.endsWith('/access_token') ||
         config.url.endsWith('/version')
     ) {
         // Without this, calling refresh_token 
@@ -61,22 +65,18 @@ axiosInstance.interceptors.request.use((config) => {
         return config;
     }
 
-    cachedUser = getUser();
-    if (!cachedUser || cachedUser.access_token === undefined || cachedUser.refresh_token === undefined) {
+    // cachedUser = xummAuthState;
+
+    if (!cachedUser || cachedUser.jwt === undefined) {
         console.log('cached user NOT found, sending to login', config);
         return config;
     } else if (cachedUser) {
         console.log('cached user found', config, cachedUser);
-        const info = getAccessTokenInfo(cachedUser);
+        const info = getAccessTokenInfo(cachedUser.jwt);
         if (info.expirationDate && info.expirationDate.isBefore(moment.utc().add(1, 'minutes'))) {
-            console.log('token expired, refreshing');
-            return refreshToken().then((r) => {
-                console.log('refreshed token', r.data);
-                const { access_token, refresh_token } = r.data;
-                let settings = [];
-                setUser({ ...cachedUser, access_token, refresh_token, settings });
-                return config;
-            });
+            console.log('token expired');
+            // setXummState(null);
+            // navigate('/login');
         }
     }
     config.headers.authorization = cachedUser.access_token;
@@ -108,16 +108,10 @@ function del(url) {
 }
 
 function setUser(user) {
+    console.log('setUser', user);
     cachedUser = user;
 }
 
-// function getApiUrl(url) {
-//     return `${backendBaseUrl}/${url}`;
-// }
-
-// function getPage(url, pagination = {page: 1, page_size: 5}) {
-//     return get(`${url}?page=${pagination.page || 1}&page_size=${pagination.page_size || 5}`)
-// }
 
 export const AxiosService = {
     axiosInstance,

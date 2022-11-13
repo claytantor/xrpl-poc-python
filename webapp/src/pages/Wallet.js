@@ -3,7 +3,6 @@ import React, {useEffect, useState } from "react"
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"
 import { WalletService } from "../services/WalletService"
-import { XummService } from "../services/XummService"
 
 
 import { SiXrp } from "react-icons/si"
@@ -33,26 +32,9 @@ const Wallet = ({useStore}) => {
         return (drops / 1000000).toFixed(2);
     };
 
-    useEffect(() => {
-        XummService.ping().then((res) => {
-            console.log("ping from xumm sdk",res);
-        });
-        if (!walletInfo) {
-            WalletService.getWallet().then(r => {
-                console.log(r.data);
-                setWalletInfo(r.data);
-            }).catch(error => {
-                console.log(error)
-            }).finally(() => {
-                // console.log("finally")
-            });
-        }
-    } , [])
-
-
     return (
         <>
-        <Page useStore={useStore}> 
+        <Page useStore={useStore} withSidenav={true}> 
             <div className="p-4"> 
                 <h2 className="text-2xl">Wallet</h2>
                 {walletInfo ? <div className="flex flex-col">

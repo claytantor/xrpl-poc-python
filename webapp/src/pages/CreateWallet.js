@@ -1,5 +1,5 @@
 import React, {useEffect, useState } from "react"
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"

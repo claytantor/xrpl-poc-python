@@ -1,5 +1,5 @@
 import React, {useEffect, useState } from "react"
-import { QrReader } from 'react-qr-reader';
+// import { QrReader } from 'react-qr-reader';
 
 import Page  from "../components/Page"
 import Spinner  from "../components/Spinner"
@@ -100,7 +100,7 @@ const SendPayment = ({useStore}) => {
 
     return (
         <>
-        <Page useStore={useStore}> 
+        <Page useStore={useStore} withSidenav={true}> 
             <div className="p-1 m:p-4"> 
             
                
@@ -109,7 +109,7 @@ const SendPayment = ({useStore}) => {
                     <div className="text-center w-full md:w-1/2 p-1 md:p2" id="qr-reader">
                     <div className="text-2xl">Scan To Send Payment</div>
                     <div className="border-4 rounded-md h-fit border-dashed p-1 border-slate-300">
-                        <QrReader
+                        {/* <QrReader
                             scanDelay={delayScan}
                             onError={(err) => console.error(err)}               
                             constraints={ constraints }
@@ -120,7 +120,7 @@ const SendPayment = ({useStore}) => {
                                     handleScan({'payment_request':result?.text});
                                 } 
                             }}
-                        />
+                        /> */}
                     </div>
                     </div>
                 </div>}
