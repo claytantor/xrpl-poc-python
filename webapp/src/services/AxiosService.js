@@ -1,8 +1,10 @@
 import Axios from "axios";
 import moment from 'moment';
-import { useNavigate } from "react-router-dom";
-import {useStore} from "../store";
+import { XummPkce } from 'xumm-oauth2-pkce';
+import { AuthenticationService } from "../services/AuthenticationService";
+import { useStore } from "../zstore"
 import { backendBaseUrl } from '../env';
+
 
 Axios.defaults.withCredentials = false; 
 
@@ -51,10 +53,6 @@ const axiosInstance = Axios.create({
 
 axiosInstance.interceptors.request.use((config) => { 
 
-    // // const navigate = useNavigate();
-    // const xummAuthState = useStore((state) => state.xummState);
-    // const setXummState = useStore((state) => state.setXummState);
-
 
     console.log('interceptors.request.use', config);
     if (
@@ -65,22 +63,24 @@ axiosInstance.interceptors.request.use((config) => {
         return config;
     }
 
-    // cachedUser = xummAuthState;
+    let storage = JSON.parse(window.localStorage.getItem('xurlpay-storage'));
+    console.log('xummState', storage.state.xummState);
+    let cachedUser = storage.state.xummState;
 
     if (!cachedUser || cachedUser.jwt === undefined) {
         console.log('cached user NOT found, sending to login', config);
         return config;
     } else if (cachedUser) {
         console.log('cached user found', config, cachedUser);
-        const info = getAccessTokenInfo(cachedUser.jwt);
+        const info = AuthenticationService.getAccessTokenInfo(cachedUser.jwt);
         if (info.expirationDate && info.expirationDate.isBefore(moment.utc().add(1, 'minutes'))) {
             console.log('token expired');
-            // setXummState(null);
-            // navigate('/login');
         }
     }
-    config.headers.authorization = cachedUser.access_token;
+    config.headers.authorization = `Bearer ${cachedUser.jwt}`;
     return config;
+
+    
 
 }, function (error) {
     return Promise.reject(error);

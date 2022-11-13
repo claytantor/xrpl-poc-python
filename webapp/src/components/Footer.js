@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from "react"
-import { WalletService } from "../services/WalletService"
 
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
@@ -15,13 +14,7 @@ const Footer = ({xummAppDetails}) => {
     useEffect(() => {
         console.log("Footer useEffect", count);
         let cv = count+1;
-        setCount(cv);
-        // WalletService.getVersion().then(r => {
-        //     setVersion(r.data.version);
-        // }).catch(e => {
-        //     console.log(e);
-        // });
-    
+        setCount(cv); 
     },[]);
 
     return (
@@ -60,12 +53,6 @@ const Footer = ({xummAppDetails}) => {
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <IoIosPaper className="mr-1"/> Whitepaper</a></li>
                             <li><a href="https://github.com/claytantor/xrpl-poc-python/blob/main/LICENCE.md" target="_new" className="text-slate-200 underline flex justify-left items-center"> <TbCertificate className="mr-1"/> License</a></li>
                         </ul>
-                        {/* {xummAppDetails && <div>
-                            {xummAppDetails.xapp_deeplink}
-                            <QRCode className="m-2" value={`${xummAppDetails.xapp_deeplink}`} size={200} />
-                            <QRCode className="m-2" value={xummAppDetails.xapp_deeplink} size={200} /> 
-                        </div>}*/}
-
                     </div>
                 </div>
 

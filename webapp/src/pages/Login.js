@@ -1,12 +1,13 @@
 import React, {useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
 
-import {XummPkce} from 'xumm-oauth2-pkce';
+import { XummPkce } from 'xumm-oauth2-pkce';
 
-import Page  from "../components/Page"
+import Page from "../components/Page"
+
 import { AxiosService } from "../services/AxiosService";
 import xummLogo from "../assets/img/xumm_logo.png"
-import {useStore} from "../store"
+import {useStore} from "../zstore"
 
 
 const Login = () => {

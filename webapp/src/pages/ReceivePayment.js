@@ -7,14 +7,13 @@ import PaymentRequestForm from "../components/PaymentRequestForm";
 import { WalletService } from "../services/WalletService"
 
 
-const ReceivePayment = ({useStore}) => {
+const ReceivePayment = () => {
     
     const [paymentRequest, setPaymentRequest] = useState();
 
-
     return (
         <>
-        <Page useStore={useStore} withSidenav={true}> 
+        <Page withSidenav={true}> 
             <div className="p-4"> 
                 <div className="p-1 flex w-full justify-center">
                 {paymentRequest ? <PaymentRequest paymentRequest={paymentRequest} setPaymentRequest={setPaymentRequest}/>:

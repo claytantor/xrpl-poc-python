@@ -32,7 +32,7 @@ export const backendBaseUrl = (() => {
     case 'mock':
       return 'http://localhost:3100'; //use the mock server 
     case 'local':
-      return 'https://localhost:5000'; //use the local api server
+      return 'http://localhost:5000'; //use the local api server
     case 'dev':
       return 'https://devapi.xurlpay.org/v1';
     case 'prd':

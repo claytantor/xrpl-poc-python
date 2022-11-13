@@ -4,23 +4,12 @@ import Header from "./Header"
 import Footer from "./Footer"
 import Sidebar from "./Sidebar"
 
-import { useStore } from "../store"
+import { useStore } from "../zstore"
 
 const Page = ({
     withSidenav=false,
     children,
   }) => {
-
-  // let [appDetails, setAppDetails] = useState();
-
-  // useEffect(() => {
-  //   if (useStore) {
-  //     console.log(`useStore get app details ${JSON.stringify(useStore.getState())}`);
-  //     setAppDetails(useStore.getState().appDetails);
-  //   }
-
-  // }, [useStore]);
-
 
   return (
     <>

@@ -2,16 +2,18 @@ import React, {useState, useEffect} from "react"
 import { useNavigate } from "react-router-dom";
 import { SiXrp } from 'react-icons/si';
 import { FaUserCircle } from 'react-icons/fa';
-// import {XummPkce} from 'xumm-oauth2-pkce';
+import {XummPkce} from 'xumm-oauth2-pkce';
 import icon32 from "../assets/favicon_io/favicon-32x32.png"
 
 
-import { useStore } from "../store";
+import { useStore } from "../zstore";
 
 
 const Header = ({
     children,
   }) => {
+
+    const xumm = new XummPkce('1b144141-440b-4fbc-a064-bfd1bdd3b0ce');
 
     const navigate = useNavigate();
     const xummAuthState = useStore((state) => state.xummState);
@@ -21,6 +23,9 @@ const Header = ({
     let logout = () => {
         console.log(`logout`, xummAuthState);
         setXummState(null);
+        // window.localStorage.removeItem('xurlpay-storage');
+        xumm.logout();
+        navigate("/");
     };
 
     let login = () => {

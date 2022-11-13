@@ -65,6 +65,12 @@ const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
             <div className="flex flex-row justify-center">
               <div><img src={xummLogo} className="w-24" /></div>
             </div>
+
+            <div className="flex flex-row mt-2 w-full justify-center">
+                <span className="w-24 inline-flex justify-center items-center px-2 text-sm font-medium text-gray-800 bg-pink-200 rounded-full dark:bg-gray-700 dark:text-gray-300">{paymentRequest.payment_request.network_type.toUpperCase()}</span>   
+            </div>
+
+
             <div>
                 <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(paymentRequest.payment_request.amount)} <SiXrp className="ml-1"/></div>
             </div>
@@ -82,7 +88,10 @@ const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
                         </>
                     )}
                 </div>
+
               </div>
+              <div className="flex flex-row justify-center"><a className="underline" 
+                          href="https://xumm.app/detect/xapp:sandbox.32849dc99872?amount=11.25&memo=hi">Open xApp Deeplink</a></div>
               {/* <div className="d-flex flex-col justify-content-center mb-2">
                 <div className="w-full text-center text-xs font-bold">
                   expires:
