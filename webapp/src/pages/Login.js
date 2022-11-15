@@ -33,7 +33,7 @@ const Login = () => {
         const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
         console.log('Authorized', /* authorized.jwt, */ authorized);
         if (useStore) {
-            console.log('Update use store state', /* authorized.jwt, */ authorized.me)
+            console.log('Update use store state', /* authorized.jwt, */ authorized.me)                     
             setXummState({'me':authorized.me,'jwt':authorized.jwt});
             AxiosService.setUser(authorized);
             navigate("/wallet");

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {AiOutlineDashboard, AiOutlineUser, AiOutlineLogout} from "react-icons/ai";
-import {FaWallet} from "react-icons/fa";
+import {FaWallet, FaShoppingBag} from "react-icons/fa";
 import {BsCardChecklist} from "react-icons/bs";
 import {BsCashCoin} from "react-icons/bs";
 const Sidebar = ({ useStore }) => {
@@ -13,14 +13,14 @@ const Sidebar = ({ useStore }) => {
             <aside className="w-64" aria-label="Sidebar">
                 <div className="overflow-y-auto py-4 px-3 bg-gray-50 rounded dark:bg-gray-800">
                     <ul className="space-y-2">
-                        <li>
+                        {/* <li>
                             <div className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
 
                             <AiOutlineDashboard className="text-2xl"/>
 
                             <span className="ml-3">Dashboard</span>
                             </div>
-                        </li>
+                        </li> */}
                         <li>
                             <div onClick={()=>navigate('/wallet')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <FaWallet className="text-2xl"/>
@@ -45,7 +45,7 @@ const Sidebar = ({ useStore }) => {
                             <div onClick={()=>navigate('/ledger')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <BsCardChecklist className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Ledger</span>
-                            </div>
+                            </div> 
                         </li>
                         <li>
                             <div onClick={()=>navigate('/receive')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -54,10 +54,10 @@ const Sidebar = ({ useStore }) => {
                             </div>
                         </li>
                         <li>
-                            <a href="#" className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <svg aria-hidden="true" className="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd"></path></svg>
+                            <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <FaShoppingBag className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Payment Items</span>
-                            </a>
+                            </div>
                         </li>
                         {/* <li>
                             <a href="#" className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">

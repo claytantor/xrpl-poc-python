@@ -9,3 +9,5 @@ Flask-Migrate
 Flask-Cors
 pyjwt
 xumm-sdk-py 
+boto3==1.21.4
+Pillow

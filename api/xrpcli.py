@@ -141,6 +141,7 @@ class XummWallet:
     def balance(self): 
         return self.account_data['Balance'] / DROPS_IN_XRP
 
+
     def generate_payment_request(self, xrp_amount, memo="generated payment request"):
         """Generate a payment request
         """
@@ -165,15 +166,20 @@ class XummWallet:
         # return payment_request_dict, payment_request
 
         create_payload = {
-        'txjson': {
-                'TransactionType' : 'Payment',
-                'Destination' : self.classic_address,
-                'Amount': str(xrp_to_drops(xrp_amount)),
+            'txjson': {
+                    'TransactionType' : 'Payment',
+                    'Destination' : self.classic_address,
+                    'Amount': str(xrp_to_drops(xrp_amount)),
+            },
+            "custom_meta": {
+                "blob": json.dumps(payment_request_dict),
+                "instruction": memo
             }
         }   
 
         created = sdk.payload.create(create_payload)
-        return {'payload':created.to_dict(), 'payment_request':payment_request_dict}
+
+        return created.to_dict()
 
 
 

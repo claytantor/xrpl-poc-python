@@ -4,9 +4,9 @@ import {AxiosService} from "./AxiosService";
 
 export const XummService = {
 
-    async ping(){
-        return AxiosService.get(`/xumm/ping`);     
-    },
+    // async ping(){
+    //     return AxiosService.get(`/xumm/ping`);     
+    // },
 }
 
 export default XummService;

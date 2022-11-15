@@ -1,15 +1,22 @@
-import "./styles.css";
+import React, {useEffect, useState } from "react"
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Wallet from "./pages/Wallet";
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
+import ReceivePayment from "./pages/ReceivePayment";
+import PayloadLedger from "./pages/PayloadLedger";
+import PaymentItems from "./pages/PaymentItems";
+import PaymentItemViewer from "./pages/PaymentItemViewer";
+import PaymentItemEditor from "./pages/PaymentItemEditor";
 
 import {AuthenticationService} from "./services/AuthenticationService";
-import ReceivePayment from "./pages/ReceivePayment";
 
 import {useStore} from "./zstore";
 
+import "./styles.css";
 import "./App.css";
+
 
 
 const PrivateRoute = () => {
@@ -44,6 +51,39 @@ const App = () => {
               exact
               path="/wallet"
               element={<Wallet />}
+            />
+          </Route>
+
+          <Route exact path="/ledger" element={<PrivateRoute />}>
+            <Route
+              exact
+              path="/ledger"
+              element={<PayloadLedger />}
+            />
+          </Route>
+
+          <Route exact path="/items" element={<PrivateRoute />}>
+            <Route
+              exact
+              path="/items"
+              element={<PaymentItems />}
+            />
+          </Route>
+          <Route exact path="/item/edit/:id" element={<PrivateRoute />}>
+            <Route
+              exact
+              path="/item/edit/:id"
+              element={<PaymentItemEditor/>}
+            />
+          </Route>
+          <Route exact path="/item/create" element={<PrivateRoute/>}>
+            <Route exact path="/item/create" element={<PaymentItemEditor/>} />
+          </Route>
+          <Route exact path="/item/details/:id" element={<PrivateRoute/>}>
+            <Route
+              exact
+              path="/item/details/:id"
+              element={<PaymentItemViewer/>}
             />
           </Route>
 
