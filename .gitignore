@@ -17,4 +17,5 @@ deployment.json
 logs/
 logs/*
 .parcel-cache/
-
+webapp/.parcel-cache/
+webapp/.parcel-cache/*
