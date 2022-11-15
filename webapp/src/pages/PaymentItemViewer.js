@@ -1,49 +1,36 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from "react-router-dom";
 
-// import Page from "../components/Page";
-// // import {HybridPaymentItemDetails} from "../components/PaymentItemDetails"
-// import {PaymentItemService} from '../services/PaymentItemService'
+import Page from "../components/Page";
 
-// // import { Spinner,  Row, Col, Breadcrumb } from "react-bootstrap";
-
+import { PaymentItemService } from "../services/PaymentItemService";
 
 const PaymentItemViewer = () => {
 
-  // const { pathname } = useLocation();
-  // const [paymentItemId] = useState(parseInt(pathname.replace("/item/details/", "")));
+  const { id } = useParams();
 
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [paymentItem, setPaymentItem] = useState();
 
-  // const [paymentItem, setPaymentItem] = useState();
-
-  // useEffect(() => {
-  //   console.log("useEffect", paymentItemId)
-  //   PaymentItemService.getById(paymentItemId).then(r => {
-  //     console.log(r.data);
-  //     setPaymentItem(r.data);
-  //   });
+  useEffect(() => {
+    console.log("useEffect", id)
+    PaymentItemService.getById(id).then(r => {
+      console.log(r.data);
+      setPaymentItem(r.data);
+    });
       
-  // }, [paymentItemId]); 
+  }, [id]); 
   
-  // return (
-  //   <Page >
-  //     <div className="p-4 flex flex-col">
-  //       <div>
-  //         {/* <Breadcrumb>
-  //           <Breadcrumb.Item href="#" onClick={()=>navigate("/items")}>Payment Item</Breadcrumb.Item>
-  //           <Breadcrumb.Item active>View Payment Item</Breadcrumb.Item>
-  //         </Breadcrumb> */}
-  //       </div>
-  //       {/* <div>{ paymentItem ? <HybridPaymentItemDetails paymentItemId={paymentItem.id}/>:
-  //         <Spinner animation="border"/> }</div> */}
-
-  //     </div>      
-  //   </Page>
-  // );
-
   return (
-    <div>PaymentItemViewer</div>
+    <Page withSidenav={true}>
+      <div className='p-4'>
+        <h2 className="text-2xl">Payment Item</h2>
+        {paymentItem && 
+          <div className="p-1 rounded bg-slate-700 text-gray-100 font-mono">
+            {JSON.stringify(paymentItem, null, 2)}   
+          </div>}
+      </div>
+    </Page>
   );
 };
 

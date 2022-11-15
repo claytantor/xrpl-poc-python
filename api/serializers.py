@@ -10,7 +10,7 @@ class PaymentItemDetailsSerializer():
     def __init__(self, payment_item):
 
         self.data = {
-            'id': payment_item.payment_item_id,
+            'payment_item_id': payment_item.payment_item_id,
             'name': payment_item.name,
             'description': payment_item.description,
             'sku_id': payment_item.sku_id,

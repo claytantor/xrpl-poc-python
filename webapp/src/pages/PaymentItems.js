@@ -10,48 +10,6 @@ import { PaymentItemService } from "../services/PaymentItemService";
 
 import { useStore } from "../zstore"
 
-// const Alert = ({variant, children}) => {
-//   return (
-//     <div className={`alert alert-${variant}`} role="alert">
-//       {children}
-//     </div>
-//   )
-// };
-
-// const HelpAlert = ({children}) => {
-//   return (
-//     <Alert variant="info">
-//       <p>
-//         <strong>Help</strong>
-//       </p>
-//       <p>
-//         This is the payment items page. You can add, edit, and delete payment items here.
-//       </p>
-//       <div>{children}</div>
-//     </Alert>
-//   );
-// };
-
-// const Modal = ({show, children}) => {
-//   return (
-//     <div className={`modal ${show ? 'show' : ''}`} style={{display: show ? 'block' : 'none'}}>
-//       <div className="modal-dialog">
-//         <div className="modal-content">
-//           {children}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// const Badge = ({variant, children}) => {
-//   return (
-//     <span className={`badge badge-${variant}`}>
-//       {children}
-//     </span>
-//   )
-// };
-
 const FileUpload = ({setShowModal}) => {
   const [selectedFile, setSelectedFile] = useState();
 	const [isFilePicked, setIsFilePicked] = useState(false);
@@ -158,7 +116,7 @@ const PaymentItems = () => {
           <HelpAlert 
             helpLink='/docs/#/paymentItems'>Payment items are your "Scan to pay" items that can be used to automatically receive payment with no activity required for the receiver. You can also use paymentItems to collect "ad hoc" payments using the cart.</HelpAlert>
         </div>
-        <div><PaymentItemList useStore={useStore}/></div>
+        <div><PaymentItemList/></div>
       </div>
       <div><PaymentItemUploadModal showModal={showModalLocal} setShowModal={setShowModalLocal}/></div>
 

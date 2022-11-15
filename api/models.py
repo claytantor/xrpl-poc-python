@@ -148,8 +148,7 @@ class PaymentItem(db.Model):
             name=None,
             description=None,
             sku_id=None,
-            wallet_id=None,
-            xumm_payload_id=None):
+            wallet_id=None):
                     
             self.fiat_i8n_currency = fiat_i8n_currency
             self.fiat_i8n_price = fiat_i8n_price
@@ -157,7 +156,6 @@ class PaymentItem(db.Model):
             self.description = description
             self.sku_id = sku_id
             self.wallet_id = wallet_id
-            self.xumm_payload_id = xumm_payload_id
             self.created_at = dt.now()
             self.updated_at = dt.now()
 
@@ -166,13 +164,12 @@ class PaymentItem(db.Model):
 
     def serialize(self):
         return {
+            "payment_item_id": self.payment_item_id,
             "fiat_i8n_currency": self.fiat_i8n_currency,
             "fiat_i8n_price": self.fiat_i8n_price,
             "name": self.name,
             "description": self.description,
             "sku_id": self.sku_id,
-            "xumm_payload_id": self.xumm_payload_id,
-            "xumm_payload": self.xumm_payload.serialize(),
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }

@@ -15,7 +15,7 @@ const Spinner = ({animation}) => {
     )
 };
 
-const PaymentItemList = ({useStore}) => {
+const PaymentItemList = () => {
 
     let navigate = useNavigate();
 
@@ -33,14 +33,12 @@ const PaymentItemList = ({useStore}) => {
     
     let fetchPaymentItems = (pageInfo) => {
         setLoading(true);
-        // PaymentItemService.getPaymentItemsPaged(pageInfo).then(res => {
-        //     setPaymentItems(res.data.paymentItems);
-        //     setCurrentPageMeta(pageInfo);
-        //     setCurrentPageMeta(res.data.page_meta);
-        //     setLoading(false);
-        // }).catch(err => {      
-        //     console.error(err);
-        // });       
+        PaymentItemService.getPaymentItems().then(res => {
+            setPaymentItems(res.data);
+            setLoading(false);
+        }).catch(err => {      
+            console.error(err);
+        });       
     };
 
 
@@ -67,9 +65,8 @@ const PaymentItemList = ({useStore}) => {
     
 
     const listItems = paymentItems.map((paymentItem) => (
-        <div className="p-2 m-1 bg-white rounded" key={paymentItem.id}>  
+        <div className="p-2 m-1 bg-white rounded" key={paymentItem.payment_item_id}>  
             <PaymentItemSummary
-                useStore={useStore}
                 handleDeleteCallback={deletePaymentItem}
                 paymentItem={paymentItem}/>       
         </div>    
@@ -80,16 +77,11 @@ const PaymentItemList = ({useStore}) => {
         <div>
             {loading && <Spinner animation='border' />}
             {paymentItems.length>0 ? 
-            <>
-            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-                {listItems}
-            </div>
-            {currentPage && <div className='mb-5'><NewPagination pageInfo={currentPage} pageMeta={currentPageMeta} handlePageChange={handlePageChange} fetchPage={setCurrentPage}/></div>}
-            <ConfirmModal showModal={showModal} actionName={'Delete PaymentItem'} actionDescription={'delete this paymentItem'} actionCallback={handleConfirmDelete}/>
-            </>
-
+                <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                    {listItems}
+                </div>
             : 
-            <div>No Payment Items</div>}
+                <div>No Payment Items</div>}
         </div>
 
     </>);

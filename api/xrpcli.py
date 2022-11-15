@@ -151,11 +151,9 @@ class XummWallet:
         payment_request_dict = {
             'amount': xrp_amount,
             'amount_drops': int(xrp_to_drops(xrp_amount)),
-            # 'public_key':self.pub_key,
             'address':self.classic_address,
             'network_endpoint':self.network_endpoint,
             'network_type': get_network_type(self.network_endpoint),
-            # 'expires':expires.timestamp(),
             'memo':memo,
             'request_hash':shortuuid.uuid(),
         }

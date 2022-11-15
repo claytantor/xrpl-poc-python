@@ -367,6 +367,96 @@ def save_images_for_request(request, payment_item, app):
         save_images(request.json['images'], payment_item, app)
 
 
+@app.route('/payment_item', methods=['GET'])  # depricated
+@cross_origin()
+def get_payment_items():
+
+    # lookup the wallet by the classic address in the jwt
+    jwt_body = get_token_body(dict(request.headers)[
+                              "Authorization"].replace("Bearer ", ""))
+
+    wallet = db.session.query(Wallet).filter_by(
+        classic_address=jwt_body['sub']).first()
+    if wallet is None:
+        return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+
+    # get all the payment items for this wallet
+    payment_items = db.session.query(PaymentItem).filter_by(
+        wallet_id=wallet.wallet_id).all()
+    return jsonify([p.serialize() for p in payment_items]), 200
+
+
+@app.route('/payment_item/<id>', methods=['GET'])  # depricated
+@cross_origin()
+def get_payment_item_by_id(id):
+
+    # lookup the wallet by the classic address in the jwt
+    jwt_body = get_token_body(dict(request.headers)[
+                              "Authorization"].replace("Bearer ", ""))
+
+    wallet = db.session.query(Wallet).filter_by(
+        classic_address=jwt_body['sub']).first()
+    if wallet is None:
+        return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+
+    # get all the payment items for this wallet
+    payment_item = db.session.query(PaymentItem).filter_by(
+        wallet_id=wallet.wallet_id, payment_item_id=id).first()
+    
+    if payment_item is None:
+        return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+
+
+    pi_m = payment_item.serialize()
+    pi_m['xurl'] = f'{config["APP_BASEURL_API"]}/payment_item/xumm/payload/{payment_item.payment_item_id}'
+    # pi_m['images'] = [i.serialize() for i in payment_item.images]
+
+    return jsonify(pi_m), 200
+
+
+@app.route('/payment_item/xumm/payload/<id>', methods=['GET'])  # depricated
+@cross_origin()
+def get_payment_item_payload_by_id(id):
+
+    payment_item = db.session.query(PaymentItem).filter_by(payment_item_id=id).first()
+    
+    if payment_item is None:
+        return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+
+    # get the wallet for this payment item
+    wallet = db.session.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
+
+    # convert the payment item to a xumm payload
+    xrp_quote = asyncio.run(xrp_price(payment_item.fiat_i8n_currency))
+    xrp_amount = payment_item.fiat_i8n_amount / xrp_quote
+    
+    payment_request_dict = {
+        'type': 'payment_item',
+        'payment_item_id': payment_item.payment_item_id,       
+        'xrp_quote': xrp_quote,
+        'fiat_i8n_currency': payment_item.fiat_i8n_currency,
+        'fiat_i8n_price': payment_item.fiat_i8n_price,
+        'request_hash':shortuuid.uuid(),
+    }
+
+    create_payload = {
+        'txjson': {
+                'TransactionType' : 'Payment',
+                'Destination' : wallet.classic_address,
+                'Amount': str(xrp_to_drops(xrp_amount)),
+        },
+        "custom_meta": {
+            "blob": json.dumps(payment_request_dict),
+            "instruction": f"Pay {payment_item.fiat_i8n_amount} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
+        }
+    }   
+
+    created = sdk.payload.create(create_payload)
+
+    return redirect(created.to_dict()['next']['always'], code=302)    
+
+
+
 @app.route('/payment_item', methods=['POST'])  # depricated
 @cross_origin()
 def create_payment_item():
