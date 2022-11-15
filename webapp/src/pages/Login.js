@@ -14,7 +14,7 @@ const Login = () => {
 
     const navigate = useNavigate();
 
-    const xumm = new XummPkce('1b144141-440b-4fbc-a064-bfd1bdd3b0ce');
+    const xumm = new XummPkce('secret');
 
     const setXummState = useStore((state) => state.setXummState);
     const xummState = useStore((state) => state.xummState);
