@@ -7,7 +7,7 @@ import icon32 from "../assets/favicon_io/favicon-32x32.png"
 
 
 import { useStore } from "../zstore";
-
+import { xummConfig } from "../env";
 
 const Header = ({
     children,
@@ -43,19 +43,14 @@ const Header = ({
             <nav className="flex flex-col md:flex-row items-center justify-between bg-pink-700 p-3">
                 <div className="flex w-full md:w-1/2">
                     <img src={icon32} alt="icon32" className="w-12" />
-                    <span className="ml-2 mt-2 items-center font-semibold text-2xl tracking-tight text-white" onClick={()=>navigate('/')}>xurlpay.org</span></div>
+                    <span className="ml-2 mt-2 items-center font-semibold text-2xl tracking-tight text-white" onClick={()=>navigate('/')}>xurlpay.org</span>
+                    <div className="text-slate-900 rounded-lg bg-pink-200 w-fit pr-1 pl-1 ml-2 mt-3 h-6 items-center">{xummConfig.xrp_network}</div>                  
+                </div>
                 <div className="flex flex-row md:w-1/2 justify-end w-full">
-                    <div className="mr-3" onClick={()=>window.location.href='https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md'}>
+                    <div className="mr-3 mt-3" onClick={()=>window.location.href='https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md'}>
                         <button className="block mt-4 md:inline-block md:mt-0 text-white hover:underline cursor-pointer">
                         White Paper
                         </button> 
-
-
-
-
-
-
-
                     </div>
 
                     {/* ==== IN ==== */}

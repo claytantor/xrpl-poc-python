@@ -3,8 +3,8 @@ import React, {useEffect, useState} from "react"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
-// import QRCode from "react-qr-code";
 
+import { xummConfig } from "../env"
 
 const Footer = ({xummAppDetails}) => {
 
@@ -26,6 +26,7 @@ const Footer = ({xummAppDetails}) => {
                     <div className="mb-6 sm:w-full md:w-1/2">
                         <h5 className="text-pink-300 font-bold text-lg">xurlpay.org</h5>
                         <div className="font-bold font-mono text-slate-400">v{version}</div>
+                        <div className="text-slate-900 rounded-lg bg-pink-200 w-fit pr-1 pl-1">{xummConfig.xrp_network}</div>
                         <div>Everything you need to use the <span className="font-bold text-pink-500">xInvoice</span> and <span className="font-bold text-pink-500">xURL</span> protocols on the XRP testnet. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
                     
                     

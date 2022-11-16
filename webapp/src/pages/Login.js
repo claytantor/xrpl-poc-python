@@ -9,12 +9,14 @@ import { AxiosService } from "../services/AxiosService";
 import xummLogo from "../assets/img/xumm_logo.png"
 import {useStore} from "../zstore"
 
+import { xummConfig } from "../env";
+
 
 const Login = () => {
 
     const navigate = useNavigate();
 
-    const xumm = new XummPkce('secret');
+    const xumm = new XummPkce(xummConfig["api-key"]);
 
     const setXummState = useStore((state) => state.setXummState);
     const xummState = useStore((state) => state.xummState);

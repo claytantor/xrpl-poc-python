@@ -125,6 +125,12 @@ class XummPayload(db.Model):
         return db.session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
         .order_by(desc(XummPayload.created_at)).paginate(page=page,per_page=page_size)
 
+    @staticmethod
+    def get_wallet_payloads(wallet_id):
+        return db.session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
+        .order_by(desc(XummPayload.created_at)).all()
+
+
 
 class PaymentItem(db.Model):
     __tablename__ = "payment_item"   
@@ -193,7 +199,7 @@ class FileUpload(db.Model):
 
 class PaymentItemImage(FileUpload):
     payment_item_id = db.Column(db.Integer, db.ForeignKey('payment_item.payment_item_id'), nullable=True)
-    product = relationship('PaymentItem', backref='images', cascade="all, delete")
+    payment_item = relationship('PaymentItem', backref='images', cascade="all, delete")
 
     __mapper_args__ = {
         'polymorphic_identity': 'PaymentItemImage'

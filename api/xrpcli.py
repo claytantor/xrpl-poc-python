@@ -170,6 +170,7 @@ class XummWallet:
                     'Amount': str(xrp_to_drops(xrp_amount)),
             },
             "custom_meta": {
+                "identifier": "payment_request",
                 "blob": json.dumps(payment_request_dict),
                 "instruction": memo
             }

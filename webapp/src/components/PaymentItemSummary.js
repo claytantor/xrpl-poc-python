@@ -20,29 +20,23 @@ const PaymentItemSummary = ({
     if (paymentItem.images) {
         image = paymentItem.images[0]['data_url']
     }
-    
-    
-    // let price=paymentItem.fiat_i8n_price;
-    let id=paymentItem.id;
-    let edit_url='/item/edit/' + paymentItem.id;
-    let details_url='/item/details/' + paymentItem.id;    
 
     let navigate = useNavigate();
     
 
     let handleDelete = () => {
-        handleDeleteCallback(id);
+        handleDeleteCallback(paymentItem.id);
     };
 
     return (<>
-        <div className="m-1" id={id}>
+        <div className="m-1" id={paymentItem.id}>
             
             <div className="p-1 max-w-sm rounded overflow-hidden shadow-md">
                 {/* <div className='flex justify-end'>
                     <button className="text-xs flex underline hover:text-pink-500 bg-orange rounded-lg m-1 p-1" onClick={()=>addPaymentItemToCart(paymentItem)}>
                             <div className='mt-1 align-bottom'>Add to Cart</div></button>
                 </div> */}
-                <img className="card-img-top" src={image} alt="" />
+                <img className="card-img-top" src={image} alt="{paymentItem.name}" />
                 <div className="px-6 py-1">
                     <div className="font-bold text-xl mb-1">{paymentItem.name}</div>
                     <p className="text-gray-700 text-sm">{paymentItem.description}</p>
@@ -54,8 +48,6 @@ const PaymentItemSummary = ({
                     <div className='flex justify-end flex-wrap'>
                         <button className="btn-common-pink text-xs" onClick={()=>navigate(`/item/details/${paymentItem.payment_item_id}`)}>
                             View</button>
-                        {/* <button className="btn-common-pink text-xs" onClick={()=>navigate(details_url)}>
-                            Print</button> */}
                         <button className="btn-common-pink text-xs" onClick={()=>navigate(`/item/edit/${paymentItem.payment_item_id}`)}>
                             Edit</button>
                         <button className="btn-common-pink text-xs" onClick={()=>handleDelete()}>

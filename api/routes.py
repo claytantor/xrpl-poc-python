@@ -1,4 +1,5 @@
 import io
+from pydoc import describe
 import uuid
 from flask import Flask, jsonify, request, redirect, render_template, url_for
 from flask import current_app as app
@@ -18,7 +19,7 @@ from PIL import Image
 
 
 from api.exchange_rates import xrp_price
-from api.xrpcli import XUrlWallet, verify_msg, drops_to_xrp
+from api.xrpcli import XUrlWallet, get_network_type, verify_msg, drops_to_xrp
 from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
 from api.serializers import PaymentItemDetailsSerializer
 from api.xrpcli import xrp_to_drops, XummWallet, get_rpc_network
@@ -226,12 +227,44 @@ def create_pay_request():
     # receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=wallet.seed)
     # payment_request_dict, payment_request = receiving_wallet.generate_payment_request(amount=xrp_amount, memo=memo)
 
-    xumm_wallet = XummWallet(
-        network_endpoint=get_rpc_network(jwt_body['network_type']),
-        classic_address=wallet.classic_address)
+    # xumm_wallet = XummWallet(
+    #     network_endpoint=get_rpc_network(jwt_body['network_type']),
+    #     classic_address=wallet.classic_address)
 
-    xumm_payload = xumm_wallet.generate_payment_request(
-        xrp_amount=xrp_amount, memo=memo)
+    # xumm_payload = xumm_wallet.generate_payment_request(
+    #     xrp_amount=xrp_amount, memo=memo)
+
+        payment_request_dict = {
+            'amount': xrp_amount,
+            'amount_drops': int(xrp_to_drops(xrp_amount)),
+            'address':wallet.classic_address,
+            'network_endpoint':get_rpc_network(jwt_body['network_type']),
+            'network_type': get_network_type(get_rpc_network(jwt_body['network_type'])),
+            'memo':memo,
+            'request_hash':shortuuid.uuid(),
+        }
+
+        # json_str = json.dumps(payment_request_dict)
+        # base64_message, base_64_sig = self.sign_msg(json_str)
+        # payment_request=f"{base64_message}:{base_64_sig}"
+        # return payment_request_dict, payment_request
+
+        create_payload = {
+            'txjson': {
+                    'TransactionType' : 'Payment',
+                    'Destination' : wallet.classic_address,
+                    'Amount': str(xrp_to_drops(xrp_amount)),
+            },
+            "custom_meta": {
+                "identifier": f"payment_request:{shortuuid.uuid()[:12]}",
+                "blob": json.dumps(payment_request_dict),
+                "instruction": memo
+            }
+        }   
+
+        
+
+
 
 # {
 #   "uuid": "9112991f-c106-4311-9aca-857bff640c15",
@@ -251,7 +284,8 @@ def create_pay_request():
 #   "pushed": false
 # }
 
-    app.logger.info(f"Xumm payload: {xumm_payload} {json.dumps(xumm_payload)}")
+    created = sdk.payload.create(create_payload)
+    xumm_payload = created.to_dict()
     m_payload = XummPayload(payload_body=json.dumps(xumm_payload),
                             wallet_id=wallet.wallet_id,
                             payload_uuidv4=xumm_payload['uuid'])
@@ -322,10 +356,13 @@ def get_wallet_payloads():
     if wallet is None:
         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
 
-    print(wallet.serialize())
-    payloads = db.session.query(XummPayload).filter_by(
-        wallet_id=wallet.wallet_id).all()
-    print(payloads)
+    # print(wallet.serialize())
+    # #payloads = db.session.query(XummPayload).where(XummPayload.wallet_id==wallet.wallet_id).order_by(describe (XummPayload.created_at)).all()
+    # payloads = db.session.execute(select(XummPayload).where(BalanceNotify.wallet_id==wallet_id).order_by(desc (BalanceNotify.created_at)))
+    # payloads = db.session.query(XummPayload).where(XummPayload.wallet_id==wallet.wallet_id).order_by(describe (XummPayload.created_at)).all()
+    # # print(payloads)
+    payloads = XummPayload.get_wallet_payloads(wallet.wallet_id)
+    # print(payloads)
 
     return jsonify([p.serialize() for p in payloads]), 200
 
@@ -383,7 +420,7 @@ def get_payment_items():
     # get all the payment items for this wallet
     payment_items = db.session.query(PaymentItem).filter_by(
         wallet_id=wallet.wallet_id).all()
-    return jsonify([p.serialize() for p in payment_items]), 200
+    return jsonify([PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items]), 200
 
 
 @app.route('/payment_item/<id>', methods=['GET'])  # depricated
@@ -406,12 +443,7 @@ def get_payment_item_by_id(id):
     if payment_item is None:
         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
 
-
-    pi_m = payment_item.serialize()
-    pi_m['xurl'] = f'{config["APP_BASEURL_API"]}/payment_item/xumm/payload/{payment_item.payment_item_id}'
-    # pi_m['images'] = [i.serialize() for i in payment_item.images]
-
-    return jsonify(pi_m), 200
+    return jsonify(PaymentItemDetailsSerializer(payment_item).serialize()), 200
 
 
 @app.route('/payment_item/xumm/payload/<id>', methods=['GET'])  # depricated
@@ -428,7 +460,7 @@ def get_payment_item_payload_by_id(id):
 
     # convert the payment item to a xumm payload
     xrp_quote = asyncio.run(xrp_price(payment_item.fiat_i8n_currency))
-    xrp_amount = payment_item.fiat_i8n_amount / xrp_quote
+    xrp_amount = payment_item.fiat_i8n_price / xrp_quote
     
     payment_request_dict = {
         'type': 'payment_item',
@@ -437,6 +469,8 @@ def get_payment_item_payload_by_id(id):
         'fiat_i8n_currency': payment_item.fiat_i8n_currency,
         'fiat_i8n_price': payment_item.fiat_i8n_price,
         'request_hash':shortuuid.uuid(),
+        'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
+        'network_type': config['XRP_NETWORK_TYPE'],     
     }
 
     create_payload = {
@@ -446,14 +480,23 @@ def get_payment_item_payload_by_id(id):
                 'Amount': str(xrp_to_drops(xrp_amount)),
         },
         "custom_meta": {
+            "identifier": f"payment_item:{shortuuid.uuid()[:12]}",
             "blob": json.dumps(payment_request_dict),
-            "instruction": f"Pay {payment_item.fiat_i8n_amount} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
+            "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
         }
     }   
 
     created = sdk.payload.create(create_payload)
+    xumm_payload = created.to_dict()
+    p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                            wallet_id=wallet.wallet_id,
+                            payload_uuidv4=xumm_payload['uuid'])
 
-    return redirect(created.to_dict()['next']['always'], code=302)    
+    db.session.add(p_xumm_payload)
+    db.session.commit()
+
+
+    return redirect(xumm_payload['next']['always'], code=302)    
 
 
 
@@ -571,6 +614,7 @@ def xumm_webhook():
                                                  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
                                                  'Access-Control-Allow-Methods': 'POST, OPTIONS'}
 
+    # ADHOC PAYMENT
     #  {
     #     "meta": {
     #         "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
@@ -601,13 +645,50 @@ def xumm_webhook():
     #     }
     # }
 
+
+    # PAYMENT ITEM
+    # {
+    # "meta": {
+    #     "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
+    #     "application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+    #     "payload_uuidv4": "ca14725e-a628-4d16-8a07-99932a916763",
+    #     "opened_by_deeplink": false
+    # },
+    # "custom_meta": {
+    #     "identifier": null,
+    #     "blob": "{\"type\": \"payment_item\", \"payment_item_id\": 1, \"xrp_quote\": 0.37941592, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.15, \"request_hash\": \"c9qjoB5P4sMhtA7EBgRMSU\"}",
+    #     "instruction": "Pay 0.15 USD for item Tootsie Roll Chocolate Midgee"
+    # },
+    # "payloadResponse": {
+    #     "payload_uuidv4": "ca14725e-a628-4d16-8a07-99932a916763",
+    #     "reference_call_uuidv4": "453f76bd-584e-42d5-bb53-d710e9c2426b",
+    #     "signed": true,
+    #     "user_token": true,
+    #     "return_url": {
+    #         "app": null,
+    #         "web": null
+    #     },
+    #     "txid": "3A2EE5A74AA760C6E40402A11E4416029D97E66F15B58C62987DC0808D4BE011"
+    # },
+    # "userToken": {
+    #     "user_token": "83234d7d-54d6-4240-89a3-e86cb97603cd",
+    #     "token_issued": 1668293195,
+    #     "token_expiration": 1671130384
+    # }
+    # }
+
+
     json_body = request.get_json()
+    app.logger.info(f"==== xumm webhook payload:\n{json.dumps(json_body, indent=4)}")
 
     # get the xumm payload by the payload_uuidv4
     payload = XummPayload.get_by_payload_uuidv4(
         json_body['payloadResponse']['payload_uuidv4'])
+    
     if payload is None:
         return jsonify({'message': 'payload not found'}), 404
+
+
     payload.set_is_signed_bool(json_body['payloadResponse']['signed'])
     payload.txid = json_body['payloadResponse']['txid']
     payload.webhook_body = json.dumps(json_body)

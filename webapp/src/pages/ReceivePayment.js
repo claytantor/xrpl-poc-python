@@ -4,7 +4,6 @@ import React, {useEffect, useState } from "react"
 import Page  from "../components/Page"
 import PaymentRequest from "../components/PaymentRequest";
 import PaymentRequestForm from "../components/PaymentRequestForm";
-import { WalletService } from "../services/WalletService"
 
 
 const ReceivePayment = () => {

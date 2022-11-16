@@ -1,3 +1,11 @@
+import os
+from dotenv import dotenv_values
+config = {
+    # load shared development variables
+    **dotenv_values(os.getenv("APP_CONFIG")),
+    **os.environ,  # override loaded values with environment variables
+}
+
 class ImageSerializer():
     def __init__(self, image):
         self.data = {
@@ -16,5 +24,8 @@ class PaymentItemDetailsSerializer():
             'sku_id': payment_item.sku_id,
             'fiat_i8n_price': payment_item.fiat_i8n_price,
             'fiat_i8n_currency': payment_item.fiat_i8n_currency,
-            'images': [ImageSerializer(image=image).get_data() for image in payment_item.images]
+            'images': [ImageSerializer(image=image).get_data() for image in payment_item.images],
+            'xurl': f'{config["APP_BASEURL_API"]}/payment_item/xumm/payload/{payment_item.payment_item_id}'
         }
+    def serialize(self):
+        return self.data

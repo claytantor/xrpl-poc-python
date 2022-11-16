@@ -2,7 +2,7 @@
   "name": "my-project",
   "source": "src/index.html",
   "scripts": {
-    "start": "bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel src/index.html -p 3001",
+    "start": "rm -rf .parcel-cache && bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel src/index.html -p 3001",
     "build": "parcel build",
     "serve-local": "bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel build && parcel serve src/index.html -p 3001",
     "deploy-dev": "bash ./scripts/create-deployment-json.sh dev && cp ./environment/deployment.json ./src/. && npm run build && bash ./scripts/deploy.sh dev"
@@ -29,6 +29,7 @@
     "react-dom": "^18.2.0",
     "react-icons": "^4.4.0",
     "react-images-uploading": "^3.1.7",
+    "react-qr-code": "^2.0.8",
     "react-router-dom": "^6.4.3",
     "tailwindcss": "^3.2.4",
     "websocket": "^1.0.34",

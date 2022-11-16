@@ -1,10 +1,7 @@
 import Axios from "axios";
 import moment from 'moment';
-import { XummPkce } from 'xumm-oauth2-pkce';
 import { AuthenticationService } from "../services/AuthenticationService";
-import { useStore } from "../zstore"
 import { backendBaseUrl } from '../env';
-
 
 Axios.defaults.withCredentials = false; 
 

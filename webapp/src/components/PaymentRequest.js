@@ -143,45 +143,11 @@ const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
                 </div>
 
               </div>
-              {/* <div className="flex flex-row justify-center"><a className="underline" 
-                          href="https://xumm.app/detect/xapp:sandbox.32849dc99872?amount=11.25&memo=hi">Open xApp Deeplink</a></div> */}
-              {/* <div className="d-flex flex-col justify-content-center mb-2">
-                <div className="w-full text-center text-xs font-bold">
-                  expires:
-                </div>
-                <div className="text-center text-sm text-gray-500">
-                    Thursday, Aug 25, 2022, 3:15 PM -{" "}
-                    <time
-                        className="italic text-slate-600"
-                        dateTime="2022-08-25T22:15:11.634Z"
-                        title="Thursday, August 25, 2022 at 3:15:11 PM"
-                    >
-                        in 7 hours
-                    </time>
-                </div>
-                <div className="w-full text-center font-bold text-pink-600 font-mono">00:00:29:04</div>
-              </div> */}
             </div>
-            {/* <div className="bg-slate-700 rounded-md p-3">
-                <div className="break-all font-bold text-sm font-mono text-pink-400">{paymentRequest.payment_request}</div>                
+
+            <div className="flex flex-col justify-content-center p-3">
+              <button className="btn-common-pink" onClick={() => setPaymentRequest(null)}>Back</button>
             </div>
-            <div className="flex flex-col justify-content-center">
-              <button className="bg-blue hover:bg-pink-600 hover:text-white rounded flex m-1 p-1 justify-center items-center hover:underline">
-                <BiCopy/>
-                Copy
-              </button>{" "}
-
-              <button
-                className="btn-common-pink"
-                onClick={() => setPaymentRequest(null)}
-                >
-                Create New Request
-                </button>
-
-            </div> */}
-              <div className="flex flex-col justify-content-center p-3">
-                <button className="btn-common-pink" onClick={() => setPaymentRequest(null)}>Back</button>
-              </div>
           </div>
 
           {/* ================================================================ */}
