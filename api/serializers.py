@@ -17,6 +17,8 @@ class ImageSerializer():
 class PaymentItemDetailsSerializer():
     def __init__(self, payment_item):
 
+        # https://xumm.app/detect/xapp:sandbox.32849dc99872?TransactionType=Payment&LookupType=PaymentItem&LookupRef=1
+
         self.data = {
             'payment_item_id': payment_item.payment_item_id,
             'name': payment_item.name,
@@ -25,7 +27,7 @@ class PaymentItemDetailsSerializer():
             'fiat_i8n_price': payment_item.fiat_i8n_price,
             'fiat_i8n_currency': payment_item.fiat_i8n_currency,
             'images': [ImageSerializer(image=image).get_data() for image in payment_item.images],
-            'xurl': f'{config["APP_BASEURL_API"]}/payment_item/xumm/payload/{payment_item.payment_item_id}'
+            'xurl': f'{config["XUMM_APP_DEEPLINK"]}?TransactionType=Payment&LookupType=PaymentItem&LookupRef={payment_item.payment_item_id}'
         }
     def serialize(self):
         return self.data

@@ -33,6 +33,10 @@ const BasePayload = ({payload}) => {
 };
 
 const PaymentItemPayload = ({payload}) => {
+
+  // useEffect(() => {
+  //   console.log(payload, xummConfig);
+  // }, [payload]);
   
   let payloadCustomMeta = JSON.parse(payload.webhook_body.custom_meta.blob.replaceAll("\\",""));
   //"{\"type\": \"payment_item\", \"payment_item_id\": 1, \"xrp_quote\": 0.38509692500000003, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.15, \"request_hash\": \"Aed73UUPkHNc2G6LjxHKXP\"}",
@@ -52,7 +56,7 @@ const PaymentItemPayload = ({payload}) => {
               </div>
               {payload.is_signed && payload.txid && <div className="flex flex-row justify-center text-2xl">
                 <GoLinkExternal className="hover:text-pink-600" 
-                  onClick={() => {window.location.href = `${xummConfig.xrp_explorer}/transactions/${payload.txid}`}}/>
+                  onClick={() => {window.location.href = `${xummConfig.xrp_endpoint_explorer}/transactions/${payload.txid}`}}/>
               </div>}
             </div>
             <div>
