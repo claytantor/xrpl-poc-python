@@ -4,40 +4,37 @@ skinparam usecase {
     BackgroundColor<< xInvoice >> #ffabb0
 }
 
-package "xInvoice App" {
+package "xURL xumm app" {
     (Scans xURL)
-    (Pay xInvoice\nPayment Request) as (PayInvoice)<<xInvoice>>
+    (Sign Payment Payload) as (SignPayment)
 }
 note right
-this is the mobile wallet or 
-webapp that scans the xURL 
-and pays the invoice, current 
-proposal is a xumm app plugin
+this is the xumm wallet 
+that signs and pays the 
+invoice
 end note
 
-package "xInvoice Backend" {
-    (GET Callback)
+package "xURL Backend (xurlpay.org)" {
+    (Handle xURL Request)
     (Creates xURL)
-    (Generate xInvoice\nPayment Request) as (GenerateInvoice)<<xInvoice>>
-    (POST Stateful Reference)
+    (Generate xApp Payment Payload) as (GeneratePayload)
     (Perform Orchestration or\nFiat Conversion) as (Orchestrate)
-    (GET Stateful Reference)
 }
 
-Requestor-->(Creates xURL)
-(Creates xURL)-->(POST Stateful Reference)
+' Requestor-->(Creates xURL)
+' (Creates xURL)-->(POST Stateful Reference)
 
-Payer-->(Scans xURL)
-(Scans xURL)-->(GET Stateful Reference)
-(GET Stateful Reference)-->(Orchestrate)
-(GET Stateful Reference)-->(GenerateInvoice)
+' Payer-->(Scans xURL)
+' (Scans xURL)-->(GET Stateful Reference)
+' (GET Stateful Reference)-->(Orchestrate)
+' (GET Stateful Reference)-->(GenerateInvoice)
 
-Payer-->(PayInvoice)
-(PayInvoice)-->(GET Callback)
+' Payer-->(PayInvoice)
+' (PayInvoice)-->(GET Callback)
 
-note "these are the same use\ncase as xInvoice " as N2
-(GenerateInvoice) .. N2
-N2 .. (PayInvoice)
+' note "these are the same use\ncase as xInvoice " as N2
+' (GenerateInvoice) .. N2
+' N2 .. (PayInvoice)
 
 @enduml
 
