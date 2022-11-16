@@ -21,8 +21,9 @@ from xrpl.core.keypairs.exceptions import XRPLKeypairsException
 from xrpl.core.keypairs.helpers import get_account_id
 from xrpl.core.keypairs.secp256k1 import SECP256K1
 from typing_extensions import Final
-from typing import Dict, Optional, Tuple, Type
-
+from typing import Dict, Type
+# get the token info
+import requests
 import xumm
 
 _ALGORITHM_TO_MODULE_MAP: Final[Dict[CryptoAlgorithm, Type[CryptoImplementation]]] = {
@@ -47,6 +48,35 @@ DROPS_IN_XRP=1000000
 
 # Or with manually provided credentials (instead of using dotenv):
 sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
+
+class AppTokenPayloadFactory:
+    def __init__(self, xapp_token):
+        self.xapp_token = xapp_token
+
+    async def _make_payload(self):
+        xumm_app_session = await self.get_xapp_tokeninfo(self.xapp_token)
+
+        # print(xumm_app_session)
+        
+    
+    async def get_xapp_tokeninfo(self, xumm_token):
+        url = f"https://xumm.app/api/v1/platform/xapp/ott/{xumm_token}"
+
+        headers = {
+            "accept": "application/json",
+            "X-API-Key": f"{config['XUMM_API_KEY']}",
+            "X-API-Secret": f"{config['XUMM_API_SECRET']}",
+        }
+
+        response = requests.get(url, headers=headers)
+
+        return json.loads(response.text)
+        
+
+    @staticmethod
+    async def make_payload(xapp_token):
+        factory = AppTokenPayloadFactory(xapp_token)
+        return await factory._make_payload() 
 
 
 class XummWallet:
@@ -153,7 +183,7 @@ class XummWallet:
             'amount_drops': int(xrp_to_drops(xrp_amount)),
             'address':self.classic_address,
             'network_endpoint':self.network_endpoint,
-            'network_type': get_network_type(self.network_endpoint),
+            # 'network_type': get_network_type(self.network_endpoint),
             'memo':memo,
             'request_hash':shortuuid.uuid(),
         }
@@ -256,9 +286,10 @@ class XUrlWallet:
         private_key: must be hex
         """
 
-        base64_message, base64_signature =  sign_message(message, self.private_key)
+        # base64_message, base64_signature =  sign_message(message, self.private_key)
 
-        return base64_message, base64_signature
+        # return base64_message, base64_signature
+        pass
 
 
     def generate_payment_request(self, amount, memo="generated payment request"):
@@ -332,51 +363,51 @@ def verify_msg(base64_message, base64_signature, public_key):
             "Derived keypair did not generate verifiable signature",
         )
 
-def send_payment_from_request():
-    receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=config['WALLET_SECRET_R'])
+# def send_payment_from_request():
+#     receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=config['WALLET_SECRET_R'])
     
-    payment_request = receiving_wallet.generate_payment_request(amount=120)
-    print(payment_request)
+#     payment_request = receiving_wallet.generate_payment_request(amount=120)
+#     print(payment_request)
 
 
-    # ok now lets pay it with a faucet
-    # decode the payment request
-    pr_parts = payment_request.split(":")
+#     # ok now lets pay it with a faucet
+#     # decode the payment request
+#     pr_parts = payment_request.split(":")
 
-    # verify the signed message
-    message_payload = json.loads(base64.b64decode(pr_parts[0].encode('utf-8')))
-    sig = base64.b64decode(pr_parts[1].encode('utf-8'))
-    print(message_payload, sig)
+#     # verify the signed message
+#     message_payload = json.loads(base64.b64decode(pr_parts[0].encode('utf-8')))
+#     sig = base64.b64decode(pr_parts[1].encode('utf-8'))
+#     print(message_payload, sig)
 
-    # use the public key to verify
+#     # use the public key to verify
 
-    try:
-        sending_wallet = XUrlWallet(network=config['JSON_RPC_URL']) #this is a faucet wallet
-        account_info = sending_wallet.get_account_info()
-        print(account_info)
+#     try:
+#         sending_wallet = XUrlWallet(network=config['JSON_RPC_URL']) #this is a faucet wallet
+#         account_info = sending_wallet.get_account_info()
+#         print(account_info)
         
-        # this will throw an exception if the signature is not valid
-        verify_msg(pr_parts[0].encode('utf-8'), sig, message_payload['public_key'])
+#         # this will throw an exception if the signature is not valid
+#         verify_msg(pr_parts[0].encode('utf-8'), sig, message_payload['public_key'])
 
-        # Memos": [
-        # {
-        #     "Memo": {
-        #         "MemoType": "687474703a2f2f6578616d706c652e636f6d2f6d656d6f2f67656e65726963",
-        #         "MemoData": "72656e74"
-        #     }
-        #     }
-        # ],
+#         # Memos": [
+#         # {
+#         #     "Memo": {
+#         #         "MemoType": "687474703a2f2f6578616d706c652e636f6d2f6d656d6f2f67656e65726963",
+#         #         "MemoData": "72656e74"
+#         #     }
+#         #     }
+#         # ],
 
-        tx_response_status, tx_response_result = sending_wallet.send_payment(
-            amount_xrp=message_payload['amount'],
-            destination_address=message_payload['address']
-        )
+#         tx_response_status, tx_response_result = sending_wallet.send_payment(
+#             amount_xrp=message_payload['amount'],
+#             destination_address=message_payload['address']
+#         )
 
-        print(tx_response_status, tx_response_result)
+#         print(tx_response_status, tx_response_result)
 
 
-    except Exception as e:
-        print("=== COULD NOT VERIFY", e)
+#     except Exception as e:
+#         print("=== COULD NOT VERIFY", e)
 
 
 # def create_new_wallet(network=config['JSON_RPC_URL']):
@@ -408,13 +439,29 @@ def sign_basic():
     public_key = wallet.public_key
     private_key = wallet.private_key
     classic_address = wallet.classic_address     
-    base64_message, base64_signature = sign_message("message", private_key, encoding='utf-8') 
-    print(f"message: {base64_message} signature: {base64_signature}") 
+    # base64_message, base64_signature = sign_message("message", private_key, encoding='utf-8') 
+    # print(f"message: {base64_message} signature: {base64_signature}") 
     try:
-        verify_msg(base64_message, base64_signature, public_key) 
+        # verify_msg(base64_message, base64_signature, public_key) 
         print("message verified")
     except Exception as e:
         print("=== COULD NOT VERIFY", e)
+
+
+async def get_xapp_tokeninfo(xumm_token):
+
+
+    url = f"https://xumm.app/api/v1/platform/xapp/ott/{xumm_token}"
+
+    headers = {
+        "accept": "application/json",
+        "X-API-Key": f"{config['XUMM_API_KEY']}",
+        "X-API-Secret": f"{config['XUMM_API_SECRET']}",
+    }
+
+    response = requests.get(url, headers=headers)
+
+    return json.loads(response.text)
 
 
 
@@ -441,28 +488,28 @@ def main():
         public_key, private_key = derive_keypair(seed)
         print(f"public_key: {public_key}, private_key: {private_key}")
 
-    # wallet from seed
-    if 'wallet' in args and args.wallet == 'create' and 'faucet' in args and args.faucet == 'True':
-        wallet = XUrlWallet(network=config['JSON_RPC_URL'], isFaucet=True)
-        print(json.dumps(wallet.serialize(), indent=4))
+    # # wallet from seed
+    # if 'wallet' in args and args.wallet == 'create' and 'faucet' in args and args.faucet == 'True':
+    #     wallet = XUrlWallet(network=config['JSON_RPC_URL'], isFaucet=True)
+    #     print(json.dumps(wallet.serialize(), indent=4))
 
-    # sign a message
-    if 'sign' in args and args.sign and 'private_key' in args and args.private_key:
-        message = args.sign
-        private_key = args.private_key
-        message,signature = sign_message(message, private_key)
-        print(f"message: {message} signature: {signature}")
+    # # sign a message
+    # if 'sign' in args and args.sign and 'private_key' in args and args.private_key:
+    #     message = args.sign
+    #     private_key = args.private_key
+    #     message,signature = sign_message(message, private_key)
+    #     print(f"message: {message} signature: {signature}")
 
-    # verify a message
-    if 'verify' in args and args.verify and 'public_key' in args and args.public_key and 'signature' in args and args.signature:
-        message = args.verify
-        pk = args.public_key
-        sig = args.signature
-        try:
-            verify_msg(message.encode('utf-8'), sig.encode('utf-8'), pk)
-            print("message verified")
-        except Exception as e:
-            print("=== COULD NOT VERIFY", e)   
+    # # verify a message
+    # if 'verify' in args and args.verify and 'public_key' in args and args.public_key and 'signature' in args and args.signature:
+    #     message = args.verify
+    #     pk = args.public_key
+    #     sig = args.signature
+    #     try:
+    #         verify_msg(message.encode('utf-8'), sig.encode('utf-8'), pk)
+    #         print("message verified")
+    #     except Exception as e:
+    #         print("=== COULD NOT VERIFY", e)   
 
    
 

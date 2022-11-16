@@ -22,7 +22,7 @@ from api.exchange_rates import xrp_price
 from api.xrpcli import XUrlWallet, get_network_type, verify_msg, drops_to_xrp
 from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
 from api.serializers import PaymentItemDetailsSerializer
-from api.xrpcli import xrp_to_drops, XummWallet, get_rpc_network
+from api.xrpcli import xrp_to_drops, XummWallet, get_rpc_network, get_xapp_tokeninfo
 
 
 from . import db
@@ -261,29 +261,7 @@ def create_pay_request():
                 "instruction": memo
             }
         }   
-
-        
-
-
-
-# {
-#   "uuid": "9112991f-c106-4311-9aca-857bff640c15",
-#   "next": {
-#     "always": "https://xumm.app/sign/9112991f-c106-4311-9aca-857bff640c15"
-#   },
-#   "refs": {
-#     "qr_png": "https://xumm.app/sign/9112991f-c106-4311-9aca-857bff640c15_q.png",
-#     "qr_matrix": "https://xumm.app/sign/9112991f-c106-4311-9aca-857bff640c15_q.json",
-#     "qr_uri_quality_opts": [
-#       "m",
-#       "q",
-#       "h"
-#     ],
-#     "websocket_status": "wss://xumm.app/sign/9112991f-c106-4311-9aca-857bff640c15"
-#   },
-#   "pushed": false
-# }
-
+     
     created = sdk.payload.create(create_payload)
     xumm_payload = created.to_dict()
     m_payload = XummPayload(payload_body=json.dumps(xumm_payload),
@@ -294,53 +272,6 @@ def create_pay_request():
     db.session.commit()
 
     return jsonify(xumm_payload), 200
-
-
-# @app.route("/send_payment", methods=['POST'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def send_payment():
-#     json_body = request.get_json()
-#     # json_body = json.loads(json_body['data'])
-#     # print("==== send payment",json.loads(json_body['data']))
-
-#     # lookup the wallet by the classic address in the jwt
-#     classic_address = get_token_sub(dict(request.headers)["Authorization"])
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=classic_address).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
-
-#     # ok now lets pay it with a faucet
-#     # decode the payment request
-#     pr_parts = json_body['payment_request'].split(":")
-#     # print("==== send payment",pr_parts)
-
-#     # # verify the signed message
-
-#     message_payload = json.loads(base64.b64decode(pr_parts[0]))
-#     print("==== send payment", message_payload)
-
-#     # use the public key to verify
-#     try:
-#         # this is a faucet wallet
-#         sending_wallet = XUrlWallet(
-#             network=config['JSON_RPC_URL'], seed=wallet.seed)
-
-#         # this will throw an exception if the signature is not valid
-#         verify_msg(pr_parts[0], pr_parts[1], message_payload['public_key'])
-
-#         tx_response_status, tx_response_result = sending_wallet.send_payment(
-#             amount_xrp=message_payload['amount'],
-#             destination_address=message_payload['address']
-#         )
-
-#         print(tx_response_status, tx_response_result)
-#         return jsonify(tx_response_result), 200
-
-#     except Exception as e:
-#         print("=== COULD NOT VERIFY SIG", e)
-#         return jsonify({'error': 'could not verify'}), 400
 
 
 @app.route("/payload", methods=['GET'])
@@ -455,8 +386,25 @@ def get_payment_item_payload_by_id(id):
     if payment_item is None:
         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
 
+    app.logger.info(payment_item.serialize())
+
+    try:
+        return make_payment_item_payload_response(payment_item)
+    except Exception as e:
+        
+        app.logger.error(e)
+        app.log_exception(e)
+        return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+
+
+def make_payment_item_payload_response(payment_item):
+
     # get the wallet for this payment item
     wallet = db.session.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
+    if wallet is None:
+        return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
 
     # convert the payment item to a xumm payload
     xrp_quote = asyncio.run(xrp_price(payment_item.fiat_i8n_currency))
@@ -495,8 +443,9 @@ def get_payment_item_payload_by_id(id):
     db.session.add(p_xumm_payload)
     db.session.commit()
 
-
-    return redirect(xumm_payload['next']['always'], code=302)    
+    # return xumm_payload
+    app.logger.info(f"xumm_payload:{xumm_payload}")
+    return redirect(xumm_payload['next']['always'], code=302)
 
 
 
@@ -700,6 +649,9 @@ def xumm_webhook():
 # https://devapi.xurlpay.org/v1/xumm/webhook
 
 
+
+
+
 @app.route("/xumm/app", methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin()
 @log_decorator(app.logger)
@@ -707,10 +659,6 @@ def xumm_app():
 
     app.logger.info("==== xumm app")
 
-    if request.method == 'OPTIONS':
-        return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
-                                                 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                                                 'Access-Control-Allow-Methods': 'POST, OPTIONS'}
     app.logger.info(
         f"{request} {request.args} {request.headers} {request.environ} {request.method} {request.url}")
 
@@ -723,65 +671,75 @@ def xumm_app():
     if xAppToken is None:
         return jsonify({"xAppToken": "token not found unauthorized"}), HTTPStatus.UNAUTHORIZED
 
-    create_payload = {
-        'txjson': {
-            'TransactionType': 'Payment',
-            'Destination': 'rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw',
-            'Amount': str(xrp_to_drops(9.23)),
-        }
-    }
 
-    created = sdk.payload.create(create_payload)
+    xapp_session = asyncio.run(get_xapp_tokeninfo(xAppToken)) 
+    if xapp_session is None:
+        return jsonify({"xAppToken": "cannot create payload"}), HTTPStatus.UNAUTHORIZED
 
-    # return jsonify(created.to_dict()), 200
-    return redirect(created.to_dict()['next']['always'], code=302)
+    app.logger.info(f"==== xapp_session:\n{xapp_session}")
+    # {
+    #     "version": "2.3.1",
+    #     "locale": "en",
+    #     "currency": "USD",
+    #     "style": "LIGHT",
+    #     "nodetype": "TESTNET",
+    #     "origin": {
+    #         "type": "QR",
+    #         "data": {
+    #         "content": "https://xumm.app/detect/xapp:sandbox.32849dc99872?classic_address=rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw&amount=10.21"
+    #         }
+    #     },
+    #     "classic_address": "rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw",
+    #     "amount": "10.21",
+    #     "account": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
+    #     "accounttype": "REGULAR",
+    #     "accountaccess": "FULL",
+    #     "nodewss": "wss://testnet.xrpl-labs.com",
+    #     "user": "5cc95aba-7e42-4485-befc-97fe087938eb",
+    #     "user_device": {
+    #         "currency": "USD",
+    #         "platform": "android"
+    #     },
+    #     "account_info": {
+    #         "account": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
+    #         "name": null,
+    #         "domain": null,
+    #         "blocked": false,
+    #         "source": "",
+    #         "kycApproved": false,
+    #         "proSubscription": false
+    #     },
+    #     "subscriptions": [],
+    #     "xAppNavigateData": {
+    #         "classic_address": "rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw",
+    #         "amount": "10.21"
+    #     }
+    #     }
 
+    # lookup the action by the xAppNavigateData
+    xAppNavigateData = xapp_session['xAppNavigateData']
+    if xAppNavigateData is None:
+        return jsonify({"xAppNavigateData": "xAppNavigateData not found unauthorized"}), HTTPStatus.UNAUTHORIZED
+    
+    app.logger.info(f"==== xAppNavigateData:\n{xAppNavigateData}")
+    if xAppNavigateData['TransactionType'] is None:
+        return jsonify({"xAppNavigateData": "xAppNavigateData TransactionType not found unauthorized"}), HTTPStatus.BAD_REQUEST
+    
+    if xAppNavigateData['LookupType'] is None:
+        return jsonify({"xAppNavigateData": "xAppNavigateData LookupType not found unauthorized"}), HTTPStatus.BAD_REQUEST
 
-# @app.route("/xumm/pay", methods=['POST', 'OPTIONS'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_pay():
+    lookupType = xAppNavigateData['LookupType']
+    if(lookupType == "PaymentItem"):
+        reference = xAppNavigateData['LookupRef']
+        if reference is None:
+            return jsonify({"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"}), HTTPStatus.BAD_REQUEST
+        payment_item = db.session.query(PaymentItem).filter_by(payment_item_id=int(reference)).first()
+    
+        if payment_item is None:
+            return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
 
-#     app.logger.info("==== xumm pay")
+        return make_payment_item_payload_response(payment_item)
 
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
-#                                                 'Access-Control-Allow-Headers':'Content-Type, Authorization',
-#                                                 'Access-Control-Allow-Methods':'POST, OPTIONS'}
+    else:
+        return jsonify({"xAppNavigateData": "xAppNavigateData ActionType not found unauthorized"}), HTTPStatus.BAD_REQUEST
 
-
-#     # const request = {
-#     #     "TransactionType": "Payment",
-#     #     "Destination": "rwietsevLFg8XSmG3bEZzFein1g8RBqWDZ",
-#     #     "Amount": "10000",
-#     #     "Memos": [
-#     #     {
-#     #         "Memo": {
-#     #         "MemoData": "F09F988E20596F7520726F636B21"
-#     #         }
-#     #     }
-#     #     ]
-#     # }
-
-#     # const payload = await Sdk.payload.create(request, true)
-#     # console.log(payload)
-
-#     json_body = request.get_json()
-#     # app.logger.info(json_body, list(json_body.keys(), 'amount' not in list(json_body.keys()))
-#     if 'amount' not in list(json_body.keys()):
-#         return jsonify({"message":"Missing required body element amount"}), HTTPStatus.BAD_REQUEST
-
-#     if 'classic_address' not in list(json_body.keys()):
-#         return jsonify({"message":"Missing required body element classic_address"}), HTTPStatus.BAD_REQUEST
-
-#     create_payload = {
-#         'txjson': {
-#             'TransactionType' : 'Payment',
-#             'Destination' : json_body['classic_address'],
-#             'Amount': str(json_body['amount']),
-#         }
-#     }
-
-#     created = sdk.payload.create(create_payload)
-
-#     return jsonify(created.to_dict()), 200
