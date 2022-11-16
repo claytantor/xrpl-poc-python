@@ -27,24 +27,8 @@ const Footer = ({xummAppDetails}) => {
                         <h5 className="text-pink-300 font-bold text-lg">xurlpay.org</h5>
                         <div className="font-bold font-mono text-slate-400">v{version}</div>
                         <div className="text-slate-900 rounded-lg bg-pink-200 w-fit pr-1 pl-1">{xummConfig.xrp_network}</div>
-                        <div>Everything you need to use the <span className="font-bold text-pink-500">xInvoice</span> and <span className="font-bold text-pink-500">xURL</span> protocols on the XRP testnet. Including wallet creation, <span className="font-bold text-pink-500">xInvoice</span> creation, <span className="font-bold text-pink-500">xURL</span> creation and "Scan To Pay"</div>
-                    
-                    
-                        {xummAppDetails && xummAppDetails.application && <>
-                        <div className="flex flex-col">
-                            <div className="text-sm flex flex-row">
-                                <div>xumm app name:</div>
-                                <div className="ml-1 text-pink-500">{xummAppDetails.application.name}</div>
-                            </div>
-                            <div className="text-sm flex flex-row">
-                                <div>xumm app id:</div>
-                                <div className="ml-1 text-pink-500">{xummAppDetails.application.uuidv4}</div>
-                            </div>
-                        
-                        </div>
-                        </>}                    
-                    
-                    
+                        <div>xApp Reference implementation of the <span className="font-bold text-pink-500">xURL</span> protocol for XRP.
+                        </div>                                                            
                     </div>
 
                     <div className="mb-6">
