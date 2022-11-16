@@ -9,7 +9,7 @@ By abstracting and separating the activities of creating payment requests and au
 
 * **xURL** is a protocol and specification for creating durable payment requests via signed URLs that become xumm payloads and can trigger backend automation. 
 
-* **xUrlPay.org** is an backend application for creating durable payment requests backed by metadata. It is intended to be used by XRP payment users and XRP payment networks and generates xApp payloads and can trigger automation. The requestor can track and manage the lifecycle of the payment request using a backend.
+* **xUrlPay.org** is an backend application for creating and hadling durable payment requests backed by metadata. It is intended to be used by XRP payment users and XRP payment networks and generates xApp payloads and can trigger automation. The requestor can track and manage the lifecycle of the payment request using a backend.
   
 
 ## Use Cases

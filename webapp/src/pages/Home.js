@@ -18,18 +18,17 @@ const Home = () => {
                   <div className="space-y-6 py-8 text-base leading-7 text-gray-600">
                     <div>
                       This site is an online proof of concept to show how the{" "}
-                      <span className="font-bold text-pink-500">xInvoice</span>{" "}
-                      and <span className="font-bold text-pink-500">xURL</span>{" "}
-                      protocols can be applied to enable numerous payment and
+                      <span className="font-bold text-pink-500">xURL</span>{" "}
+                      protocol can be applied to enable numerous payment and
                       point of use sale cases for the XRP ecosystem:
                     </div>
                     <ul className="space-y-4">
                       <li className="flex items-center">
                         <AiOutlineCheckCircle className="text-pink-500 text-6xl w-1/12" />
                         <div className="ml-2 w-11/12">
-                          Allows for signed payment request{" "}
+                          Allows for <a className="underline cursor-pointer" href="https://xumm.readme.io/docs/what-are-xapps" target="_new">xApp </a>deeplink signed payment requests aka. {" "}
                           <span className="font-bold text-pink-500">
-                            xInvoices
+                            xURLs
                           </span>{" "}
                           that can guarantee payment to the correct requestor.
                         </div>
@@ -39,9 +38,7 @@ const Home = () => {
                         <div className="ml-2 w-11/12">
                           Provides stateful tracking of payment state for
                           payment requests as{" "}
-                          <span className="font-bold text-pink-500">
-                            xInvoices
-                          </span>{" "}
+                          <span className="font-bold text-pink-500">xURL</span>{" "}
                           via backend.
                         </div>
                       </li>
@@ -50,10 +47,7 @@ const Home = () => {
                         <AiOutlineCheckCircle className="text-pink-500 text-6xl w-1/12" />
                         <div className="ml-2 w-11/12">
                           <span className="font-bold text-pink-500">xURL</span>{" "}
-                          automation of payment request creation by a live
-                          backend automation empowering payment with POS,
-                          instant currency conversion, and non expiring "scan to
-                          pay" capabilities.
+                          automation of notifications to externals systems.
                         </div>
                       </li>
                     </ul>
@@ -67,18 +61,14 @@ const Home = () => {
                       >
                         XRP testnet
                       </a>
-                      . Including wallet creation,{" "}
-                      <span className="font-bold text-pink-500">xInvoice</span>{" "}
-                      creation,{" "}
+                      . Including xApp xumm wallet integration via OAuth2,{" "}
                       <span className="font-bold text-pink-500">xURL</span>{" "}
-                      creation and "Scan To Pay"
+                      creation and "Scan To Pay" printable items.
                     </div>
                   </div>
                   <div className="pt-8 text-base font-semibold leading-7">
                     <div className="text-gray-900">
-                      Want to dig deeper into{" "}
-                      <span className="font-bold text-pink-500">xInvoice</span>{" "}
-                      and the{" "}
+                      Want to dig deeper into the{" "}
                       <span className="font-bold text-pink-500">xURL</span>{" "}
                       protocol specification?
                     </div>
