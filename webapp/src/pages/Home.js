@@ -2,6 +2,9 @@ import React, { useState } from "react";
 
 import Page from "../components/Page";
 import { AiOutlineCheckCircle } from "react-icons/ai";
+import { whitepaperUrl } from "../env";
+import {xummConfig} from "../env"
+
 
 const Home = () => {
   return (
@@ -56,10 +59,10 @@ const Home = () => {
                       proposed protocols on the{" "}
                       <a
                         className="underline"
-                        href="https://testnet.xrpl.org/"
+                        href={xummConfig.xrp_endpoint_explorer}
                         target="_new"
                       >
-                        XRP testnet
+                        XRP {xummConfig.xrp_network} blockchain
                       </a>
                       . Including xApp xumm wallet integration via OAuth2,{" "}
                       <span className="font-bold text-pink-500">xURL</span>{" "}
@@ -74,7 +77,7 @@ const Home = () => {
                     </div>
                     <div>
                       <a
-                        href="https://github.com/claytantor/xrpl-poc-python/blob/main/docs/whitepaper.md"
+                        href={whitepaperUrl}
                         className="text-pink-500 underline hover:text-pink-600"
                       >
                         Read the whitepaper

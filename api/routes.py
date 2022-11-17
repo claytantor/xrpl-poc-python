@@ -7,7 +7,8 @@ from flask_cors import cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from http import HTTPStatus
 import os
-import sys
+import requests
+import json
 import shortuuid
 import json
 import base64
@@ -16,7 +17,6 @@ import jwt
 import xumm
 import asyncio
 from PIL import Image
-
 
 from api.exchange_rates import xrp_price
 from api.xrpcli import XUrlWallet, get_network_type, verify_msg, drops_to_xrp
@@ -643,14 +643,33 @@ def xumm_webhook():
     payload.webhook_body = json.dumps(json_body)
     db.session.commit()
 
+    # get the custom_meta blob
+    custom_meta_blob = json.loads(payload['custom_meta']['blob'].replace("\\", ''))
+    app.logger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
+    if custom_meta_blob['type'] == 'payment_item':
+        # get the payment item
+        payment_item = PaymentItem.get_by_id(custom_meta_blob['payment_item_id'])
+        if payment_item is not None:
+            asyncio.run(send_slack_message(f"Payment Item id:{payment_item.id} {payment_item.name} has just been purchased!"))
+            # dont block if this fails
+
     app.logger.info(json.dumps(json_body, indent=4))
     return jsonify({'message': 'xumm_webhook'}), 200
 
 # https://devapi.xurlpay.org/v1/xumm/webhook
 
 
-
-
+async def send_slack_message(message):
+    try:
+        slack_data = {'text': message}
+        response = requests.post(
+            app.config['SLACK_WEBHOOK_URL'], data=json.dumps(slack_data),
+            headers={'Content-Type': 'application/json'}
+        )
+        if response.status_code != 200:
+            app.log_exception(f"==== slack webhook error: {response.status_code}")
+    except Exception as e:
+        app.log_exception(f"==== slack webhook error: {e}")
 
 @app.route("/xumm/app", methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin()
