@@ -48,13 +48,12 @@ const PaymentItemViewer = () => {
             <div className='flex flex-row justify-center w-full'>
                 
                 <div className='rounded bg-slate-200 w-fit p-3'>
-                  
                   <div className="m-1 flex flex-row justify-center">
-                    <img src={xurlIcon32} className="mr-2"/> <h2 className="text-2xl">SCAN TO PAY</h2>
-                  </div>
-                  {/* <div className="m-1 flex flex-row justify-center">
                     <img src={xummLogo} className="mr-2 w-32"/>
-                  </div> */}
+                  </div>                  
+                  <div className="m-1 flex flex-row justify-center">
+                    <h2 className="text-2xl">SCAN TO PAY</h2>
+                  </div>
                   <div className="m-1 flex flex-row justify-center">
                     <h2 className="text-2xl break-words w-96 text-center">{paymentItem.name}</h2>
                   </div>

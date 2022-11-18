@@ -1,25 +1,13 @@
 import React, {useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom";
 
-import { XummPkce } from 'xumm-oauth2-pkce';
 
 import Page from "../components/Page"
 
-import { AxiosService } from "../services/AxiosService";
 import xummLogo from "../assets/img/xumm_logo.png"
-import {useStore} from "../zstore"
-
-import { xummConfig } from "../env";
 
 
-const Login = () => {
-
-    const navigate = useNavigate();
-
-    const xumm = new XummPkce(xummConfig["api-key"]);
-
-    const setXummState = useStore((state) => state.setXummState);
-    const xummState = useStore((state) => state.xummState);
+const Login = ({xumm, xummState}) => {
+   
 
     let login = () => {
         xumm.authorize()
@@ -30,28 +18,6 @@ const Login = () => {
         console.log("error", error)
     })
 
-    xumm.on("success", async () => {
-        console.log("success");
-        const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-        console.log('Authorized', /* authorized.jwt, */ authorized);
-        if (useStore) {
-            console.log('Update use store state', /* authorized.jwt, */ authorized.me)                     
-            setXummState({'me':authorized.me,'jwt':authorized.jwt});
-            AxiosService.setUser(authorized);
-            navigate("/wallet");
-        }
-    });
-
-    xumm.on("retrieved", async () => {
-        console.log("Retrieved: from localStorage or mobile browser redirect")
-        const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-        console.log('Authorized', /* authorized.jwt, */ authorized);
-        if (useStore) {
-            console.log('Update use store state', /* authorized.jwt, */ authorized.me)
-            setXummState({'me':authorized.me,'jwt':authorized.jwt});     
-            AxiosService.setUser(authorized);    
-        }
-    });
 
     return (
         <>

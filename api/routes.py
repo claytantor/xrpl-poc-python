@@ -626,40 +626,47 @@ def xumm_webhook():
     # }
     # }
 
+    
 
     json_body = request.get_json()
     app.logger.info(f"==== xumm webhook payload:\n{json.dumps(json_body, indent=4)}")
+    if 'signed' in json_body['payloadResponse'] and json_body['payloadResponse']['signed'] == True:
+        app.logger.info("==== xumm webhook payload is signed")
 
-    # get the xumm payload by the payload_uuidv4
-    payload = XummPayload.get_by_payload_uuidv4(
-        json_body['payloadResponse']['payload_uuidv4'])
-    
-    if payload is None:
-        return jsonify({'message': 'payload not found'}), 404
+        # get the xumm payload by the payload_uuidv4
+        payload = XummPayload.get_by_payload_uuidv4(
+            json_body['payloadResponse']['payload_uuidv4'])
+        
+        if payload is None:
+            return jsonify({'message': 'payload not found'}), 404
 
+        # dont run this if the payload is already processed
+        if not payload.is_signed:
+            payload.set_is_signed_bool(json_body['payloadResponse']['signed'])
+            payload.txid = json_body['payloadResponse']['txid']
+            payload.webhook_body = json.dumps(json_body)
+            db.session.commit()
 
-    payload.set_is_signed_bool(json_body['payloadResponse']['signed'])
-    payload.txid = json_body['payloadResponse']['txid']
-    payload.webhook_body = json.dumps(json_body)
-    db.session.commit()
+            # get the custom_meta blob
+            if 'custom_meta' in json_body and json_body['payloadResponse']['txid'] is not None:
+                custom_meta_blob = json.loads(json_body['custom_meta']['blob'].replace("\\", ''))
+                app.logger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
+                if custom_meta_blob['type'] == 'payment_item':
+                    # get the payment item
+                        # get all the payment items for this wallet
+                    payment_item = db.session.query(PaymentItem).filter_by( payment_item_id=int(custom_meta_blob['payment_item_id'])).first()
+                    if payment_item is not None:
+                        # asyncio.run(send_slack_message(f"Payment Item id:{payment_item.payment_item_id} {payment_item.name} has just been purchased for {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency}!"))
+                        send_slack_message(f"Payment Item {payment_item.name} has just been purchased! payment item id:{payment_item.payment_item_id} price:{payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} {config['XRP_NETWORK_EXPLORER']}/transactions/{json_body['payloadResponse']['txid']}")
+                        # dont block if this fails
 
-    # get the custom_meta blob
-    custom_meta_blob = json.loads(payload['custom_meta']['blob'].replace("\\", ''))
-    app.logger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
-    if custom_meta_blob['type'] == 'payment_item':
-        # get the payment item
-        payment_item = PaymentItem.get_by_id(custom_meta_blob['payment_item_id'])
-        if payment_item is not None:
-            asyncio.run(send_slack_message(f"Payment Item id:{payment_item.id} {payment_item.name} has just been purchased!"))
-            # dont block if this fails
-
-    app.logger.info(json.dumps(json_body, indent=4))
     return jsonify({'message': 'xumm_webhook'}), 200
 
-# https://devapi.xurlpay.org/v1/xumm/webhook
 
 
-async def send_slack_message(message):
+def send_slack_message(message):
+    """Send a message to slack"""
+    app.logger.info(f"==== send_slack_message: {message} to {app.config['SLACK_WEBHOOK_URL']}")
     try:
         slack_data = {'text': message}
         response = requests.post(
@@ -667,7 +674,7 @@ async def send_slack_message(message):
             headers={'Content-Type': 'application/json'}
         )
         if response.status_code != 200:
-            app.log_exception(f"==== slack webhook error: {response.status_code}")
+            app.logger.error(f"==== slack webhook error: {response.status_code}")
     except Exception as e:
         app.log_exception(f"==== slack webhook error: {e}")
 

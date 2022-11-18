@@ -91,7 +91,7 @@ const PaymentRequestPayload = ({payload}) => {
                 </div>
                 {payload.is_signed && payload.txid && <div className="flex flex-row justify-center text-2xl">
                 <GoLinkExternal className="hover:text-pink-600" 
-                  onClick={() => {window.location.href = `${xummConfig.xrp_explorer}/transactions/${payload.txid}`}}/>
+                  onClick={() => {window.location.href = `${xummConfig.xrp_endpoint_explorer}/transactions/${payload.txid}`}}/>
               </div>}
               </div>
               <div>
