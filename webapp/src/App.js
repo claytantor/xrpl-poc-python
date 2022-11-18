@@ -2,7 +2,6 @@ import React, {useEffect, useState } from "react"
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { XummPkce } from 'xumm-oauth2-pkce';
 
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Wallet from "./pages/Wallet";
@@ -18,12 +17,8 @@ import { AuthenticationService } from "./services/AuthenticationService";
 
 import { xummConfig } from "./env";
 
-import {useStore} from "./zstore";
-
-
 import "./styles.css";
 import "./App.css";
-
 
 const PrivateRoute = ({xummState, setXummState}) => {
 
@@ -50,8 +45,6 @@ const PrivateRoute = ({xummState, setXummState}) => {
 const App = () => {
   
   const xumm = new XummPkce(xummConfig["api-key"]);
-  // const setXummState = useStore((state) => state.setXummState);
-
   const [xummState, setXummState] = useState();
 
   xumm.on("success", async () => {
@@ -60,12 +53,6 @@ const App = () => {
       console.log('Authorized', /* authorized.jwt, */ authorized);
       AxiosService.setUser(authorized);
       setXummState(authorized);
-      // if (useStore) {
-      //     console.log('Update use store state', /* authorized.jwt, */ authorized.me)                     
-      //     setXummState({'me':authorized.me,'jwt':authorized.jwt});
-      //     AxiosService.setUser(authorized);
-      //     navigate("/wallet");
-      // }
   });
 
   xumm.on("retrieved", async () => {
@@ -74,12 +61,6 @@ const App = () => {
       console.log('Authorized', /* authorized.jwt, */ authorized);
       AxiosService.setUser(authorized);
       setXummState(authorized);
-      // if (useStore) {
-      //     console.log('Update use store state', /* authorized.jwt, */ authorized.me)
-      //     setXummState({'me':authorized.me,'jwt':authorized.jwt});     
-      //     AxiosService.setUser(authorized);   
-      //     navigate("/wallet"); 
-      // }
   });
 
   
