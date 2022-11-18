@@ -6,12 +6,15 @@ import Page from "../components/Page"
 import xummLogo from "../assets/img/xumm_logo.png"
 
 
-const Login = ({xumm, xummState}) => {
+const Login = ({xumm, xummState, setXummState, xummSignInHandler}) => {
    
 
     let login = () => {
-        xumm.authorize()
-            .catch(e => console.log('error', e));
+        xumm.authorize().then((session) => {
+            xummSignInHandler(session);
+         }).catch((err) => {
+            console.log("error on authorize",err);
+         });        
     };
     
     xumm.on("error", (error) => {
@@ -21,7 +24,7 @@ const Login = ({xumm, xummState}) => {
 
     return (
         <>
-        <Page> 
+        <Page xumm={xumm} xummState={xummState} setXummState={setXummState}> 
             <div className="p-4"> 
                 <div className="flex flex-row justify-center">
                     {xummState && xummState.me ?<>You are logged in.</>:               

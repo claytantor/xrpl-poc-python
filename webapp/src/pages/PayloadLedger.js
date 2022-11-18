@@ -127,7 +127,7 @@ const PayloadItem = ({payload}) => {
 
 
 
-const PayloadLedger = () => {
+const PayloadLedger = ({xumm, xummState, setXummState}) => {
 
   const [payloads, setPayloads] = useState(null);
   
@@ -138,7 +138,10 @@ const PayloadLedger = () => {
   }, []);
 
   return (
-    <Page withSidenav={true}>
+    <Page withSidenav={true} 
+      xumm={xumm} 
+      setXummState={setXummState} 
+      xummState={xummState}>
       <div className="p-4">
         <h2 className="text-2xl">Ledger</h2>
         {payloads && payloads.length > 0 && payloads.map((payload) => {

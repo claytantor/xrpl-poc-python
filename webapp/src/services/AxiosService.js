@@ -47,6 +47,7 @@ const axiosInstance = Axios.create({
 });
 
 
+let cachedUser = null;
 
 axiosInstance.interceptors.request.use((config) => { 
 
@@ -60,9 +61,9 @@ axiosInstance.interceptors.request.use((config) => {
         return config;
     }
 
-    let storage = JSON.parse(window.localStorage.getItem('xurlpay-storage'));
-    console.log('xummState', storage.state.xummState);
-    let cachedUser = storage.state.xummState;
+    // let storage = JSON.parse(window.localStorage.getItem('xurlpay-storage'));
+    // console.log('xummState', storage.state.xummState);
+    // let cachedUser = storage.state.xummState;
 
     if (!cachedUser || cachedUser.jwt === undefined) {
         console.log('cached user NOT found, sending to login', config);

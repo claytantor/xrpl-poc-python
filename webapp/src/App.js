@@ -20,7 +20,7 @@ import { xummConfig } from "./env";
 import "./styles.css";
 import "./App.css";
 
-const PrivateRoute = ({xummState, setXummState}) => {
+const PrivateRoute = ({xummState}) => {
 
 
   console.log("PrivateRoute xumm state", xummState);
@@ -32,12 +32,12 @@ const PrivateRoute = ({xummState, setXummState}) => {
       return <Outlet />;
     } else {
       console.log("PrivateRoute xumm state accessTokenInfo not active");
-      setXummState(null);
+      // setXummState(null);
       return <Navigate to="/login" />;
     }
   } else {
     console.log("PrivateRoute xumm state accessTokenInfo not active");
-    setXummState(null);
+    // setXummState(null);
     return <Navigate to="/login" />;
   }
 };
@@ -45,80 +45,124 @@ const PrivateRoute = ({xummState, setXummState}) => {
 const App = () => {
   
   const xumm = new XummPkce(xummConfig["api-key"]);
+
   const [xummState, setXummState] = useState();
 
-  xumm.on("success", async () => {
-      console.log("success");
-      const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-      console.log('Authorized', /* authorized.jwt, */ authorized);
-      AxiosService.setUser(authorized);
-      setXummState(authorized);
+  const xummSignInHandler = (state) => {
+    if (state.me) {
+      const { sdk, me } = state;
+      setXummState({ sdk, me });
+      console.log("state", me);
+      // Also: sdk » xumm-sdk (npm)
+    }
+  };
+
+  // To pick up on mobile client redirects:
+  xumm.on("retrieved", async () => {
+    console.log("Retrieved: from localStorage or mobile browser redirect");
+    xummSignInHandler(await xumm.state());
   });
 
-  xumm.on("retrieved", async () => {
-      console.log("Retrieved: from localStorage or mobile browser redirect")
-      const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-      console.log('Authorized', /* authorized.jwt, */ authorized);
-      AxiosService.setUser(authorized);
-      setXummState(authorized);
-  });
+
+  // xumm.authorize().then((session) => {
+  //   xummSignInHandler(session);
+  // });
+
+
+  // xumm.on("success", async () => {
+  //     console.log("success");
+  //     const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
+  //     console.log('Authorized', /* authorized.jwt, */ authorized);
+  //     AxiosService.setUser(authorized);
+  //     setXummState(authorized);
+  // });
+
+  // xumm.on("retrieved", async () => {
+  //     console.log("Retrieved: from localStorage or mobile browser redirect")
+  //     const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
+  //     console.log('Authorized', /* authorized.jwt, */ authorized);
+  //     AxiosService.setUser(authorized);
+  //     setXummState(authorized);
+  // });
 
   
   return (
     <>
       <BrowserRouter>
         <Routes>
-          <Route exact path="/wallet" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/wallet" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/wallet"
-              element={<Wallet xummState={xummState}/>}
+              element={<Wallet 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/ledger" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/ledger" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/ledger"
-              element={<PayloadLedger xummState={xummState}/>}
+              element={<PayloadLedger 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/items" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/items" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/items"
-              element={<PaymentItems xummState={xummState}/>}
+              element={<PaymentItems 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
-          <Route exact path="/item/edit/:id" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/item/edit/:id" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/item/edit/:id"
-              element={<PaymentItemEditor xummState={xummState}/>}
+              element={<PaymentItemEditor 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
-          <Route exact path="/item/create" element={<PrivateRoute xummState={xummState}/>}>
-            <Route exact path="/item/create" element={<PaymentItemEditor xummState={xummState}/>} />
+          <Route exact path="/item/create" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+            <Route exact 
+              path="/item/create" 
+              element={<PaymentItemEditor 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>} />
           </Route>
-          <Route exact path="/item/details/:id" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/item/details/:id" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/item/details/:id"
-              element={<PaymentItemViewer xummState={xummState}/>}
+              element={<PaymentItemViewer 
+                xumm={xumm} 
+                setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/receive" element={<PrivateRoute xummState={xummState}/>}>
+          <Route exact path="/receive" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
             <Route
               exact
               path="/receive"
-              element={<ReceivePayment xummState={xummState}/>}
+              element={<ReceivePayment 
+                xumm={xumm} setXummState={setXummState} 
+                xummState={xummState}/>}
             />
           </Route>
-          <Route path="/xapp" element={<XummApp />} />
-          <Route path="/login" element={<Login xumm={xumm} xummState={xummState}/>} />
-          <Route path="/" element={<Home />} />
+          <Route path="/xapp" element={<XummApp xumm={xumm} xummState={xummState} setXummState={setXummState}/>} />
+          <Route path="/login" element={<Login xumm={xumm} xummState={xummState} setXummState={setXummState} xummSignInHandler={xummSignInHandler}/>} />
+          <Route path="/" element={<Home xumm={xumm} xummState={xummState} setXummState={setXummState}/>} />
         </Routes>
       </BrowserRouter>
     </>

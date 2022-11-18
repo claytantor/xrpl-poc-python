@@ -10,20 +10,24 @@ import { useStore } from "../zstore";
 import { xummConfig, whitepaperUrl } from "../env";
 
 const Header = ({
+    xumm,
+    xummState,
+    setXummState,
     children,
   }) => {
 
-    const xumm = new XummPkce(xummConfig["api-key"]);
+    // useEffect(() => {
+    //     console.log("Header xumm state", xummState);
+    //     if (xummState && xummState.jwt) {
+    //         console.log("Header xumm state jwt", xummState.jwt);
+    //     }
+    // }, [xummState]);
 
     const navigate = useNavigate();
-    const xummAuthState = useStore((state) => state.xummState);
-    const setXummState = useStore((state) => state.setXummState);
-
 
     let logout = () => {
-        console.log(`logout`, xummAuthState);
+        console.log(`logout`, xummState);
         setXummState(null);
-        // window.localStorage.removeItem('xurlpay-storage');
         xumm.logout();
         navigate("/");
     };
@@ -54,13 +58,13 @@ const Header = ({
                     </div>
 
                     {/* ==== IN ==== */}
-                    {xummAuthState && xummAuthState.me  ? <>
+                    {xummState && xummState.me  ? <>
                             <div>
 
                                 <div className="p-1">
                                     <div className="dropdown inline-block relative">
                                         <button className="bg-pink-300 text-pink-700 font-semibold py-2 px-4 rounded-t inline-flex items-center">
-                                            <div className="mr-1 flex flex-row"><FaUserCircle className='mr-1'/>{xummAuthState.me.sub}</div>
+                                            <div className="mr-1 flex flex-row"><FaUserCircle className='mr-1'/>{xummState.me.sub}</div>
                                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/> </svg>
                                         </button>
                                         <ul style={{zIndex: 50}} className="dropdown-menu absolute hidden text-gray-700 pt-1 bg-gray-200 rounded-b w-full">

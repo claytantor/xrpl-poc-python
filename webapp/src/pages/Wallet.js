@@ -26,7 +26,7 @@ const AccountInfo = ({accountInfo}) => {
 };
 
 
-const Wallet = () => {
+const Wallet = ({xumm, xummState, setXummState}) => {
 
     let [walletInfo, setWalletInfo] = useState(null);
     let [xrpPrice, setXrpPrice] = useState(null);
@@ -62,7 +62,10 @@ const Wallet = () => {
 
     return (
         <>
-        <Page withSidenav={true}> 
+        <Page withSidenav={true} 
+            xumm={xumm} 
+            setXummState={setXummState} 
+            xummState={xummState}> 
             <div className="p-4"> 
                 <h2 className="text-2xl">Wallet </h2>
                 {walletInfo ? <div className="flex flex-col">

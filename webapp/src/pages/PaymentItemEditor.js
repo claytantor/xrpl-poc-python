@@ -8,9 +8,8 @@ import PaymentItemForm from "../components/PaymentItemForm";
 
 
 
-const PaymentItemEditor = () => {
+const PaymentItemEditor = ({xumm, xummState, setXummState}) => {
 
-  const navigate = useNavigate();
   const { id } = useParams();
 
   const { pathname } = useLocation();
@@ -38,7 +37,10 @@ const PaymentItemEditor = () => {
   }, [id]); 
   
   return (
-    <Page withSidenav={true}>
+    <Page withSidenav={true} 
+      xumm={xumm} 
+      setXummState={setXummState} 
+      xummState={xummState}>
       <div className="p-4">
         <div className="row">
           {/* <Breadcrumb>

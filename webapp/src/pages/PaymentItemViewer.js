@@ -11,11 +11,10 @@ import { WalletService } from "../services/WalletService";
 import xurlIcon32 from "../assets/favicon_io/favicon-32x32.png";
 import xummLogo from "../assets/img/xumm_logo.png"
 
-const PaymentItemViewer = () => {
+const PaymentItemViewer = ({xumm, xummState, setXummState}) => {
 
   const { id } = useParams();
 
-  const navigate = useNavigate();
   const [paymentItem, setPaymentItem] = useState();
   let [xrpPrice, setXrpPrice] = useState(null);
   let [xrpAmount, setXrpAmount] = useState(null);
@@ -40,7 +39,10 @@ const PaymentItemViewer = () => {
   }, [id]); 
   
   return (
-    <Page withSidenav={true}>
+    <Page withSidenav={true} 
+      xumm={xumm} 
+      setXummState={setXummState} 
+      xummState={xummState}>
       <div className='p-4'>
         
         {paymentItem && 
