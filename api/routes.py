@@ -190,8 +190,13 @@ def get_wallet():
     rpc_network = 'wss://s.altnet.rippletest.net:51233'
     if 'net' in jwt_body:
         rpc_network = get_rpc_network_from_wss(jwt_body['net'])
+        app.logger.info(f"rpc_network: {rpc_network} net:{jwt_body['net']}")
     elif 'network_endpoint' in jwt_body:
         rpc_network = get_rpc_network_from_wss(jwt_body['network_endpoint'])
+        app.logger.info(f"rpc_network: {rpc_network} network_endpoint:{jwt_body['network_endpoint']}")
+
+    if rpc_network is 'none':
+        return jsonify({"message": "invalid network"}), HTTPStatus.BAD_REQUEST
     
     account_info = get_account_info(wallet.classic_address, rpc_network)
 
@@ -807,7 +812,7 @@ def xumm_xapp():
 
 
 @app.route('/xumm/qr', methods=['GET', 'OPTIONS'])
-def serve_img():
+def serve_qr_img():
     app.logger.info("==== xumm webhook")
 
     if request.method == 'OPTIONS':

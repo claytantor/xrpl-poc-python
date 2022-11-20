@@ -378,7 +378,7 @@ xrp_lookup = {
         'type':'mainnet',
     },
     'testnet.xrpl-labs.com':{
-        'json_rpc':'https://testnet.xrpl-labs.com:51234',
+        'json_rpc':'https://testnet.xrpl-labs.com',
         'websocket':'wss://testnet.xrpl-labs.com',
         'type':'testnet',
     },

@@ -22,24 +22,19 @@ def generate_qr_code(data):
 	hsize = int((float(logo.size[1])*float(wpercent)))
 	logo = logo.resize((basewidth, hsize), Image.ANTIALIAS)
 
-	# qr = qrcode.QRCode(
-	# 	version=1,
-	# 	error_correction=qrcode.constants.ERROR_CORRECT_L,
-	# 	box_size=10,
-	# 	border=4,
-	# )
-
+	# creating an instance of qrcode
 	QRcode = qrcode.QRCode(
 		error_correction=qrcode.constants.ERROR_CORRECT_H,
-		box_size=10,
-		border=1,
+		box_size=9,
+		border=2
 	)
 
 	# taking url or text
 	url = data['url']
+	print(url)
 
 	# adding URL or text to QRcode
-	QRcode.add_data(url)
+	QRcode.add_data(url, optimize=0)
 
 	# generating QR code
 	QRcode.make()
