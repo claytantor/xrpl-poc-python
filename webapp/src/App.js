@@ -1,6 +1,6 @@
 import React, {useEffect, useState } from "react"
 import { BrowserRouter, Routes, Route, Outlet, Navigate, useNavigate } from "react-router-dom";
-import { XummPkce } from 'xumm-oauth2-pkce';
+
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -14,54 +14,157 @@ import PaymentItemEditor from "./pages/PaymentItemEditor";
 
 import { AxiosService } from "./services/AxiosService";
 import { AuthenticationService } from "./services/AuthenticationService";
+import { XummService } from "./services/XummService";
+
 
 import { xummConfig } from "./env";
 
 import "./styles.css";
 import "./App.css";
 
+var sBrowser, sUsrAg = navigator.userAgent;
+
+import { XummPkce } from 'xumm-oauth2-pkce';
+const xummPkce = new XummPkce(xummConfig["api-key"]);
+
+const { XummSdkJwt } = require('xumm-sdk')
+const url = new URL(window.location.href);
+const xAppToken = url.searchParams.get("xAppToken") || '';
+const xummSdkJwt = new XummSdkJwt(xummConfig["api-key"], xAppToken);
+
+
+const getSdkJwtStorage = () => {
+  const ls_sdk = localStorage.getItem('XummSdkJwt');
+  if (ls_sdk) {
+    const sdk = JSON.parse(ls_sdk.substring("121f6616-f25d-45fc-a258-b5bac5b03609:".length, ls_sdk.length));
+    console.log("getSdkJwtStorage", sdk);
+    return sdk;
+  } else {
+    return null;
+  }
+};
+
+
 const PrivateRoute = ({xummState}) => {
 
+  const [xummPkceJwt, setXummPkceJwt] = useState(
+    JSON.parse(localStorage.getItem('XummPkceJwt')) || false
+  );
+  const [xummSdkJwt, setXummSdkJwt] = useState(
+    getSdkJwtStorage() || false
+  );
 
-  console.log("PrivateRoute xumm state", xummState);
-  if (xummState && xummState.jwt) {
-    console.log("PrivateRoute xumm state jwt", xummState.jwt);
-    const accessTokenInfo = AuthenticationService.getAccessTokenInfo(xummState.jwt);
-    console.log("PrivateRoute xumm state accessTokenInfo", accessTokenInfo);
-    if (accessTokenInfo && accessTokenInfo.active) {
-      return <Outlet />;
-    } else {
-      console.log("PrivateRoute xumm state accessTokenInfo not active");
-      // setXummState(null);
-      return <Navigate to="/login" />;
+  const xummSignInHandler = (jwt, sdk) => {
+    const accessTokenInfo = AuthenticationService.getAccessTokenInfo(jwt);
+    const _xummState = {
+      jwt: jwt,
+      me: accessTokenInfo.payload,
+      sdk: sdk
     }
-  } else {
+    AxiosService.setUser(_xummState);
+  };
+  
+
+  console.log("PrivateRoute", xummPkceJwt, xummSdkJwt);
+  if (xummSdkJwt.jwt) {
+    xummSignInHandler(xummSdkJwt.jwt, null);
+    return <Outlet />;
+  } else if (xummPkceJwt.jwt) {
+    xummSignInHandler(xummPkceJwt.jwt, null);
+    return <Outlet />;
+  } else { 
     console.log("PrivateRoute xumm state accessTokenInfo not active");
     // setXummState(null);
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 };
 
 const App = () => {
-  
-  const xumm = new XummPkce(xummConfig["api-key"]);
 
+  const [xAppLoginError, setXAppLoginError] = useState();
   const [xummState, setXummState] = useState();
+  const [xummSdkJwt, setXummSdkJwt] = useState(
+    getSdkJwtStorage() || false
+  );
 
-  const xummSignInHandler = (state) => {
-    if (state.me) {
-      const { sdk, me } = state;
-      setXummState({ sdk, me });
-      console.log("state", me);
-      // Also: sdk » xumm-sdk (npm)
+  useEffect(() => {
+
+    //normalize state
+    if (sUsrAg.indexOf("xumm") > -1){
+      sBrowser = "xumm";
+      console.log("xumm detected");
+
+      if (!xummSdkJwt) {
+        XummService.authorize(xummConfig["api-key"], xAppToken).then((response) => {
+          console.log("XummService.authorize response", response.data);
+          xummSignInHandler(response.data.jwt, xummSdkJwt);
+
+        }).catch((error) => {
+          setXummState({jwt: 'none'});
+          setXAppLoginError(`JWT ERROR api-key:${xummConfig["api-key"]} authToken:${xAppToken} ${JSON.stringify(error)}`);
+        });
+      } else {
+        xummSignInHandler(xummSdkJwt.jwt, xummSdkJwt);
+        // setXAppLoginError(`JWT Found ${JSON.stringify(xummSdkJwt)}`);
+
+      }
+
+      xummPkce.on("retrieved", async () => {
+        setXAppLoginError("Retrieved: from localStorage or mobile browser redirect")
+        const authorized = await xummPkce.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
+        // console.log('Authorized', /* authorized.jwt, */ authorized);
+        xummSignInHandler(authorized.jwt, authorized.sdk);
+      });
+
+    } else {
+      console.log("Not xumm");
+      if(xummState == null){
+        setXummState({sdk:xummPkce, me:null, jwt:null}); //needed to login
+      }
+      xummPkce.on("success", async () => {
+          console.log("success");
+          const authorized = await xummPkce.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
+          console.log('Authorized', /* authorized.jwt, */ authorized);
+          xummSignInHandler(authorized.jwt, authorized.sdk);
+      });
+
+      xummPkce.on("retrieved", async () => {
+          console.log("Retrieved: from localStorage or mobile browser redirect")
+          const authorized = await xummPkce.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
+          console.log('Authorized', /* authorized.jwt, */ authorized);
+          xummSignInHandler(authorized.jwt, authorized.sdk);
+      });
     }
-  };
+  }, []);
 
-  // To pick up on mobile client redirects:
-  xumm.on("retrieved", async () => {
-    console.log("Retrieved: from localStorage or mobile browser redirect");
-    xummSignInHandler(await xumm.state());
-  });
+  const xummSignInHandler = (jwt, sdk) => {
+    const accessTokenInfo = AuthenticationService.getAccessTokenInfo(jwt);
+        const _xummState = {
+          jwt: jwt,
+          me: accessTokenInfo.payload,
+          sdk: sdk
+        }
+        setXummState(_xummState);
+        AxiosService.setUser(_xummState);
+  };
+  
+  // const [xummState, setXummState] = useState();
+
+  // const xummSignInHandler = (state) => {
+  //   if (state.me) {
+  //     const { sdk, me, jwt } = state;
+  //     setXummState({ sdk, me, jwt });
+  //     console.log("identity:", me);
+  //     AxiosService.setUser(state);
+  //     // Also: sdk » xumm-sdk (npm)
+  //   }
+  // };
+
+  // // To pick up on mobile client redirects:
+  // xumm.on("retrieved", async () => {
+  //   console.log("Retrieved: from localStorage or mobile browser redirect");
+  //   xummSignInHandler(await xumm.state());
+  // });
 
 
   // xumm.authorize().then((session) => {
@@ -88,81 +191,68 @@ const App = () => {
   
   return (
     <>
+      {/* <div>browser: {JSON.stringify(sUsrAg)}</div> */}
       <BrowserRouter>
         <Routes>
-          <Route exact path="/wallet" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/wallet" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
               path="/wallet"
               element={<Wallet 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/ledger" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/ledger" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
               path="/ledger"
               element={<PayloadLedger 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/items" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/items" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
               path="/items"
               element={<PaymentItems 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>}
             />
           </Route>
-          <Route exact path="/item/edit/:id" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/item/edit/:id" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
               path="/item/edit/:id"
               element={<PaymentItemEditor 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>}
             />
           </Route>
-          <Route exact path="/item/create" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/item/create" element={<PrivateRoute xummState={xummState}/>}>
             <Route exact 
               path="/item/create" 
               element={<PaymentItemEditor 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>} />
           </Route>
-          <Route exact path="/item/details/:id" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/item/details/:id" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
               path="/item/details/:id"
               element={<PaymentItemViewer 
-                xumm={xumm} 
-                setXummState={setXummState} 
                 xummState={xummState}/>}
             />
           </Route>
 
-          <Route exact path="/receive" element={<PrivateRoute setXummState={setXummState} xummState={xummState}/>}>
+          <Route exact path="/receive" element={<PrivateRoute  xummState={xummState}/>}>
             <Route
               exact
               path="/receive"
               element={<ReceivePayment 
-                xumm={xumm} setXummState={setXummState} 
                 xummState={xummState}/>}
             />
-          </Route>
-          <Route path="/xapp" element={<XummApp xumm={xumm} xummState={xummState} setXummState={setXummState}/>} />
-          <Route path="/login" element={<Login xumm={xumm} xummState={xummState} setXummState={setXummState} xummSignInHandler={xummSignInHandler}/>} />
-          <Route path="/" element={<Home xumm={xumm} xummState={xummState} setXummState={setXummState}/>} />
+          </Route> 
+          <Route path="/xapp" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} />         
+          <Route path="/" element={<Home xummState={xummState}/>} />
         </Routes>
       </BrowserRouter>
     </>

@@ -85,7 +85,7 @@ const PaymentItemUploadModal = ({showModal, setShowModal}) => {
 
 };
 
-const PaymentItems = ({xumm, xummState, setXummState}) => {
+const PaymentItems = ({ xummState}) => {
 
   const navigate = useNavigate();
 
@@ -96,8 +96,6 @@ const PaymentItems = ({xumm, xummState, setXummState}) => {
   
   return (
     <Page withSidenav={true} 
-      xumm={xumm} 
-      setXummState={setXummState} 
       xummState={xummState}>
       <div className='p-4'>
         <div className="p-1 flex justify-between">        

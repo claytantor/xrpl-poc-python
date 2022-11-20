@@ -212,6 +212,8 @@ class XummWallet:
 
 
 
+
+
 class XUrlWallet:
     def __init__(self, network="https://s.altnet.rippletest.net:51234/", seed=None, isFaucet=False):
         print("network:", network)
@@ -319,22 +321,103 @@ class XUrlWallet:
 functional methods
 ==========================
 """
-def get_rpc_network(network):
-    if network.lower() == "testnet":
-        return "https://s.altnet.rippletest.net:51234/"
-    elif network.lower() == "mainnet":
-        return "https://s1.ripple.com:51234/"
-    else:
-        raise ValueError("network must be testnet or mainnet")
 
-def get_network_type(network):
-    if network.lower() == "https://s.altnet.rippletest.net:51234/":
-        return "testnet"
-    elif network.lower() == "https://s1.ripple.com:51234/":
-        return "mainnet"
-    else:
-        raise ValueError("network must be testnet or mainnet")
+"""
+If you don't run your own rippled server, you can use the following public servers to submit transactions or read data from the ledger.
 
+Operator	Network	JSON-RPC URL	WebSocket URL	Notes
+XRP Ledger Foundation	Mainnet	https://xrplcluster.com/
+https://xrpl.ws/ ²	wss://xrplcluster.com/
+wss://xrpl.ws/ ²	Full history server cluster.
+Ripple¹	Mainnet	https://s1.ripple.com:51234/	wss://s1.ripple.com/	General purpose server cluster
+Ripple¹	Mainnet	https://s2.ripple.com:51234/	wss://s2.ripple.com/	Full-history server cluster
+Sologenic	Mainnet		wss://x1.sologenic.org	Websocket Server
+Ripple¹	Testnet	https://s.altnet.rippletest.net:51234/	wss://s.altnet.rippletest.net/	Testnet public server
+Ripple¹	Devnet	https://s.devnet.rippletest.net:51234/	wss://s.devnet.rippletest.net/	Devnet public server
+"""
+
+xrp_lookup = {
+    's.altnet.rippletest.net':{
+        'json_rpc':'https://s.altnet.rippletest.net:51234',
+        'websocket':'wss://s.altnet.rippletest.net:51233',
+        'type':'testnet',
+    },
+    's.devnet.rippletest.net':{  
+        'json_rpc':'https://s.devnet.rippletest.net:51234',
+        'websocket':'wss://s.devnet.rippletest.net:51233',
+        'type':'devnet',
+    },
+    's1.ripple.com':{
+        'json_rpc':'https://s1.ripple.com:51234',
+        'websocket':'wss://s1.ripple.com:51233',
+        'type':'mainnet',
+    },
+    's2.ripple.com':{
+        'json_rpc':'https://s2.ripple.com:51234',
+        'websocket':'wss://s2.ripple.com:51233',
+        'type':'mainnet',
+    },
+    'xrplcluster.com':{
+        'json_rpc':'https://xrplcluster.com',
+        'websocket':'wss://xrplcluster.com',
+        'type':'mainnet',
+    },
+    'xrpl.ws':{
+        'json_rpc':'https://xrpl.ws',
+        'websocket':'wss://xrpl.ws',
+        'type':'mainnet',
+    },
+    'x1.sologenic.org':{
+        'json_rpc':'',
+        'websocket':'wss://x1.sologenic.org',
+        'type':'mainnet',
+    },
+    'xrpl.link':{
+        'json_rpc':'https://xrpl.link',
+        'websocket':'wss://xrpl.link',
+        'type':'mainnet',
+    },
+    'testnet.xrpl-labs.com':{
+        'json_rpc':'https://testnet.xrpl-labs.com:51234',
+        'websocket':'wss://testnet.xrpl-labs.com',
+        'type':'testnet',
+    },
+
+}
+
+def get_rpc_network_from_wss(wss_endpoint):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['websocket'] == wss_endpoint:
+            return xrp_lookup[domain]['json_rpc']
+    
+    return 'none'
+
+def get_rpc_network_type(network):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['json_rpc'] == network:
+            return xrp_lookup[domain]['type']
+    
+    return 'none'
+
+def get_wss_network_type(network):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['websocket'] == network:
+            return xrp_lookup[domain]['type']
+    
+    return 'none'
+
+
+def get_account_info(address, network="https://s.altnet.rippletest.net:51234/"):
+    client = JsonRpcClient(network)
+    acct_info = AccountInfo(
+        account=address,
+        ledger_index="current",
+        queue=True,
+        strict=True,
+    )
+    response = client.request(acct_info)
+    result = response.result
+    return result
 
 def xrp_to_drops(xrp):
     return int(xrp*DROPS_IN_XRP)

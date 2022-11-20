@@ -1,40 +1,36 @@
 import React, {useState, useEffect} from "react"
 import { useNavigate } from "react-router-dom";
-import { SiXrp } from 'react-icons/si';
+
 import { FaUserCircle } from 'react-icons/fa';
-import {XummPkce} from 'xumm-oauth2-pkce';
-import icon32 from "../assets/favicon_io/favicon-32x32.png"
 
-
-import { useStore } from "../zstore";
 import { xummConfig, whitepaperUrl } from "../env";
 
+import icon32 from "../assets/favicon_io/favicon-32x32.png"
+
 const Header = ({
-    xumm,
     xummState,
-    setXummState,
     children,
   }) => {
 
-    // useEffect(() => {
-    //     console.log("Header xumm state", xummState);
-    //     if (xummState && xummState.jwt) {
-    //         console.log("Header xumm state jwt", xummState.jwt);
-    //     }
-    // }, [xummState]);
 
-    const navigate = useNavigate();
+    let navigate = useNavigate();
+
+    let login = () => {
+        console.log("login", xummState);
+        xummState.sdk.authorize().then((session) => {
+            xummSignInHandler(session);
+         }).catch((err) => {
+            console.log("error on authorize",err);
+         });        
+    };
+    
 
     let logout = () => {
         console.log(`logout`, xummState);
-        setXummState(null);
-        xumm.logout();
+        xummState.sdk.logout();
         navigate("/");
     };
 
-    let login = () => {
-        navigate("/login");
-    };
 
     let wallet = () => {
         console.log(`wallet`);
@@ -64,7 +60,7 @@ const Header = ({
                                 <div className="p-1">
                                     <div className="dropdown inline-block relative">
                                         <button className="bg-pink-300 text-pink-700 font-semibold py-2 px-4 rounded-t inline-flex items-center">
-                                            <div className="mr-1 flex flex-row"><FaUserCircle className='mr-1'/>{xummState.me.sub}</div>
+                                            <div className="mr-1 flex flex-row"><FaUserCircle className='mr-1'/>{xummState.me.sub.substring(0, 8)+"..."}</div>
                                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/> </svg>
                                         </button>
                                         <ul style={{zIndex: 50}} className="dropdown-menu absolute hidden text-gray-700 pt-1 bg-gray-200 rounded-b w-full">

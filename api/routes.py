@@ -1,7 +1,7 @@
 import io
 from pydoc import describe
 import uuid
-from flask import Flask, jsonify, request, redirect, render_template, url_for
+from flask import Flask, jsonify, request, redirect, render_template, url_for, send_file
 from flask import current_app as app
 from flask_cors import cross_origin
 from flask_sqlalchemy import SQLAlchemy
@@ -19,10 +19,11 @@ import asyncio
 from PIL import Image
 
 from api.exchange_rates import xrp_price
-from api.xrpcli import XUrlWallet, get_network_type, verify_msg, drops_to_xrp
+from api.xqr import generate_qr_code
+from api.xrpcli import get_rpc_network_type, get_wss_network_type
 from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
 from api.serializers import PaymentItemDetailsSerializer
-from api.xrpcli import xrp_to_drops, XummWallet, get_rpc_network, get_xapp_tokeninfo
+from api.xrpcli import xrp_to_drops, get_xapp_tokeninfo, get_rpc_network_from_wss, get_account_info
 
 
 from . import db
@@ -153,6 +154,12 @@ def make_wallet(classic_address):
 @cross_origin()
 @log_decorator(app.logger)
 def get_wallet():
+
+    app.logger.info(
+        f"{request} {request.args} {request.headers} {request.environ} {request.method} {request.url}")
+
+
+
     # lookup the wallet by the classic address in the jwt
     jwt_body = get_token_body(dict(request.headers)[
                               "Authorization"].replace("Bearer ", ""))
@@ -164,16 +171,35 @@ def get_wallet():
         # create a new wallet
         # wallet = make_wallet(classic_address=jwt_body['sub']) # create a new wallet
 
-    # {'client_id': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'scope': 'XummPkce', 'aud': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'sub': 'rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y', 'email': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce+rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y@xumm.me', 'app_uuidv4': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'app_name': 'dev-xurlpay', 'payload_uuidv4': 'a9d8f45a-16ff-48ee-8ef1-163ce3b10f7c', 'usertoken_uuidv4': '4de21968-8c2f-4fb3-9bb6-94b589a13a8c', 'network_type': 'TESTNET', 'network_endpoint': 'wss://s.altnet.rippletest.net:51233', 'iat': 1668223704, 'exp': 1668310104, 'iss': 'https://oauth2.xumm.app'}
-    xumm_wallet = XummWallet(
-        network_endpoint=get_rpc_network(jwt_body['network_type']),
-        classic_address=wallet.classic_address)
+    # # {
+    #     "client_id": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+    #     "ott_uuidv4": "1e068541-a8c2-4a24-9023-65b42b578e7d",
+    #     "app_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+    #     "app_name": "dev-xurlpay",
+    #     "aud": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+    #     "sub": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
+    #     "iss": "https://xumm.app",
+    #     "usr": "5cc95aba-7e42-4485-befc-97fe087938eb",
+    #     "net": "wss://testnet.xrpl-labs.com",
+    #     "iat": 1668826143,
+    #     "exp": 1668912543
+    #     }
+
+
+    app.logger.info(f"jwt body: {json.dumps(jwt_body, indent=4)}")
+    rpc_network = 'wss://s.altnet.rippletest.net:51233'
+    if 'net' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['net'])
+    elif 'network_endpoint' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['network_endpoint'])
+    
+    account_info = get_account_info(wallet.classic_address, rpc_network)
 
     return jsonify({
         'classic_address': wallet.classic_address,
         'wallet_info': wallet.serialize(),
         'wallet_user_info': jwt_body,
-        'account_data': xumm_wallet.account_data}), 200
+        'account_data': account_info['account_data']}), 200
 
 
 @app.route("/wallet", methods=['POST'])
@@ -189,14 +215,14 @@ def create_wallet():
         # create a new wallet
         wallet = make_wallet(classic_address=jwt_body['sub'])
 
-    xumm_wallet = XummWallet(
-        network_endpoint=get_rpc_network(jwt_body['network_type']),
-        classic_address=wallet.classic_address)
+
+    rpc_network = get_rpc_network_from_wss(jwt_body['net'])
+    account_info = get_account_info(wallet.classic_address, rpc_network)
 
     return jsonify({
         'classic_address': wallet.classic_address,
         'wallet_info': jwt_body,
-        'account_data': xumm_wallet.account_data}), 200
+        'account_data': account_info}), 200
 
 
 @app.route("/pay_request", methods=['POST'])
@@ -224,22 +250,13 @@ def create_pay_request():
     if 'memo' in list(json_body.keys()):
         memo = json_body['memo']
 
-    # receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=wallet.seed)
-    # payment_request_dict, payment_request = receiving_wallet.generate_payment_request(amount=xrp_amount, memo=memo)
-
-    # xumm_wallet = XummWallet(
-    #     network_endpoint=get_rpc_network(jwt_body['network_type']),
-    #     classic_address=wallet.classic_address)
-
-    # xumm_payload = xumm_wallet.generate_payment_request(
-    #     xrp_amount=xrp_amount, memo=memo)
 
         payment_request_dict = {
             'amount': xrp_amount,
             'amount_drops': int(xrp_to_drops(xrp_amount)),
             'address':wallet.classic_address,
-            'network_endpoint':get_rpc_network(jwt_body['network_type']),
-            'network_type': get_network_type(get_rpc_network(jwt_body['network_type'])),
+            'network_endpoint':get_rpc_network_from_wss(jwt_body['network_type']),
+            'network_type': get_rpc_network_type(get_rpc_network_from_wss(jwt_body['network_type'])),
             'memo':memo,
             'request_hash':shortuuid.uuid(),
         }
@@ -486,41 +503,41 @@ def create_payment_item():
     return jsonify(response)
 
 
-@app.route("/xumm/deeplink/payment/basic", methods=['GET'])
-@cross_origin()
-@log_decorator(app.logger)
-def xumm_deeplink_payment_basic():
-    # lookup the wallet by the classic address in the jwt
-    classic_address = request.args.get('classic_address')
-    if classic_address is None:
-        return jsonify({"message": "wallet address not found, requires classic_address"}), HTTPStatus.BAD_REQUEST
+# @app.route("/xumm/deeplink/payment/basic", methods=['GET'])
+# @cross_origin()
+# @log_decorator(app.logger)
+# def xumm_deeplink_payment_basic():
+#     # lookup the wallet by the classic address in the jwt
+#     classic_address = request.args.get('classic_address')
+#     if classic_address is None:
+#         return jsonify({"message": "wallet address not found, requires classic_address"}), HTTPStatus.BAD_REQUEST
 
-    amount = request.args.get('amount')
-    if amount is None:
-        return jsonify({"message": "amount not found, requires amount"}), HTTPStatus.BAD_REQUEST
+#     amount = request.args.get('amount')
+#     if amount is None:
+#         return jsonify({"message": "amount not found, requires amount"}), HTTPStatus.BAD_REQUEST
 
-    memo = request.args.get('memo')
-    if memo is None:
-        memo = "xURL payment request"
+#     memo = request.args.get('memo')
+#     if memo is None:
+#         memo = "xURL payment request"
 
-    # classic_address = get_token_sub(dict(request.headers)["Authorization"])
-    wallet = db.session.query(Wallet).filter_by(
-        classic_address=classic_address).first()
-    if wallet is None:
-        return jsonify({"message": "wallet not found, bad request"}), HTTPStatus.BAD_REQUEST
+#     # classic_address = get_token_sub(dict(request.headers)["Authorization"])
+#     wallet = db.session.query(Wallet).filter_by(
+#         classic_address=classic_address).first()
+#     if wallet is None:
+#         return jsonify({"message": "wallet not found, bad request"}), HTTPStatus.BAD_REQUEST
 
-    create_payload = {
-        'txjson': {
-            'TransactionType': 'Payment',
-            'Destination': classic_address,
-            'Amount': str(xrp_to_drops(float(amount))),
-        }
-    }
+#     create_payload = {
+#         'txjson': {
+#             'TransactionType': 'Payment',
+#             'Destination': classic_address,
+#             'Amount': str(xrp_to_drops(float(amount))),
+#         }
+#     }
 
-    created = sdk.payload.create(create_payload)
+#     created = sdk.payload.create(create_payload)
 
-    # return jsonify(created.to_dict()), 200
-    return redirect(created.to_dict()['next']['always'], code=302)
+#     # return jsonify(created.to_dict()), 200
+#     return redirect(created.to_dict()['next']['always'], code=302)
 
 
 # @app.route("/xumm/ping", methods=['GET'])
@@ -678,15 +695,22 @@ def send_slack_message(message):
     except Exception as e:
         app.log_exception(f"==== slack webhook error: {e}")
 
-@app.route("/xumm/app", methods=['GET', 'POST', 'OPTIONS'])
+
+
+@app.route("/xumm/xapp", methods=['GET', 'OPTIONS'])
 @cross_origin()
 @log_decorator(app.logger)
-def xumm_app():
+def xumm_xapp():
 
-    app.logger.info("==== xumm app")
+    app.logger.info("==== xumm xapp")
 
     app.logger.info(
         f"{request} {request.args} {request.headers} {request.environ} {request.method} {request.url}")
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
+                                                 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                                                 'Access-Control-Allow-Methods': 'POST, OPTIONS'}
 
     # lookup the wallet by the classic address in the jwt
     xAppStyle = request.args.get('xAppStyle')
@@ -743,16 +767,27 @@ def xumm_app():
     #     }
 
     # lookup the action by the xAppNavigateData
+
+    # make sure they are using the correct network
+    if get_wss_network_type(xapp_session['nodewss']).lower() != str(config['XRP_NETWORK_TYPE']).lower():
+        app.logger.error(f"==== xapp_session nodewss network type {get_wss_network_type(xapp_session['nodewss'])} does not match config {config['XRP_NETWORK_TYPE']}")
+        return jsonify({"message": f"wrong network was expecting {config['XRP_NETWORK_TYPE']}, please switch and scan again"}), HTTPStatus.BAD_REQUEST
+
+    if 'xAppNavigateData' not in xapp_session:
+        return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+
     xAppNavigateData = xapp_session['xAppNavigateData']
     if xAppNavigateData is None:
-        return jsonify({"xAppNavigateData": "xAppNavigateData not found unauthorized"}), HTTPStatus.UNAUTHORIZED
+        return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
     
     app.logger.info(f"==== xAppNavigateData:\n{xAppNavigateData}")
     if xAppNavigateData['TransactionType'] is None:
-        return jsonify({"xAppNavigateData": "xAppNavigateData TransactionType not found unauthorized"}), HTTPStatus.BAD_REQUEST
+        # not an xurlpay transaction
+        return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
     
     if xAppNavigateData['LookupType'] is None:
-        return jsonify({"xAppNavigateData": "xAppNavigateData LookupType not found unauthorized"}), HTTPStatus.BAD_REQUEST
+        # not an xurlpay transaction
+        return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
 
     lookupType = xAppNavigateData['LookupType']
     if(lookupType == "PaymentItem"):
@@ -767,5 +802,37 @@ def xumm_app():
         return make_payment_item_payload_response(payment_item)
 
     else:
-        return jsonify({"xAppNavigateData": "xAppNavigateData ActionType not found unauthorized"}), HTTPStatus.BAD_REQUEST
+        # not an xurlpay transaction
+        return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
 
+
+@app.route('/xumm/qr', methods=['GET', 'OPTIONS'])
+def serve_img():
+    app.logger.info("==== xumm webhook")
+
+    if request.method == 'OPTIONS':
+        return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
+                                                 'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                                                 'Access-Control-Allow-Methods': 'POST, OPTIONS'}
+
+    # lookup the wallet by the classic address in the jwt
+    url = request.args.get('url')
+    if url is None:
+        url = 'https://dev.xurlpay.org/xapp' 
+
+    app.logger.info(f"==== making qr for {url}")                                                
+
+    img = generate_qr_code({'url': url})
+    return serve_pil_image(img)
+
+def serve_pil_image(pil_img, type='PNG', mimetype='image/png'):
+    img_io = io.BytesIO()
+    pil_img.save(img_io, type, quality=70)
+    img_io.seek(0)
+    return send_file(img_io, mimetype=mimetype)
+
+# def serve_pil_image_bytes(pil_img, type='PNG', mimetype='image/png'):
+#     img_io = BytesIO()
+#     pil_img.save(img_io, 'JPEG', quality=70)
+#     img_io.seek(0)
+#     return send_file(img_io, mimetype='image/jpeg')

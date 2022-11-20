@@ -85,8 +85,8 @@ axiosInstance.interceptors.request.use((config) => {
 });
 
 
-function get(url) {
-    return axiosInstance.get(url)
+function get(url, data) {
+    return axiosInstance.get(url, data)
 }
 
 function post(url, data) {
@@ -101,8 +101,8 @@ function destroy(url, data) {
     return axiosInstance.destroy(url, data);
 }
 
-function del(url) {
-    return axiosInstance.delete(url);
+function del(url, data) {
+    return axiosInstance.delete(url, data);
 }
 
 function setUser(user) {

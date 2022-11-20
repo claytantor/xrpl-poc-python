@@ -6,15 +6,13 @@ import PaymentRequest from "../components/PaymentRequest";
 import PaymentRequestForm from "../components/PaymentRequestForm";
 
 
-const ReceivePayment = ({xumm, xummState, setXummState}) => {
+const ReceivePayment = ({xummState}) => {
     
     const [paymentRequest, setPaymentRequest] = useState();
 
     return (
         <>
         <Page withSidenav={true} 
-            xumm={xumm} 
-            setXummState={setXummState} 
             xummState={xummState}> 
             <div className="p-4"> 
                 <div className="p-1 flex w-full justify-center">

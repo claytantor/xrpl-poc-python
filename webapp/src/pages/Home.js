@@ -4,13 +4,33 @@ import Page from "../components/Page";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 import { whitepaperUrl } from "../env";
 import {xummConfig} from "../env"
+import xummLogo from "../assets/img/xumm_logo.png"
 
+const Home = ({xummState}) => {
 
-const Home = ({xumm, xummState, setXummState}) => {
+  // let login = () => {
+  //   xumm.authorize().then((session) => {
+  //       xummSignInHandler(session);
+  //    }).catch((err) => {
+  //       console.log("error on authorize",err);
+  //    });        
+  // };
+
   return (
     <>
-      <Page xumm={xumm} xummState={xummState} setXummState={setXummState}>
-        <div className="p-1">
+      <Page xummState={xummState}>
+        <div className="p-4">
+
+          {/* <div className="flex flex-row justify-center">
+              {xummState && xummState.me ?<>You are logged in.</>:               
+              <div className="w-64 mt-8">
+                  <img src={xummLogo} alt="xummLogo" className="m-5"/>
+                  <button className="bg-pink-600 inline-block px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-900 hover:bg-pink-400 m-4 text-2xl" onClick={()=>login()}>Login with xumm</button>
+              </div>}
+          </div>  */}
+
+
+
           <div className="p-8 flex-col justify-center overflow-hidden">
             <div className="rounded z-10 relative bg-white px-6 pt-6 pb-6 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:max-w-lg sm:rounded-lg sm:px-10">
               <div className="mx-auto max-w-md">

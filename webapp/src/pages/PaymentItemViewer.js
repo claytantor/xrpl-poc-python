@@ -5,13 +5,14 @@ import QRCode from "react-qr-code";
 import {SiXrp} from "react-icons/si";
 
 import Page from "../components/Page";
+import XummQrCode from "../components/XummQrCode";
 import { PaymentItemService } from "../services/PaymentItemService";
 import { WalletService } from "../services/WalletService";
 
 import xurlIcon32 from "../assets/favicon_io/favicon-32x32.png";
 import xummLogo from "../assets/img/xumm_logo.png"
 
-const PaymentItemViewer = ({xumm, xummState, setXummState}) => {
+const PaymentItemViewer = ({xummState}) => {
 
   const { id } = useParams();
 
@@ -26,6 +27,7 @@ const PaymentItemViewer = ({xumm, xummState, setXummState}) => {
     console.log("useEffect", id)
     PaymentItemService.getById(id).then(r => {
       let p_i = r.data;
+      console.log("PaymentItemViewer", p_i);
       setPaymentItem(p_i);
       if (p_i.images && p_i.images.length > 0) {
         setItemImage(p_i.images[0]['data_url'])
@@ -40,8 +42,6 @@ const PaymentItemViewer = ({xumm, xummState, setXummState}) => {
   
   return (
     <Page withSidenav={true} 
-      xumm={xumm} 
-      setXummState={setXummState} 
       xummState={xummState}>
       <div className='p-4'>
         
@@ -73,7 +73,8 @@ const PaymentItemViewer = ({xumm, xummState, setXummState}) => {
                   </div> */}
 
                   <div className="m-1 flex flex-row justify-center bg-white w-96 p-3 rounded-md">
-                    <QRCode value={paymentItem.xurl} />
+                    {/* <XummQrCode url={paymentItem.xurl} /> */}
+                    <QRCode value={paymentItem.xurl} size={256} />
                   </div>
 {/* 
                   <div className="m-1 w-96 p-3 rounded bg-slate-700 text-pink-300 font-mono text-xs">

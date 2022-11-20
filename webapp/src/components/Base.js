@@ -1,8 +1,8 @@
 import React, {useEffect, useState } from "react"
 
-export const Alert = ({ background, children }) => {
+export const Alert = ({ background, text, children }) => {
   return (
-    <div className={`p-2 flex flex-row rounded ${background} w-full`} role="alert">
+    <div className={`p-2 flex flex-row rounded ${background} ${text} w-full`} role="alert">
       {children}
     </div>
   );
@@ -10,7 +10,7 @@ export const Alert = ({ background, children }) => {
 
 export const HelpAlert = ({ children, helpLink }) => {
   return (
-    <Alert background="bg-pink-100">
+    <Alert background="bg-pink-100" text="text-slate-800">
         <div className="flex flex-row justify-end">
             <div>{children}</div>
         </div>      
