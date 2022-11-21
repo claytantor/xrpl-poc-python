@@ -2,34 +2,18 @@ import React, { useState } from "react";
 
 import Page from "../components/Page";
 import { AiOutlineCheckCircle } from "react-icons/ai";
-import { whitepaperUrl } from "../env";
-import {xummConfig} from "../env"
-import xummLogo from "../assets/img/xumm_logo.png"
+import {FiAlertCircle} from "react-icons/fi";
+
+import { Alert } from "../components/Base";
+import {xummConfig, deploymentEnv, whitepaperUrl} from "../env"
+
 
 const Home = ({xummState}) => {
-
-  // let login = () => {
-  //   xumm.authorize().then((session) => {
-  //       xummSignInHandler(session);
-  //    }).catch((err) => {
-  //       console.log("error on authorize",err);
-  //    });        
-  // };
 
   return (
     <>
       <Page xummState={xummState}>
         <div className="p-4">
-
-          {/* <div className="flex flex-row justify-center">
-              {xummState && xummState.me ?<>You are logged in.</>:               
-              <div className="w-64 mt-8">
-                  <img src={xummLogo} alt="xummLogo" className="m-5"/>
-                  <button className="bg-pink-600 inline-block px-4 py-2 leading-none border rounded-xl text-white border-white hover:border-transparent hover:text-pink-900 hover:bg-pink-400 m-4 text-2xl" onClick={()=>login()}>Login with xumm</button>
-              </div>}
-          </div>  */}
-
-
 
           <div className="p-8 flex-col justify-center overflow-hidden">
             <div className="rounded z-10 relative bg-white px-6 pt-6 pb-6 shadow-xl ring-1 ring-gray-900/5 sm:mx-auto sm:max-w-lg sm:rounded-lg sm:px-10">
@@ -37,6 +21,17 @@ const Home = ({xummState}) => {
                 <div className="text-4xl font-bold text-pink-800">
                   xurlpay.org
                 </div>
+                {deploymentEnv === 'local' && 
+                <div className="flex flex-row mt-3">
+                  <Alert background={"bg-pink-100"} text={"text-pink-800 text-lg font-bold"}>
+                    <div className="mr-2">
+                      <FiAlertCircle className="text-2xl"/>
+                    </div>
+                    <div>
+                      NOTE: This project is currently in development. If you would like early access please <a href="mailto:claytantor@gmail.com" className="underline">contact us</a>
+                    </div>
+                  </Alert>
+                </div>}
                 <div className="divide-y divide-gray-300/50">
                   <div className="space-y-6 py-8 text-base leading-7 text-gray-600">
                     <div>
