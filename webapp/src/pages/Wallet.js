@@ -8,7 +8,9 @@ import { WalletService } from "../services/WalletService"
 import { SiXrp } from "react-icons/si"
 import {BiLinkExternal} from "react-icons/bi"
 
-import {xummConfig} from "../env"
+import {xummConfig, currencyLang} from "../env"
+
+import { useStore } from '../zstore';
 
 const AccountInfo = ({accountInfo}) => {
     return (
@@ -28,6 +30,8 @@ const AccountInfo = ({accountInfo}) => {
 
 const Wallet = ({xummState}) => {
 
+    const userCurrency = useStore(state => state.userCurrency);
+
     let [walletInfo, setWalletInfo] = useState(null);
     let [xrpPrice, setXrpPrice] = useState(null);
 
@@ -42,8 +46,8 @@ const Wallet = ({xummState}) => {
     useEffect(() => {
         WalletService.getWallet().then((walletInfo) => {
             setWalletInfo(walletInfo.data);
-            WalletService.getXrpPrice(walletInfo.data.wallet_info.fiat_i8n_currency).then((xrpPrice) => {
-                setXrpPrice(xrpPrice.data.price);
+            WalletService.getXrpPrice(userCurrency).then((xrpPrice) => {
+                setXrpPrice(xrpPrice.data.XRP);
             });
         }).catch((error) => {
             console.log("error", error, error.code, error.message, error.response.status);
@@ -89,8 +93,10 @@ const Wallet = ({xummState}) => {
 
                     </div>
                     {xrpPrice && 
-                        <div className="rounded break-words flex-row flex mt-2 w-full justify-end">
-                        <div className="font-mono text-pink-900">{fiatAmount(parseInt(walletInfo.account_data.Balance))} {walletInfo.wallet_info.fiat_i8n_currency}</div>
+                        <div className="rounded break-words flex-row flex w-full justify-center md:justify-end">
+                        <div className="font-mono text-pink-900 text-lg font-bold">
+                            {Intl.NumberFormat(currencyLang[userCurrency], { style: 'currency', currency: userCurrency }).format(fiatAmount(parseInt(walletInfo.account_data.Balance)))} {userCurrency}
+                        </div>
                     </div>}
                     <AccountInfo accountInfo={walletInfo.account_data}/>  
 
@@ -100,6 +106,6 @@ const Wallet = ({xummState}) => {
         </>
 
     )
-}
+};
 
 export default Wallet

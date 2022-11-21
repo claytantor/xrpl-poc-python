@@ -20,7 +20,7 @@ from PIL import Image
 
 from api.exchange_rates import xrp_price
 from api.xqr import generate_qr_code
-from api.xrpcli import get_rpc_network_type, get_wss_network_type
+from api.xrpcli import get_rpc_network_from_jwt, get_rpc_network_type, get_wss_network_type
 from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
 from api.serializers import PaymentItemDetailsSerializer
 from api.xrpcli import xrp_to_drops, get_xapp_tokeninfo, get_rpc_network_from_wss, get_account_info
@@ -51,6 +51,7 @@ scopes = {
 }
 
 
+
 @app.route("/")
 def hello_world():
     return jsonify({'message': "Hello xURL"}), 200
@@ -68,8 +69,35 @@ def api_version():
 @cross_origin()
 @log_decorator(app.logger)
 def xrp_price_from_currency(fiat_i8n_currency):
-    xrp_quote = asyncio.run(xrp_price(fiat_i8n_currency))
-    return jsonify({'price': xrp_quote}), 200
+
+    # lookup the wallet by the classic address in the jwt
+    jwt_body = get_token_body(dict(request.headers)[
+                              "Authorization"].replace("Bearer ", ""))
+
+    wallet = db.session.query(Wallet).filter_by(
+        classic_address=jwt_body['sub']).first()
+    if wallet is None:
+        return jsonify({"message": "wallet not found"}), HTTPStatus.NOT_FOUND
+
+    # print('should fetch rates')
+    # sdk = xumm.XummSdk(
+    #     cls.json_fixtures['api']['key'],
+    #     cls.json_fixtures['api']['secret']
+    # )
+
+    # mock_get.return_value = Mock(status_code=200)
+    # mock_get.return_value.json.return_value = cls.json_fixtures['rates']
+    # cls.assertEqual(sdk.get_rates('usd').to_dict(), cls.json_fixtures['rates'])
+
+    # get rates from xumm
+    rates = sdk.get_rates(fiat_i8n_currency).to_dict()
+    app.logger.info(f"==== xumm rates: {rates}")
+
+
+
+
+    # xrp_quote = asyncio.run(xrp_price(fiat_i8n_currency))
+    return jsonify(rates), 200
 
 
 @app.route('/auth/access_token', methods=['POST', 'OPTIONS'])
@@ -187,7 +215,7 @@ def get_wallet():
 
 
     app.logger.info(f"jwt body: {json.dumps(jwt_body, indent=4)}")
-    rpc_network = 'wss://s.altnet.rippletest.net:51233'
+    rpc_network = 'https://s.altnet.rippletest.net:51234'
     if 'net' in jwt_body:
         rpc_network = get_rpc_network_from_wss(jwt_body['net'])
         app.logger.info(f"rpc_network: {rpc_network} net:{jwt_body['net']}")
@@ -242,6 +270,8 @@ def create_pay_request():
     jwt_body = get_token_body(dict(request.headers)[
                               "Authorization"].replace("Bearer ", ""))
 
+    app.logger.info(f"jwt body: {json.dumps(jwt_body, indent=4)}")
+
     wallet = db.session.query(Wallet).filter_by(
         classic_address=jwt_body['sub']).first()
     if wallet is None:
@@ -260,8 +290,8 @@ def create_pay_request():
             'amount': xrp_amount,
             'amount_drops': int(xrp_to_drops(xrp_amount)),
             'address':wallet.classic_address,
-            'network_endpoint':get_rpc_network_from_wss(jwt_body['network_type']),
-            'network_type': get_rpc_network_type(get_rpc_network_from_wss(jwt_body['network_type'])),
+            'network_endpoint':get_rpc_network_from_jwt(jwt_body),
+            'network_type': get_rpc_network_type(get_rpc_network_from_jwt(jwt_body)),
             'memo':memo,
             'request_hash':shortuuid.uuid(),
         }

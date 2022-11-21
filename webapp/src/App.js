@@ -25,6 +25,7 @@ import "./App.css";
 var sBrowser, sUsrAg = navigator.userAgent;
 
 import { XummPkce } from 'xumm-oauth2-pkce';
+import UserSettings from "./pages/UserSettings";
 const xummPkce = new XummPkce(xummConfig["api-key"]);
 
 const { XummSdkJwt } = require('xumm-sdk')
@@ -148,47 +149,6 @@ const App = () => {
         AxiosService.setUser(_xummState);
   };
   
-  // const [xummState, setXummState] = useState();
-
-  // const xummSignInHandler = (state) => {
-  //   if (state.me) {
-  //     const { sdk, me, jwt } = state;
-  //     setXummState({ sdk, me, jwt });
-  //     console.log("identity:", me);
-  //     AxiosService.setUser(state);
-  //     // Also: sdk » xumm-sdk (npm)
-  //   }
-  // };
-
-  // // To pick up on mobile client redirects:
-  // xumm.on("retrieved", async () => {
-  //   console.log("Retrieved: from localStorage or mobile browser redirect");
-  //   xummSignInHandler(await xumm.state());
-  // });
-
-
-  // xumm.authorize().then((session) => {
-  //   xummSignInHandler(session);
-  // });
-
-
-  // xumm.on("success", async () => {
-  //     console.log("success");
-  //     const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-  //     console.log('Authorized', /* authorized.jwt, */ authorized);
-  //     AxiosService.setUser(authorized);
-  //     setXummState(authorized);
-  // });
-
-  // xumm.on("retrieved", async () => {
-  //     console.log("Retrieved: from localStorage or mobile browser redirect")
-  //     const authorized = await xumm.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
-  //     console.log('Authorized', /* authorized.jwt, */ authorized);
-  //     AxiosService.setUser(authorized);
-  //     setXummState(authorized);
-  // });
-
-  
   return (
     <>
       {/* <div>browser: {JSON.stringify(sUsrAg)}</div> */}
@@ -251,6 +211,17 @@ const App = () => {
                 xummState={xummState}/>}
             />
           </Route> 
+
+          <Route exact path="/settings" element={<PrivateRoute  xummState={xummState}/>}>
+            <Route
+              exact
+              path="/settings"
+              element={<UserSettings 
+                xummState={xummState}/>}
+            />
+          </Route> 
+
+
           <Route path="/xapp" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} />         
           <Route path="/" element={<Home xummState={xummState}/>} />
         </Routes>

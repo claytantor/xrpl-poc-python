@@ -66,10 +66,13 @@ const Header = ({
                                         <ul style={{zIndex: 50}} className="dropdown-menu absolute hidden text-gray-700 pt-1 bg-gray-200 rounded-b w-full">
                                             <li className="">
                                                 <button onClick={wallet} className="hover:underline font-semibold cursor-pointer text-black  py-2 px-4 block whitespace-no-wrap">Wallet</button>
-                                                </li>
-                                            <li className="">
-                                                <button onClick={()=>logout()} className="hover:underline font-semibold cursor-pointer text-black rounded-b py-2 px-4 block whitespace-no-wrap">Logout</button>
                                             </li>
+                                            <li className="">
+                                                <button onClick={()=>navigate("/settings")} className="hover:underline font-semibold cursor-pointer text-black rounded-b py-2 px-4 block whitespace-no-wrap">Settings</button>
+                                            </li>                                        
+                                            {/* <li className="">
+                                                <button onClick={()=>logout()} className="hover:underline font-semibold cursor-pointer text-black rounded-b py-2 px-4 block whitespace-no-wrap">Logout</button>
+                                            </li> */}
 
                                         </ul>
                                     </div>

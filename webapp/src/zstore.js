@@ -9,9 +9,13 @@ export const useStore = create(
       setXummState: (xummState) => set({
         xummState: xummState
       }),
-      logout: () => {
-        console.log("logout");
-      },
+
+      userCurrency: "USD",
+      getUserCurrency: () => get({ userCurrency }),
+      setUserCurrency: (userCurrency) => set({
+        userCurrency: userCurrency
+      }),
+
       //========== ITEM CART ====================================
       paymentItemCart: [],
       emptyCart: () => set({ paymentItemCart: [] }),

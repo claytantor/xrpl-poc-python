@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 
 // import { useStore } from '../zstore';
 
+import {currencyLang} from '../env';
+
 
 const PaymentItemSummary = ({ 
     paymentItem,
@@ -43,7 +45,7 @@ const PaymentItemSummary = ({
                 </div>
                 <div className="px-1 pt-1 pb-2">
                     <span className="flex justify-end px-1 py-1 text-2xl font-semibold text-gray-700 mr-1 mb-2">
-                        {Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
+                        {Intl.NumberFormat(currencyLang[paymentItem.fiat_i8n_currency], { style: 'currency', currency: paymentItem.fiat_i8n_currency }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
                     </span>
                     <div className='flex justify-end flex-wrap'>
                         <button className="btn-common-pink text-xs" onClick={()=>navigate(`/item/details/${paymentItem.payment_item_id}`)}>

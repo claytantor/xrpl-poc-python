@@ -385,6 +385,16 @@ xrp_lookup = {
 
 }
 
+def get_rpc_network_from_jwt(jwt_body):
+    rpc_network = xrp_lookup['s.altnet.rippletest.net']['json_rpc']
+    if 'net' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['net'])
+        # app.logger.info(f"rpc_network: {rpc_network} net:{jwt_body['net']}")
+    elif 'network_endpoint' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['network_endpoint'])
+        # app.logger.info(f"rpc_network: {rpc_network} network_endpoint:{jwt_body['network_endpoint']}")
+    return rpc_network
+
 def get_rpc_network_from_wss(wss_endpoint):
     for domain in xrp_lookup.keys():
         if xrp_lookup[domain]['websocket'] == wss_endpoint:

@@ -35,8 +35,21 @@ const PaymentItemViewer = ({xummState}) => {
         setItemImage(p_i.images[0]['data_url'])
       }
       WalletService.getXrpPrice(p_i.fiat_i8n_currency).then((xrpPrice) => {
-        setXrpPrice(xrpPrice.data.price);
-        setXrpAmount((p_i.fiat_i8n_price * xrpPrice.data.price).toFixed(6));
+        // {
+        //   "USD": 1,
+        //   "XRP": 0.37289,
+        //   "__meta": {
+        //     "currency": {
+        //       "code": "USD",
+        //       "en": "US Dollar",
+        //       "isoDecimals": 4,
+        //       "symbol": "$"
+        //     }
+        //   }
+        // }
+
+        setXrpPrice(xrpPrice.data.XRP);
+        setXrpAmount((p_i.fiat_i8n_price * xrpPrice.data.XRP).toFixed(6));
       });
     });
       
@@ -70,7 +83,7 @@ const PaymentItemViewer = ({xummState}) => {
                   </div>
                   <div className="m-1 flex flex-row justify-center">
                     <span className="flex justify-end px-1 py-1 text-3xl font-bold font-monospace text-pink-700 mr-1 mb-2">
-                        {Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
+                        {Intl.NumberFormat('en-US', { style: 'currency', currency: paymentItem.fiat_i8n_currency }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
                     </span>
 
                   </div>
