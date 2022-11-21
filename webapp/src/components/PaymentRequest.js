@@ -9,6 +9,7 @@ import React, { Component } from 'react';
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 
 import {BiCheckCircle} from "react-icons/bi"
+import {BiQrScan} from "react-icons/bi"
 
 const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
     
@@ -44,6 +45,8 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
           setTimeout(() => {
             wsclient.close();
           }, 3000);    
+        } else if ("opened" in m_payload) {
+          setPayloadState("OPENED");
         } else if ("expired" in m_payload) { 
           wsclient.close(); 
         }
@@ -110,12 +113,17 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
                 <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(customPayloadMeta.amount).toFixed(2)} <SiXrp className="ml-1"/></div>
             </div></>}
             <div className="w-full">
-              <div className="w-full flex justify-center">
-
-                <div className="p-2 rounded-xl bg-white flex items-center">
-                    {paymentRequest && payloadState == "CREATED" && (
-                        <img src={paymentRequest.refs.qr_png} />
-                    )}
+              <div className="w-full flex flex-col justify-center">
+                {paymentRequest && payloadState == "OPENED" && 
+                      <span className="inline-flex justify-center items-center p-1 m-1 text-lg font-bold bg-slate-200 text-gray-800 rounded-lg dark:bg-gray-700 dark:text-gray-300">Scan OK <BiQrScan className="ml-1"/></span>
+                }
+                {paymentRequest && payloadState == "RESOLVED" && 
+                      <span className="inline-flex justify-center items-center p-1 m-1 text-lg font-bold bg-green-200 text-green-800 rounded-lg dark:bg-green-700 dark:text-green-300">Transaction Signed</span>
+                }
+                <div className="p-2 rounded-xl bg-white flex flex-col justify-center items-center">
+                    {paymentRequest &&  ["CREATED", "OPENED"].includes(payloadState) && 
+                      <img src={paymentRequest.refs.qr_png} />
+                    }                 
                     {paymentRequest && payloadState == "RESOLVED" && (
                         <BiCheckCircle className="text-green-600 text-9xl"/>
                     )}

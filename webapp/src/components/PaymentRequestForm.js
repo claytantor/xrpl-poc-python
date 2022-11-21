@@ -38,18 +38,17 @@ const PaymentRequestForm = ({ setPaymentRequest }) => {
 
     if(!error) {
       //convert amount to xrp
-      newFormState = { ...formState, 'amount': formState.amount / xrpPrice };
+      const newFormState = { ...formState, 'amount': formState.amount / xrpPrice };
       console.log("newFormState", newFormState);
 
       WalletService.postPayRequest(newFormState).then(r => {
         console.log("new payment request",r.data);
         setPaymentRequest(r.data);
-        setLoading(false);
       }).catch(error => { 
           console.log(error)
       }).finally(() => {
-          // console.log("finally")
-          setLoading(false);
+        // console.log("finally")
+        setLoading(false);
       }); 
     }
   };   
@@ -116,9 +115,9 @@ const PaymentRequestForm = ({ setPaymentRequest }) => {
             <div className="p-2 flex justify-center w-full">
               <button className="bg-pink-500 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-xl focus:outline-none focus:shadow-outline" onClick={handleSubmit}>
                 Create Payment Request
-              </button>
-              {loading && <Spinner />}
+              </button>         
             </div>
+            {loading && <div className="fp-2 flex justify-center w-full"><Spinner /></div>}
           </form>
         </div>
       </div>

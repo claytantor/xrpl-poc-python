@@ -10,7 +10,7 @@ export const AuthenticationService = {
   }, 
   getAccessTokenInfo (token, caller = 'default') {
 
-    console.log('getAccessTokenInfo A:', token);
+    // console.log('getAccessTokenInfo A:', token);
   
     if(token !== undefined){
       // const token = userInfo.jwt;
@@ -21,7 +21,7 @@ export const AuthenticationService = {
   
       let expirationMoment = moment(`${decoded_payload.exp}`, 'X');
       let active = moment(`${decoded_payload.exp}`, 'X').isAfter(moment.utc());
-      console.log('getAccessTokenInfo B:', decoded_payload, decoded_header, expirationMoment, active, moment.utc());
+      // console.log('getAccessTokenInfo B:', decoded_payload, decoded_header, expirationMoment, active, moment.utc());
   
       return {
         header: decoded_header,

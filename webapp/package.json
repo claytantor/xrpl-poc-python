@@ -31,7 +31,6 @@
     "react-images-uploading": "^3.1.7",
     "react-qr-code": "^2.0.8",
     "react-router-dom": "^6.4.3",
-    "socket.io-client": "^4.5.3",
     "tailwindcss": "^3.2.4",
     "websocket": "^1.0.34",
     "xumm-oauth2-pkce": "^2.1.6",

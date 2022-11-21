@@ -84,9 +84,15 @@ const App = () => {
 
   const [xAppLoginError, setXAppLoginError] = useState();
   const [xummState, setXummState] = useState();
+
   const [xummSdkJwt, setXummSdkJwt] = useState(
     getSdkJwtStorage() || false
   );
+
+  const [xummPkceJwt, setXummPkceJwt] = useState(
+    JSON.parse(localStorage.getItem('XummPkceJwt')) || false
+  );
+
 
   useEffect(() => {
 
@@ -119,9 +125,13 @@ const App = () => {
 
     } else {
       console.log("Not xumm");
-      if(xummState == null){
+      if (xummPkceJwt.jwt) {
+        xummSignInHandler(xummPkceJwt.jwt, null);
+      } else { 
+        console.log("PrivateRoute xumm state accessTokenInfo not active");
         setXummState({sdk:xummPkce, me:null, jwt:null}); //needed to login
       }
+
       xummPkce.on("success", async () => {
           console.log("success");
           const authorized = await xummPkce.state() // state.sdk = instance of https://www.npmjs.com/package/xumm-sdk
