@@ -86,3 +86,64 @@ This will start the react app with the local deployment configuration and use th
 
 [https://localhost:3001/](https://localhost:3001/)
 
+## generating certs and keys for flask app
+
+```bash
+sudo apt install libnss3-tools -y
+sudo apt install openssl -y
+
+wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
+sudo cp mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
+sudo chmod +x /usr/local/bin/mkcert
+
+openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365 -subj "/C=US/ST=Oregon/L=Portland/O=XurlPay.org/CN=dev-xurlpay.org"
+
+```
+
+# rsync to ec2 instance
+
+```bash
+bash cicd/sh/rsync-api.sh
+```
+
+# xApp webhook response
+
+```json
+{
+    "meta": {
+        "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
+        "application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+        "payload_uuidv4": "a44e2edf-563f-4c59-b551-4b442a009477",
+        "opened_by_deeplink": false
+    },
+    "custom_meta": {
+        "identifier": null,
+        "blob": null,
+        "instruction": null
+    },
+    "payloadResponse": {
+        "payload_uuidv4": "a44e2edf-563f-4c59-b551-4b442a009477",
+        "reference_call_uuidv4": "b608d181-520f-4282-a0bd-6e6e7de7d14d",
+        "signed": true,
+        "user_token": true,
+        "return_url": {
+            "app": null,
+            "web": null
+        },
+        "txid": "336EFE27BEB7B494150D9DB7C59F8AA6AD3FDDE4E2AC51364797C9EBEF0BD599"
+    },
+    "userToken": {
+        "user_token": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
+        "token_issued": 1667957297,
+        "token_expiration": 1670553892
+    }
+}
+```
+
+
+https://dev.xurlpay.org/api/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25
+
+https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25
+
+
+`https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25` and it redirects to my xApp as `https://xumm.app/detect/xapp:sandbox.32849dc99872?amount={amount}&memo={memo}&classic_address={classic_address}` but when it comes back to my server the params have been stripped: `<Request 'http://ec2-34-211-56-213.us-west-2.compute.amazonaws.com:5000/xumm/app?xAppStyle=LIGHT&xAppToken=4dc0be9a-922b-4665-97d7-1c1fa73e76fc' [GET]` 

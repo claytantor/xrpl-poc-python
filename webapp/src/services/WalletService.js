@@ -8,6 +8,9 @@ export const WalletService = {
     getVersion(){
         return AxiosService.get(`/version`);     
     },
+    getXrpPrice(currency){
+        return AxiosService.get(`/xrp/price/${currency}`);     
+    },
     getWallet(){
         console.log("getWallet");
         return AxiosService.get(`/wallet`);     

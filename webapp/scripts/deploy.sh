@@ -15,7 +15,7 @@ fi
 echo "using environment ${env}" 
 
 if [[ $env == "dev" ]]; then
-    dist_id=''
+    dist_id='EZP7QB7M0R8J0'
     s3_bucket='dev.xurlpay.org'
 elif [[ $env == "prd" ]]; then
     dist_id='E3RWVWNCYFY2QA'

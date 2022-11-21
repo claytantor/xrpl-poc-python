@@ -4,40 +4,58 @@ skinparam usecase {
     BackgroundColor<< xInvoice >> #ffabb0
 }
 
-package "xInvoice App" {
-    (Scans xURL)
-    (Pay xInvoice\nPayment Request) as (PayInvoice)<<xInvoice>>
+package "xURL xumm app" {
+    (Scans xApp OAuth2 QR) as xAppLogin
+    (Signs xApp OAuth2 QR) as xAppSign 
+    (Scans Payment xURL) as xAppxURLScan
+    (Sign Payment Payload) as xAppSignPayment
 }
-note right
-this is the mobile wallet or 
-webapp that scans the xURL 
-and pays the invoice, current 
-proposal is a xumm app plugin
+note left of xAppLogin
+    xApp OAuth2 QR
+    contains xApp URL
+    and xApp Callback URL
 end note
 
-package "xInvoice Backend" {
-    (GET Callback)
-    (Creates xURL)
-    (Generate xInvoice\nPayment Request) as (GenerateInvoice)<<xInvoice>>
-    (POST Stateful Reference)
-    (Perform Orchestration or\nFiat Conversion) as (Orchestrate)
-    (GET Stateful Reference)
+package "xURL Backend (xurlpay.org)" {
+    (Login to xURL Backend\nusing xumm Pkce) as xuLoginBackend
+    (Handle xURL Deeplink Request) as xuHandleDeeplink
+    (Creates xURL) as xuCreateXurl
+    (Generate xApp Payment Payload) as xuGeneratePayload
+    (Perform Orchestration or\nFiat Conversion) as xuOrchestrate
+    (Use LookupRef to Determine State) as xLookupRef
+    (POST Stateful Reference of LookupRef) as (PostxURL)
+    (Redirect to xApp with Payload) as xuRedirect
 }
 
-Requestor-->(Creates xURL)
-(Creates xURL)-->(POST Stateful Reference)
 
-Payer-->(Scans xURL)
-(Scans xURL)-->(GET Stateful Reference)
-(GET Stateful Reference)-->(Orchestrate)
-(GET Stateful Reference)-->(GenerateInvoice)
+'oath login
+Requestor --> xAppLogin
+xAppLogin -> xAppSign
+xAppSign --> xuLoginBackend
 
-Payer-->(PayInvoice)
-(PayInvoice)-->(GET Callback)
+' create xurl
+Requestor-->xuCreateXurl
+note right of xuCreateXurl
+    wallet user creates PaymentItem
+    that is referenced by xURL in the
+    xurlpay.org xApp backend
+end note
 
-note "these are the same use\ncase as xInvoice " as N2
-(GenerateInvoice) .. N2
-N2 .. (PayInvoice)
+'pay xurl
+Payer --> xAppxURLScan
+Payer --> xAppSignPayment
+xAppxURLScan-->xuHandleDeeplink
+xuHandleDeeplink->xLookupRef
+xuHandleDeeplink-->xuOrchestrate
+xuHandleDeeplink-->xuGeneratePayload
+
+xuGeneratePayload->xuRedirect
+
+note "the payer uses xumm\nto sign the transaction" as N2
+xuRedirect ... N2
+N2 ... xAppSignPayment
+
+
 
 @enduml
 

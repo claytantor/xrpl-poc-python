@@ -6,3 +6,19 @@ body > footer {
   position: sticky;
   top: 100vh;
 }
+
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+a.dropdown-item {
+  color: black;
+}
+
+.payment-item-image-drag{
+  width: 200px;
+  height: 50px;
+  border: 1px dashed #aaa;
+  border-radius: 10px;
+}

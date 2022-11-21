@@ -9,3 +9,8 @@ Flask-Migrate
 Flask-Cors
 pyjwt
 xumm-sdk-py 
+boto3==1.21.4
+botocore==1.24.42
+awscli==1.22.97
+Pillow
+qrcode==7.3.1

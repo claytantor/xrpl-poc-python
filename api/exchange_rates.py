@@ -1,108 +1,21 @@
-import deployment from './deployment.json';
+import asyncio
+import os
+import logging
+from typing import Callable, NamedTuple
+import math
+import httpx
 
-export const env = deployment.env;
-export const branch = deployment.branch;
-export const commitSha = deployment['commit-sha'];
 
+lookup= {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARN':logging.WARN,
+    }
+logging.basicConfig(level=lookup['INFO'])
+logger = logging.getLogger()
+logger.addHandler(logging.StreamHandler())
 
-export const wpPluginDownload = () => {
-  return `${appUrl}/static/rapaygo-for-woocommerce-1.0.18.zip`
-}
-
-export const backendBaseUrl = (() => {
-  switch (deployment.env) {
-    case 'mock':
-      return 'http://localhost:3100'; //use the mock server 
-    case 'local':
-      return 'https://localhost:5000'; //use the local api server
-    case 'dev':
-      return 'https://devapi.xurlpay.org/v1';
-    case 'prd':
-      return 'https://api.xurlpay.org/v1';
-  }
-})();
-
-export const appUrl = (() => {
-  switch (deployment.env) {
-    case 'mock':
-      return 'https://localhost:3001'; //use the mock server
-    case 'local':
-      return 'https://localhost:3001'; //use the local api server
-    case 'dev':
-      return 'https://dev.xurlpay.org';
-    case 'prd':
-      return 'https://xurlpay.org';
-  }
-})();
-
-export const deploymentInfo = (() => {
-  deployment.dateVal = new Date(parseInt(deployment.timestamp, 10)*1000);
-  return deployment;
-})();
-
-export const deploymentEnv = (() => {
-  return deployment.env;
-})();
-
-export const currencyLang = {
-  //   ar-SA Arabic Saudi Arabia
-  // cs-CZ Czech Czech Republic
-  // da-DK Danish Denmark
-  // de-DE German Germany
-  // el-GR Modern Greek Greece
-  // en-AU English Australia
-  // en-GB English United Kingdom
-  // en-IE English Ireland
-  // en-US English United States
-  // en-ZA English South Africa
-  // es-ES Spanish Spain
-  // es-MX Spanish Mexico
-  // fi-FI Finnish Finland
-  // fr-CA French Canada
-  // fr-FR French France
-  // he-IL Hebrew Israel
-  // hi-IN Hindi India
-  // hu-HU Hungarian Hungary
-  // id-ID Indonesian Indonesia
-  // it-IT Italian Italy
-  // ja-JP Japanese Japan
-  // ko-KR Korean Republic of Korea
-  // nl-BE Dutch Belgium
-  // nl-NL Dutch Netherlands
-  // no-NO Norwegian Norway
-  // pl-PL Polish Poland
-  // pt-BR Portuguese Brazil
-  // pt-PT Portuguese Portugal
-  // ro-RO Romanian Romania
-  // ru-RU Russian Russian Federation
-  // sk-SK Slovak Slovakia
-  // sv-SE Swedish Sweden
-  // th-TH Thai Thailand
-  // tr-TR Turkish Turkey
-  // zh-CN Chinese China
-  // zh-HK Chinese Hong Kong
-  // zh-TW Chinese Taiwan
-      'USD': 'en-US',
-      'EUR': 'en-US',
-      'GBP': 'en-GB',
-      'AUD': 'en-AU',
-      'CAD': 'en-CA',
-      'CHF': 'fr-FR',
-      'CNY': 'zh-CN',
-      'HKD': 'zh-HK',
-      'JPY': 'ja-JP',
-      'KRW': 'ko-KR',
-      'NZD': 'en-NZ',
-      'SGD': 'en-SG',
-      'THB': 'th-TH',
-      'TRY': 'tr-TR',
-      'ZAR': 'en-ZA',
-      'EUR': 'en-US',
-      'MXN': 'es-MX',
-  
-  }
-  
-  export const currenciesLookup = {
+currencies = {
     "AED": "United Arab Emirates Dirham",
     "AFN": "Afghan Afghani",
     "ALL": "Albanian Lek",
@@ -268,6 +181,136 @@ export const currencyLang = {
     "ZAR": "South African Rand",
     "ZMW": "Zambian Kwacha",
     "ZWL": "Zimbabwean Dollar",
-  }
-  
+}
 
+
+class Provider(NamedTuple):
+    name: str
+    domain: str
+    api_url: str
+    getter: Callable
+
+
+exchange_rate_providers = {
+    "coinbase": Provider(
+        "Coinbase",
+        "coinbase.com",
+        "https://api.coinbase.com/v2/exchange-rates?currency={FROM}",
+        lambda data, replacements: data["data"]["rates"][replacements["TO"]],
+    ),
+    "kraken": Provider(
+        "Kraken",
+        "kraken.com",
+        "https://api.kraken.com/0/public/Ticker?pair=XRP{TO}",
+        lambda data, replacements: data["result"]["XXRPZ" + replacements["TO"]]["c"][0],
+    ),
+}
+
+
+async def xrp_price(currency: str) -> float:
+    replacements = {
+        "FROM": "XRP",
+        "from": "xrp",
+        "TO": currency.upper(),
+        "to": currency.lower(),
+    }
+    rates = []
+    tasks = []
+
+    send_channel = asyncio.Queue()
+
+    async def controller():
+        failures = 0
+        while True:
+            rate = await send_channel.get()
+            
+            if rate:
+                rates.append(rate)
+            else:
+                failures += 1
+
+            if len(rates) >= 2 or len(rates) == 1 and failures >= 2:
+                for t in tasks:
+                    t.cancel()
+                break
+            if failures == len(exchange_rate_providers):
+                for t in tasks:
+                    t.cancel()
+                break
+
+    async def fetch_price(provider: Provider):
+        url = provider.api_url.format(**replacements)
+        try:
+            async with httpx.AsyncClient() as client:
+                r = await client.get(url, timeout=1.0)
+                r.raise_for_status()
+                data = r.json()
+                logger.info(f"- Got data from {provider.name}")
+                rate = float(provider.getter(data, replacements))
+                await send_channel.put(rate)
+        except (
+            TypeError,  # CoinMate returns HTTPStatus 200 but no data when a currency pair is not found
+            KeyError,  # Kraken's response dictionary doesn't include keys we look up for
+            httpx.ConnectTimeout,
+            httpx.ConnectError,
+            httpx.ReadTimeout,
+            httpx.HTTPStatusError,  # Some providers throw a 404 when a currency pair is not found
+        ):
+            await send_channel.put(None)
+
+    asyncio.create_task(controller())
+    for _, provider in exchange_rate_providers.items():
+        tasks.append(asyncio.create_task(fetch_price(provider)))
+
+    try:
+        await asyncio.gather(*tasks)
+    except asyncio.CancelledError:
+        pass
+
+    if not rates:
+        return 9999999999
+    elif len(rates) == 1:
+        logger.info("Warning could only fetch one XRP price.")
+
+    return sum([rate for rate in rates]) / len(rates)
+
+async def dropsToXrp(drops:int) -> float:
+    return (drops / 1000000)
+
+async def dropsToXrp(xrp:float) -> int:
+    return int(xrp * 1000000)
+
+
+
+# async def get_fiat_rate_satoshis(currency: str) -> float:
+#     return float(100_000_000 / (await xrp_price(currency)))
+
+
+# async def fiat_amount_as_satoshis(amount: float, currency: str) -> int:
+#     return int(amount * (await get_fiat_rate_satoshis(currency)))
+
+
+# async def satoshis_amount_as_fiat(amount: float, currency: str) -> float:
+#     return float(amount / (await get_fiat_rate_satoshis(currency)))
+
+# def get_fiat_rate_pos(currency: str, rate: float, price: float):
+#     if currency != 'SAT':
+#         # allow some fluctuation (as the fiat price may have changed between the calls)
+#         min = int(math.ceil(rate * price))
+#         max = int(math.ceil(rate * price))
+#     else:
+#         min = int(math.ceil(price))
+#         max = int(math.ceil(price))
+
+#     return (min, max)
+
+# def get_fiat_rate_min_max(currency: str, rate: float, price: float):
+#     if currency != 'SAT':
+#         # allow some fluctuation (as the fiat price may have changed between the calls)
+#         min = int(math.ceil(rate * price)* 1000)
+#         max = int(math.ceil(rate * price)* 1000)
+#     else:
+#         min = int(math.ceil(price)* 1000)
+#         max = int(math.ceil(price)* 1000)
+
+#     return (min, max)

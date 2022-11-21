@@ -14,3 +14,15 @@ webapp/environment/deployment.json
 webapp/src/deployment.json
 .python-version
 node_modules/
+webapp/node_modules/
+webapp/node_modules/*
+*.pem
+deployment.json
+logs/
+logs/*
+.parcel-cache/
+webapp/.parcel-cache/
+webapp/.parcel-cache/*
+webapp/dist/
+webapp/dist/*
+webapp/src/env.js

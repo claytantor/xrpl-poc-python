@@ -1,92 +1,144 @@
 import React, {useEffect, useState } from "react"
-import QRCode from "react-qr-code";
+// import QRCode from "react-qr-code";
 
-import Page  from "../components/Page"
-import { WalletService } from "../services/WalletService"
 import { SiXrp } from "react-icons/si"
-import {BiCopy} from "react-icons/bi"
 
-const PaymentRequest = ({paymentRequest, setPaymentRequest}) => {
+import xummLogo from "../assets/img/xumm_logo.png"
+
+import React, { Component } from 'react';
+import { w3cwebsocket as W3CWebSocket } from "websocket";
+
+import {BiCheckCircle} from "react-icons/bi"
+import {BiQrScan} from "react-icons/bi"
+
+const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
     
+    const [xummPayload, setXummPayload] = useState();
+    const [customPayloadMeta, setCustomPayloadMeta] = useState();
+    const [expiresSecs, setExpiresSecs] = useState();
+    const [payloadState, setPayloadState] = useState("CREATED");
+    const [error, setError] = useState();
+    const [wsclient, setWsclient] = useState(new W3CWebSocket(paymentRequest.refs.websocket_status));
+    const [isConnected, setIsConnected] = useState(true);
+
+    // const wsclient = new W3CWebSocket(paymentRequest.refs.websocket_status);
+
+    let count = 0;
+    // let isConnected = true;
+
+    useEffect(() => {
+      console.log("PaymentRequest", paymentRequest);
+
+      wsclient.onopen = () => {
+        console.log(`WebSocket Client Connected ${paymentRequest.refs.websocket_status}`);
+      };
+      wsclient.onmessage = (message) => {
+        // console.log("GOT MESSAGE", message);
+        count += 1;
+        const m_payload = JSON.parse(message.data);
+        console.log("GOT MESSAGE", m_payload, count, isConnected);
+        if ("expires_in_seconds" in m_payload) {
+          setExpiresSecs(m_payload.expires_in_seconds);
+        } else if ("payload_uuidv4" in m_payload) {
+          // setExpiresSecs(null);
+          setPayloadState("RESOLVED");
+          setTimeout(() => {
+            wsclient.close();
+          }, 3000);    
+        } else if ("opened" in m_payload) {
+          setPayloadState("OPENED");
+        } else if ("expired" in m_payload) { 
+          wsclient.close(); 
+        }
+
+        if(!isConnected) {
+          console.log("CLOSE ", paymentRequest.refs.websocket_status);
+          wsclient.close();
+        }
+
+      };
+      wsclient.onclose = () => {
+        console.log('WebSocket Client Closed');
+        setPaymentRequest(null);
+        setExpiresSecs(null);
+        setPayloadState(null); 
+      };
+
+
+      if(xummState.sdk){
+        const Sdk = xummState.sdk;    
+        Sdk.payload.get(paymentRequest.uuid).then((res) => {
+          console.log("payload", res);
+          setXummPayload(res);
+  
+          if(res && res.custom_meta) {
+            let meta = JSON.parse(res.custom_meta.blob);
+            console.log("meta", meta);
+            setCustomPayloadMeta(meta);
+          }
+  
+        });
+
+      } else {
+        console.log("no sdk");
+        setError("No xumm sdk");
+      }
+    }, [paymentRequest,isConnected])
+
+    const back = () => {
+      console.log("back, close websocket");
+      // isConnected = false;
+      setIsConnected(false);
+    };
+
 
     return (
       <>
         <div className="p-4">
           <div className="rounded bg-slate-100 w-96 p-3">
+            {error && <div className="text-red-500 text-2xl w-full rounded bg-pink-200">{error}</div>}
+            <div className="flex flex-row font-bold text-2xl justify-center">
+              <div>SCAN TO PAY</div>
+            </div>
             <div className="flex flex-row justify-center">
-              <div className="m-1 mr-3 h-7 rounded bg-gray-400 p-1 text-sm font-bold text-white">
-                PENDING
-              </div>
+              <div><img src={xummLogo} className="w-24" /></div>
             </div>
-            <div className="font-bold text-3xl text-center">SCAN TO PAY</div>
 
+            {expiresSecs && <div className="flex flex-row justify-center">{expiresSecs} seconds left</div>}
+
+            {customPayloadMeta && <><div className="flex flex-row mt-2 w-full justify-center">
+                <span className="inline-flex justify-center items-center p-1 m-1 text-sm font-medium text-gray-800 bg-pink-200 rounded-lg dark:bg-gray-700 dark:text-gray-300">{customPayloadMeta.network_type.toLowerCase()}</span>   
+            </div>
             <div>
-
-                <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(paymentRequest.body.amount)} <SiXrp className="ml-1"/></div>
-
-
-            </div>
+                <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(customPayloadMeta.amount).toFixed(2)} <SiXrp className="ml-1"/></div>
+            </div></>}
             <div className="w-full">
-              <div className="w-full flex justify-center">
-                <div className="p-2 rounded-xl bg-white flex  items-center">
-                    {paymentRequest && (
-                        <QRCode className="m-2" value={paymentRequest.payment_request} size={300} />
+              <div className="w-full flex flex-col justify-center">
+                {paymentRequest && payloadState == "OPENED" && 
+                      <span className="inline-flex justify-center items-center p-1 m-1 text-lg font-bold bg-slate-200 text-gray-800 rounded-lg dark:bg-gray-700 dark:text-gray-300">Scan OK <BiQrScan className="ml-1"/></span>
+                }
+                {paymentRequest && payloadState == "RESOLVED" && 
+                      <span className="inline-flex justify-center items-center p-1 m-1 text-lg font-bold bg-green-200 text-green-800 rounded-lg dark:bg-green-700 dark:text-green-300">Transaction Signed</span>
+                }
+                <div className="p-2 rounded-xl bg-white flex flex-col justify-center items-center">
+                    {paymentRequest &&  ["CREATED", "OPENED"].includes(payloadState) && 
+                      <img src={paymentRequest.refs.qr_png} />
+                    }                 
+                    {paymentRequest && payloadState == "RESOLVED" && (
+                        <BiCheckCircle className="text-green-600 text-9xl"/>
                     )}
                 </div>
-              </div>
-              <div className="d-flex flex-col justify-content-center mb-2">
-                <div className="w-full text-center text-xs font-bold">
-                  expires:
-                </div>
-                <div className="text-center text-sm text-gray-500">
-                    Thursday, Aug 25, 2022, 3:15 PM -{" "}
-                    <time
-                        className="italic text-slate-600"
-                        dateTime="2022-08-25T22:15:11.634Z"
-                        title="Thursday, August 25, 2022 at 3:15:11 PM"
-                    >
-                        in 7 hours
-                    </time>
-                </div>
-                <div className="w-full text-center font-bold text-pink-600 font-mono">00:00:29:04</div>
+
               </div>
             </div>
-            <div className="bg-slate-700 rounded-md p-3">
-                <div className="break-all font-bold text-sm font-mono text-pink-400">{paymentRequest.payment_request}</div>                
-            </div>
-            <div className="flex flex-col justify-content-center">
-              <button className="bg-blue hover:bg-pink-600 hover:text-white rounded flex m-1 p-1 justify-center items-center hover:underline">
-                <BiCopy/>
-                Copy
-              </button>{" "}
 
-              <button
-                className="btn-common-pink"
-                onClick={() => setPaymentRequest(null)}
-                >
-                Create New Request
-                </button>
-
+            <div className="flex flex-col justify-content-center p-3">
+              <button className="btn-common-pink" onClick={() => back()}>Back</button>
             </div>
           </div>
 
           {/* ================================================================ */}
 
-          {/* <div className="text-2xl">Receive Payment</div>
-          {paymentRequest && (
-            <QRCode className="m-2" value={paymentRequest.payment_request} />
-          )}
-          <div className="break-all font-mono">
-            {paymentRequest.payment_request}
-          </div>
-          <div>
-            <button
-              className="btn-common-pink"
-              onClick={() => setPaymentRequest(null)}
-            >
-              Create New Request
-            </button>
-          </div> */}
         </div>
       </>
     );
