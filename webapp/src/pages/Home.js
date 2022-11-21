@@ -21,7 +21,7 @@ const Home = ({xummState}) => {
                 <div className="text-4xl font-bold text-pink-800">
                   xurlpay.org
                 </div>
-                {deploymentEnv === 'local' && 
+                {deploymentEnv === 'prd' && 
                 <div className="flex flex-row mt-3">
                   <Alert background={"bg-pink-100"} text={"text-pink-800 text-lg font-bold"}>
                     <div className="mr-2">

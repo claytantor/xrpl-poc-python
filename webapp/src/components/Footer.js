@@ -3,6 +3,8 @@ import React, {useEffect, useState} from "react"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
+import { deploymentEnv, xummConfig, whitepaperUrl } from "../env"
+
 
 const Footer = () => {
 
