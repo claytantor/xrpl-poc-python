@@ -406,7 +406,32 @@ def get_payment_items():
     return jsonify([PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items]), 200
 
 
-@app.route('/payment_item/<id>', methods=['GET'])  # depricated
+@app.route('/payment_item/<id>', methods=['DELETE'])  
+@cross_origin()
+def delete_payment_item_by_id(id):
+    # lookup the wallet by the classic address in the jwt
+    jwt_body = get_token_body(dict(request.headers)[
+                              "Authorization"].replace("Bearer ", ""))
+
+    wallet = db.session.query(Wallet).filter_by(
+        classic_address=jwt_body['sub']).first()
+    if wallet is None:
+        return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+
+    # get all the payment items for this wallet
+    payment_item = db.session.query(PaymentItem).filter_by(
+        wallet_id=wallet.wallet_id, payment_item_id=id).first()
+    
+    if payment_item is None:
+        return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+
+    db.session.delete(payment_item)
+    db.session.commit()
+
+    return jsonify({"message": "payment item deleted"}), HTTPStatus.OK
+
+
+@app.route('/payment_item/<id>', methods=['GET']) 
 @cross_origin()
 def get_payment_item_by_id(id):
 
@@ -501,7 +526,7 @@ def make_payment_item_payload_response(payment_item):
 
 
 
-@app.route('/payment_item', methods=['POST'])  # depricated
+@app.route('/payment_item', methods=['POST', 'PUT'])  # depricated
 @cross_origin()
 def create_payment_item():
     app.logger.info("create payment item")
@@ -515,92 +540,52 @@ def create_payment_item():
     if wallet is None:
         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
 
-    # print(json.dumps(wallet.serialize(), indent=4))
-    payment_item_name = request.json.get('name')
-    description = request.json.get('description')
-    price = float(request.json.get('price'))
-    sku_id = str(uuid.uuid4()).replace("-", "")[:10]
+    if request.method == 'PUT': # update
+            # get all the payment items for this wallet
+        payment_item_id = request.json.get('payment_item_id')
+        if payment_item_id is None:
+            return jsonify({"message": "payment_item_id is required"}), HTTPStatus.BAD_REQUEST
 
-    payment_item = PaymentItem(
-        wallet_id=wallet.wallet_id, 
-        name=payment_item_name,
-        description=description,
-        fiat_i8n_price=price, 
-        fiat_i8n_currency='USD', 
-        sku_id=sku_id)
+        payment_item = db.session.query(PaymentItem).filter_by(
+            wallet_id=wallet.wallet_id, payment_item_id=payment_item_id).first()
 
-    save_images_for_request(request, payment_item, app)
+        if payment_item is None:
+            return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+        
+        payment_item.name = request.json.get('name')
+        payment_item.fiat_i8n_currency = request.json.get('fiat_i8n_currency')
+        payment_item.fiat_i8n_price = float(request.json.get('fiat_i8n_price'))
+        payment_item.description = request.json.get('description')
 
-    db.session.add(payment_item)
+        save_images_for_request(request, payment_item, app)
+
+
+    elif request.method == 'POST': # create
+
+        payment_item_name = request.json.get('name')
+        description = request.json.get('description')
+        price = float(request.json.get('fiat_i8n_price'))
+        currency = request.json.get('fiat_i8n_currency')
+        sku_id = str(uuid.uuid4()).replace("-", "")[:10]
+
+        payment_item = PaymentItem(
+            wallet_id=wallet.wallet_id, 
+            name=payment_item_name,
+            description=description,
+            fiat_i8n_price=price, 
+            fiat_i8n_currency=currency, 
+            sku_id=sku_id)
+
+        save_images_for_request(request, payment_item, app)
+        db.session.add(payment_item)
+    
     db.session.commit()
     response = {'full_messages': ['PaymentItem updated successfully']}
     response.update(PaymentItemDetailsSerializer(payment_item).data)
     return jsonify(response)
 
 
-# @app.route("/xumm/deeplink/payment/basic", methods=['GET'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_deeplink_payment_basic():
-#     # lookup the wallet by the classic address in the jwt
-#     classic_address = request.args.get('classic_address')
-#     if classic_address is None:
-#         return jsonify({"message": "wallet address not found, requires classic_address"}), HTTPStatus.BAD_REQUEST
 
-#     amount = request.args.get('amount')
-#     if amount is None:
-#         return jsonify({"message": "amount not found, requires amount"}), HTTPStatus.BAD_REQUEST
-
-#     memo = request.args.get('memo')
-#     if memo is None:
-#         memo = "xURL payment request"
-
-#     # classic_address = get_token_sub(dict(request.headers)["Authorization"])
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=classic_address).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, bad request"}), HTTPStatus.BAD_REQUEST
-
-#     create_payload = {
-#         'txjson': {
-#             'TransactionType': 'Payment',
-#             'Destination': classic_address,
-#             'Amount': str(xrp_to_drops(float(amount))),
-#         }
-#     }
-
-#     created = sdk.payload.create(create_payload)
-
-#     # return jsonify(created.to_dict()), 200
-#     return redirect(created.to_dict()['next']['always'], code=302)
-
-
-# @app.route("/xumm/ping", methods=['GET'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_ping():
-#     try:
-#         app_details = sdk.ping()
-#         a_m = app_details.to_dict()
-#         a_m['xapp_deeplink'] = config['XUMM_APP_DEEPLINK']
-#         return jsonify(a_m), 200
-#     except Exception as e:
-#         app.logger.error(e)
-#         return jsonify({'error':'could not ping'}), 400
-
-# @app.route("/xumm/app", methods=['GET','POST', 'OPTIONS'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_app():
-
-#     app.logger.info("==== xumm app")
-
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message':"OK"}), 200, {'Access-Control-Allow-Origin':'*',
-#                                                 'Access-Control-Allow-Headers':'Content-Type, Authorization',
-#                                                 'Access-Control-Allow-Methods':'POST, OPTIONS'}
-
-#     return jsonify({'message':'xumm_app'}), 200
 
 # https://devapi.xurlpay.org/v1/xumm/webhook
 @app.route("/xumm/webhook", methods=['GET', 'POST', 'OPTIONS'])

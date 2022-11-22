@@ -1,8 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-// import { Trash, Edit,  Printer, PlusCircle } from "react-feather";
-
-// import { useStore } from '../zstore';
 
 import {currencyLang} from '../env';
 
@@ -12,14 +9,8 @@ const PaymentItemSummary = ({
     handleDeleteCallback
     }) => {
 
-    // const { addPaymentItemToCart } = useStore();
-    // const addPaymentItemToCart = useStore(state => state.addPaymentItemToCart);
-    // const { addPaymentItemToCart } = useStore(state => state);
-
-    const addPaymentItemToCart = (paymentItem) => {};
-
     let image='https://picsum.photos/200/200';
-    if (paymentItem.images) {
+    if (paymentItem.images.length>0) {
         image = paymentItem.images[0]['data_url']
     }
 
@@ -27,11 +18,11 @@ const PaymentItemSummary = ({
     
 
     let handleDelete = () => {
-        handleDeleteCallback(paymentItem.id);
+        handleDeleteCallback(paymentItem.payment_item_id);
     };
 
     return (<>
-        <div className="m-1" id={paymentItem.id}>
+        <div className="m-1" id={paymentItem.payment_item_id}>
             
             <div className="p-1 max-w-sm rounded overflow-hidden shadow-md">
                 {/* <div className='flex justify-end'>

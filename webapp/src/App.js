@@ -127,6 +127,8 @@ const App = () => {
       console.log("Not xumm");
       if (xummPkceJwt.jwt) {
         xummSignInHandler(xummPkceJwt.jwt, null);
+      } else if (xummSdkJwt.jwt) {
+        xummSignInHandler(xummSdkJwt.jwt, null);
       } else { 
         console.log("PrivateRoute xumm state accessTokenInfo not active");
         setXummState({sdk:xummPkce, me:null, jwt:null}); //needed to login

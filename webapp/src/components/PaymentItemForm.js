@@ -1,103 +1,14 @@
-// import React, {useState, useEffect } from 'react';
 import React, {useState, useEffect } from 'react';
-// import Ajv from "ajv";
 import { useNavigate } from 'react-router-dom';
-// import { createSignal } from "@react-rxjs/utils"
-// import { bind } from "@react-rxjs/core"
-// import {
-//     Button, Form, Spinner, ListGroup, Row, Alert
-// } from 'react-bootstrap';
 import ImageUploading from 'react-images-uploading';
-// import { Trash, Edit } from "react-feather";
 import { PaymentItemService } from '../services/PaymentItemService'
 import { Alert, Spinner } from './Base'
 
-// const [tagChange$, setTags] = createSignal();
-// const [useTags] = bind(tagChange$, []);
-
-// const TagTypeList = ({ typeTags }) => {
-//   return (
-//     <ListGroup>
-//     {typeTags.map((tag, index) => (
-//       <ListGroup.Item key={index}>{tag.type} | {tag.name} | {tag.description}</ListGroup.Item>
-//       ))}
-//     </ListGroup>
-//   );
-
-// };
-
-// const ItemTagFormGroup = () => {
-
-//   let tags = useTags();
-
-//   return (
-//   <Form.Group>
-//     <h4>Payment Item Item Attributes</h4>
-//     <TagTypeList typeTags={tags}/>
-//     <ItemTagFormControl/>
-//   </Form.Group>  
-//   );
-
-// };
-
-// const ItemTagFormControl = () => {
-
-//   let tags = useTags();
-
-//   const [formState, setFormState] = useState({
-//     name: "",
-//     description: "",
-//     value: "",
-//     price: "",
-//     shipping_cost_usps_5:0.0,
-//     shipping_cost_ups_3:0.0
-//   });
-
-
-//   const handleInputChange = event => {
-//     let target = event.target
-//     let value = target.value
-//     let name = target.name
-
-//     // if (name === "price") {
-//     //   value = value.replace(/\D/g,'');
-//     // }
-
-//     setFormState((formState) => ({
-//         ...formState,
-//         [name]: value
-//       }));  
-//   };  
-
-//   const addTag = (e) => {
-//     let tagsCopy = [...tags];
-//     tagsCopy.push({name:formState.name, type:formState.type, description:formState.description});
-//     console.log(tagsCopy);
-//     setTags(tagsCopy);
-//   };
-
-//   return (
-//     <div className='mt-3 d-flex'>
-//         <Form.Control onChange={(e)=>{handleInputChange(e)}} className='col w-25 m-1' type="text" name="type" placeholder="type of attribute"/>
-//         <Form.Control onChange={(e)=>{handleInputChange(e)}} className='col w-25 m-1' type="text" name="name" placeholder="value of attribute"/>
-//         <Form.Control onChange={(e)=>{handleInputChange(e)}} className='col w-50 m-1' type="text" name="description" placeholder="longer description"/>
-//         <Button variant="primary" onClick={(e)=>{addTag(e)}}>Add Tag</Button>
-//     </div>
-//   );
-// };
-
-
-// const Spinner = () => {
-//   return (
-//     <div className="d-flex justify-content-center">
-//       <div className="spinner-border" role="status">
-//         <span className="sr-only">Loading...</span>
-//       </div>
-//     </div>
-//   );
-// };
+import { useStore } from '../zstore';
 
 const PaymentItemForm = ({ paymentItem, formType }) => {
+
+  const userCurrency = useStore(state => state.userCurrency);
 
   const maxNumber = 1;
 
@@ -122,7 +33,8 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
       setFormState({
         name: "",
         description: "",
-        price: "" 
+        fiat_i8n_price: 0.00,
+        fiat_i8n_currency: userCurrency, 
       });
       setErrors([]);
       setSavedStatus("start")
@@ -137,14 +49,6 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
       let value = target.value
       const name = target.name
       console.log(name, value);
-
-      // if(name === 'price' && isNumber(target.value)){
-      //   console.log("price is a number A", target.value, value);
-      //   value = parseFloat(target.value).toFixed(2);
-      //   console.log("price is a number B", target.value, value);
-      // } else {
-      //   setErrors(['please enter a number for price']);
-      // }
 
       if(name === 'price'){
         value = value.replace(/[^\d.-]/g, '');
@@ -167,13 +71,13 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
   };
 
 
-
   const formSchema = {
       type: "object",
       properties: {
           name:           {type: "string", "nullable": false, minLength: 4, maxLength: 64},
           description:    {type: "string", "nullable": false, minLength: 4, maxLength: 127},
-          price:          {type: "number", "nullable": false},
+          fiat_i8n_price:          {type: "number", "nullable": false},
+          fiat_i8n_currency:      {type: "string", "nullable": false, minLength: 3, maxLength: 3},
       },
       required: [ "name", "description", "price" ],
       additionalProperties: true
@@ -202,19 +106,16 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
     
     console.log("onSaveButton", formState);
     let saveObject = Object.assign({images},formState);
-    // formState.price = parseFloat(formState.price);
     console.log("saving object", saveObject);
 
 
     //set price to number or set errors
-    console.log("saving object", saveObject, isNumber(saveObject.price));
-    if(isNumber(saveObject.price)){
-      saveObject.price = parseFloat(saveObject.price);
-      formState.price = parseFloat(formState.price);
-          // setup formats
-      // const ajv = new Ajv();
-      // const validate = ajv.compile(formSchema); //we dont want to validate the images
-      // const schemaValid = validate(formState);
+    console.log("saving object", saveObject, isNumber(saveObject.fiat_i8n_price));
+    if(isNumber(saveObject.fiat_i8n_price)){
+      saveObject.fiat_i8n_price = parseFloat(saveObject.fiat_i8n_price);
+      saveObject.fiat_i8n_currency = userCurrency;
+      formState.fiat_i8n_price = parseFloat(formState.fiat_i8n_price);
+      formState.fiat_i8n_currency = userCurrency;
 
       let schemaValid = true;
 
@@ -224,10 +125,10 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
         allErrors.push(...validate.errors);
         setErrors(allErrors);
       } else {
-        if(saveObject.id){
+        if(saveObject.payment_item_id){
+          console.log("updating payment item", saveObject);
       
           PaymentItemService.updatePaymentItem(saveObject).then(r=>{
-            // console.log("done", r);
             setSavedStatus("done");
           }).catch(e=>{
             setErrors([{
@@ -239,7 +140,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
           });
     
         } else {
-    
+          console.log("creating payment item", saveObject);
           PaymentItemService.createPaymentItem(saveObject).then(r=>{
             setSavedStatus("done");
           }).catch(e=>{
@@ -254,16 +155,12 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
       }
     } else {
       setErrors([{
-        "instancePath": "/price",              
+        "instancePath": "/fiat_i8n_price",              
         "keyword": "type price must be a numeric value.",
         "message": "problem saving paymentItem"
       }]);
       setSavedStatus("error");
     }
-
-        
-
-
 
   };
 
@@ -272,10 +169,10 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
     <>{formState?
     <>
       {/* {formState.id?<>ITEM ID:{formState.id}</>:<></>} */}
-      {errors && errors.length>0 && <Alert background="bg-red-200">
+      {errors && errors.length>0 && <Alert background="bg-red-200" text="text-red-800">
         <div className="font-bold">Validation Errors Found {renderErrors(errors)}</div>
         </Alert>}
-      {savedStatus==="done" && <Alert variant="green-200">Item successfully saved.</Alert>}
+      {savedStatus==="done" && <Alert background="bg-green-200" text="text-green-800">Item successfully saved.</Alert>}
       <div>
         <div className="flex flex-col w-full mt-3 mb-2">
           <label className='text-gray-600'>Item Name</label>
@@ -289,6 +186,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
           <label className="text-gray-600">Description</label>
           <textarea
             name="description"
+            value={formState.description}
             onChange={handleInputChange}
             className="w-full h-32 px-4 py-3 border-2 border-gray-300
               rounded outline-none  focus:border-pink-400"
@@ -298,9 +196,9 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
 
         <div className="w-full flex flex-row justify-between">
           <div className="flex flex-col w-1/2 mt-3 mb-2">
-            <label className='text-gray-600'>Fiat Price (USD)</label>
+            <label className='text-gray-600'>Fiat Price ({userCurrency})</label>
             <input
-              name="price" onChange={handleInputChange} type="text" placeholder="Enter fiat price" value={formState.price}
+              name="fiat_i8n_price" onChange={handleInputChange} type="text" placeholder={`Enter fiat price in ${userCurrency}`} value={formState.fiat_i8n_price}
               className="px-4 py-2 border-2 border-gray-300 outline-none focus:border-pink-400 rounded"
             />
           </div>
