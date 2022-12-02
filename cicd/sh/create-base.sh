@@ -13,13 +13,13 @@ if [ ! -d $DATA_DIR ]; then
 fi
 
 # env
-ENV_DIR=$DATA_DIR/$ENV/$1
+ENV_DIR=$DATA_DIR/env/$ENV
 echo "ENV_DIR: $ENV_DIR"
 if [ ! -d "$BASE_DIR/env" ]; then
   echo "$BASE_DIR/env does not exist."
   mkdir $BASE_DIR/env
   mkdir $BASE_DIR/env/$ENV 
-  cp -r $BASE_DIR/cicd/env/xrpl-poc-python-app-example.env $BASE_DIR/env/$ENV/xrpl-poc-python-app.env
+  cp -r $BASE_DIR/cicd/config/xrpl-poc-python-app-example.env $BASE_DIR/env/$ENV/xrpl-poc-python-app.env
 fi
 
 # logs
