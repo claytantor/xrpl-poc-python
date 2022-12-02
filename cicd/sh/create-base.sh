@@ -29,3 +29,9 @@ if [ ! -d $LOGS_DIR ]; then
   echo "$LOGS_DIR does not exist."
   mkdir $LOGS_DIR
 fi
+
+python -m pip install --upgrade pip
+python -m pip install setuptools
+pip install -r requirements.txt 
+
+# this omits the qr code lib which 
