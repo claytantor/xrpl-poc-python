@@ -21,3 +21,11 @@ if [ ! -d "$BASE_DIR/env" ]; then
   mkdir $BASE_DIR/env/$ENV 
   cp -r $BASE_DIR/cicd/env/xrpl-poc-python-app-example.env $BASE_DIR/env/$ENV/xrpl-poc-python-app.env
 fi
+
+# logs
+LOGS_DIR=$BASE_DIR/logs
+echo "LOGS_DIR: $LOGS_DIR"
+if [ ! -d $LOGS_DIR ]; then
+  echo "$LOGS_DIR does not exist."
+  mkdir $LOGS_DIR
+fi
