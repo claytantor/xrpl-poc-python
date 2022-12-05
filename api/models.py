@@ -2,13 +2,38 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Table, DateTime, Flo
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
-import uuid
+import os
 from datetime import datetime as dt
 import json
 
-# from api import db
+from dotenv import dotenv_values
+config = {
+    **dotenv_values(os.getenv("APP_CONFIG")),  # load shared development variables
+    **os.environ,  # override loaded values with environment variables
+}
+
+
 
 Base = declarative_base()
+
+class ApiInfo():
+    version = config['API_VERSION']
+
+
+    def to_dict(self):
+        return {
+            'version':self.version
+        }
+
+
+class Message():
+    message = ""
+
+
+    def to_dict(self):
+        return {
+            'message':self.message
+        }
 
 class Wallet(Base):
     __tablename__ = "wallet"

@@ -148,6 +148,12 @@ https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQo
 
 `https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25` and it redirects to my xApp as `https://xumm.app/detect/xapp:sandbox.32849dc99872?amount={amount}&memo={memo}&classic_address={classic_address}` but when it comes back to my server the params have been stripped: `<Request 'http://ec2-34-211-56-213.us-west-2.compute.amazonaws.com:5000/xumm/app?xAppStyle=LIGHT&xAppToken=4dc0be9a-922b-4665-97d7-1c1fa73e76fc' [GET]` 
 
+
+#  running the app
+
+`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api`
+
+# migrations
 APP_CONFIG=env/local/xrpl-poc-python-app.env alembic -c migrations/alembic.ini upgrade head
 
 
