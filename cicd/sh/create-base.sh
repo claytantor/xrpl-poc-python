@@ -31,7 +31,12 @@ if [ ! -d $LOGS_DIR ]; then
 fi
 
 python -m pip install --upgrade pip
-python -m pip install setuptools
 pip install -r requirements.txt 
 
 # this omits the qr code lib which 
+wget https://github.com/lincolnloop/python-qrcode/archive/refs/tags/v7.3.1.tar.gz
+tar -xvf v7.3.1.tar.gz
+cd python-qrcode-7.3.1
+python setup.py install
+cd ..
+rm -rf python-qrcode-7.3.1
