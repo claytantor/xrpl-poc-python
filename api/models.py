@@ -6,9 +6,11 @@ import uuid
 from datetime import datetime as dt
 import json
 
-from api import db
+# from api import db
 
-class Wallet(db.Model):
+Base = declarative_base()
+
+class Wallet(Base):
     __tablename__ = "wallet"
     wallet_id = Column(Integer, primary_key=True)
     seed = Column(String())
@@ -49,12 +51,12 @@ class Wallet(db.Model):
         }
 
 
-    @staticmethod
-    def get_wallet_by_classic_address(classic_address):
-        wallet = db.session.query(Wallet).filter_by(classic_address=classic_address).first()
-        return wallet
+    # @staticmethod
+    # def get_wallet_by_classic_address(classic_address):
+    #     wallet = session.query(Wallet).filter_by(classic_address=classic_address).first()
+    #     return wallet
     
-class XummPayload(db.Model):
+class XummPayload(Base):
     __tablename__ = "xumm_payload"
 
     xumm_payload_id = Column(Integer, primary_key=True)
@@ -114,25 +116,25 @@ class XummPayload(db.Model):
 
         return s_m
 
-    @staticmethod
-    def get_by_payload_uuidv4(payload_uuidv4):
-        payload = db.session.query(XummPayload).filter_by(payload_uuidv4=payload_uuidv4).first()
-        return payload 
+    # @staticmethod
+    # def get_by_payload_uuidv4(payload_uuidv4):
+    #     payload = session.query(XummPayload).filter_by(payload_uuidv4=payload_uuidv4).first()
+    #     return payload 
 
 
-    @staticmethod
-    def get_page_by_wallet(wallet_id, page=1, page_size=10): 
-        return db.session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
-        .order_by(desc(XummPayload.created_at)).paginate(page=page,per_page=page_size)
+    # @staticmethod
+    # def get_page_by_wallet(wallet_id, page=1, page_size=10): 
+    #     return session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
+    #     .order_by(desc(XummPayload.created_at)).paginate(page=page,per_page=page_size)
 
-    @staticmethod
-    def get_wallet_payloads(wallet_id):
-        return db.session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
-        .order_by(desc(XummPayload.created_at)).all()
+    # @staticmethod
+    # def get_wallet_payloads(wallet_id):
+    #     return session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
+    #     .order_by(desc(XummPayload.created_at)).all()
 
 
 
-class PaymentItem(db.Model):
+class PaymentItem(Base):
     __tablename__ = "payment_item"   
 
     payment_item_id = Column(Integer, primary_key=True, nullable=False)
@@ -180,25 +182,25 @@ class PaymentItem(db.Model):
             "updated_at": self.updated_at
         }
 
-class FileUpload(db.Model):
+class FileUpload(Base):
     __tablename__ = 'file_uploads'
-    file_upload_id = db.Column('id', db.Integer, primary_key=True)
-    type = db.Column('type', db.String(32))  # this will be our discriminator
+    file_upload_id = Column('id', Integer, primary_key=True)
+    type = Column('type', String(32))  # this will be our discriminator
 
-    file_path = db.Column(db.String, nullable=False)
-    file_name = db.Column(db.String, nullable=False)
-    file_size = db.Column(db.Integer, nullable=False)
-    original_name = db.Column(db.String, nullable=False)
+    file_path = Column(String, nullable=False)
+    file_name = Column(String, nullable=False)
+    file_size = Column(Integer, nullable=False)
+    original_name = Column(String, nullable=False)
 
-    created_at = db.Column(db.DateTime, nullable=False, default=dt.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=dt.utcnow, onupdate=dt.utcnow)
+    created_at = Column(DateTime, nullable=False, default=dt.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=dt.utcnow, onupdate=dt.utcnow)
     __mapper_args__ = {
         'polymorphic_on': type,
         'polymorphic_identity': 'FileUpload'
     }
 
 class PaymentItemImage(FileUpload):
-    payment_item_id = db.Column(db.Integer, db.ForeignKey('payment_item.payment_item_id'), nullable=True)
+    payment_item_id = Column(Integer, ForeignKey('payment_item.payment_item_id'), nullable=True)
     payment_item = relationship('PaymentItem', backref='images', cascade="all, delete")
 
     __mapper_args__ = {
