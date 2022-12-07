@@ -2,17 +2,23 @@ import functools
 from flask import jsonify, request, make_response
 from flask import current_app as app
 
-from .jwtauth import is_token_valid, has_all_scopes, get_token_sid
+from .jwtauth import is_token_valid, has_all_scopes, get_token_sub
 from .models import Wallet
+import logging
 
-
-def log_decorator(log_enabled):
+def log_decorator(logger, log_enabled=True, log_level=logging.INFO):
     def actual_decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if log_enabled:
-                print("Calling Function: " + func.__name__)
-            return func(*args, **kwargs)
+                # print("Calling Function: " + func.__name__))
+                logger.log(log_level, f"{request.method} {request.path} {func.__name__}")
+            try:
+                return func(*args, **kwargs)     
+            except Exception as e:
+              if log_enabled:
+                logger.exception(e)
+                
         return wrapper
     return actual_decorator
 
@@ -42,7 +48,7 @@ def verify_user_jwt_scopes(method_or_name):
             if 'Authorization' not in headers:
                 return make_response(jsonify({"error": "Invalid request missing authorization header."}), 401)
 
-            user_id = get_token_sid(dict(request.headers)["Authorization"])
+            user_id = get_token_sub(dict(request.headers)["Authorization"].replace("Bearer ", ""))
 
             if user_id is None:
               return make_response(jsonify({"error": "Authorization is missing"}), 401)

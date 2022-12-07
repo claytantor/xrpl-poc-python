@@ -3,11 +3,19 @@ from . import db
 from datetime import datetime as dt
 from .models import Wallet
 
+# {'client_id': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'scope': 'XummPkce', 'aud': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'sub': 'rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y', 'email': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce+rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y@xumm.me', 'app_uuidv4': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce', 'app_name': 'dev-xurlpay', 'payload_uuidv4': 'a9d8f45a-16ff-48ee-8ef1-163ce3b10f7c', 'usertoken_uuidv4': '4de21968-8c2f-4fb3-9bb6-94b589a13a8c', 'network_type': 'TESTNET', 'network_endpoint': 'wss://s.altnet.rippletest.net:51233', 'iat': 1668223704, 'exp': 1668310104, 'iss': 'https://oauth2.xumm.app'}
 
-def get_token_sid(token):
+def get_token_sub(token):
     try:
         jwt_body = jwt.decode(token, options={"verify_signature": False})
-        return jwt_body['sid']
+        return jwt_body['sub']
+    except:
+        return None
+
+def get_token_body(token):
+    try:
+        jwt_body = jwt.decode(token, options={"verify_signature": False})
+        return jwt_body
     except:
         return None
 

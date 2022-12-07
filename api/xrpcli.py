@@ -2,7 +2,7 @@
 import os, sys
 import shortuuid
 
-from xrpl.clients import JsonRpcClient
+from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.transactions import Payment
 from xrpl.utils import xrp_to_drops
 from xrpl.wallet import generate_faucet_wallet
@@ -21,7 +21,10 @@ from xrpl.core.keypairs.exceptions import XRPLKeypairsException
 from xrpl.core.keypairs.helpers import get_account_id
 from xrpl.core.keypairs.secp256k1 import SECP256K1
 from typing_extensions import Final
-from typing import Dict, Optional, Tuple, Type
+from typing import Dict, Type
+# get the token info
+import requests
+import xumm
 
 _ALGORITHM_TO_MODULE_MAP: Final[Dict[CryptoAlgorithm, Type[CryptoImplementation]]] = {
     CryptoAlgorithm.ED25519: ED25519,
@@ -42,6 +45,174 @@ config = {
 }
 
 DROPS_IN_XRP=1000000
+
+# Or with manually provided credentials (instead of using dotenv):
+sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
+
+class AppTokenPayloadFactory:
+    def __init__(self, xapp_token):
+        self.xapp_token = xapp_token
+
+    async def _make_payload(self):
+        xumm_app_session = await self.get_xapp_tokeninfo(self.xapp_token)
+
+        # print(xumm_app_session)
+        
+    
+    async def get_xapp_tokeninfo(self, xumm_token):
+        url = f"https://xumm.app/api/v1/platform/xapp/ott/{xumm_token}"
+
+        headers = {
+            "accept": "application/json",
+            "X-API-Key": f"{config['XUMM_API_KEY']}",
+            "X-API-Secret": f"{config['XUMM_API_SECRET']}",
+        }
+
+        response = requests.get(url, headers=headers)
+
+        return json.loads(response.text)
+        
+
+    @staticmethod
+    async def make_payload(xapp_token):
+        factory = AppTokenPayloadFactory(xapp_token)
+        return await factory._make_payload() 
+
+
+class XummWallet:
+
+    """
+    {
+        "client_id": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+        "scope": "XummPkce",
+        "aud": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+        "sub": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
+        "email": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce+rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y@xumm.me",
+        "app_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+        "app_name": "dev-xurlpay",
+        "payload_uuidv4": "4eb33332-ae57-43bc-82eb-d6d099b26ecb",
+        "usertoken_uuidv4": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
+        "network_type": "TESTNET",
+        "network_endpoint": "wss://s.altnet.rippletest.net:51233",
+        "iat": 1668194332,
+        "exp": 1668280732,
+        "iss": "https://oauth2.xumm.app"
+    }
+    
+    """
+    def __init__(self, network_endpoint, classic_address):
+        self.network_endpoint = network_endpoint
+        self.classic_address = classic_address
+        self.client = JsonRpcClient(network_endpoint)
+        
+
+        # {
+        #     "id": 5,
+        #     "status": "success",
+        #     "type": "response",
+        #     "result": {
+        #         "account_data": {
+        #             "Account": "rG1QQv2nh2gr7RCZ1P8YYcBUKCCN633jCn",
+        #             "Balance": "999999999960",
+        #             "Flags": 8388608,
+        #             "LedgerEntryType": "AccountRoot",
+        #             "OwnerCount": 0,
+        #             "PreviousTxnID": "4294BEBE5B569A18C0A2702387C9B1E7146DC3A5850C1E87204951C6FDAA4C42",
+        #             "PreviousTxnLgrSeq": 3,
+        #             "Sequence": 6,
+        #             "index": "92FA6A9FC8EA6018D5D16532D7795C91BFB0831355BDFDA177E86C8BF997985F"
+        #         },
+        #         "ledger_current_index": 4,
+        #         "queue_data": {
+        #             "auth_change_queued": true,
+        #             "highest_sequence": 10,
+        #             "lowest_sequence": 6,
+        #             "max_spend_drops_total": "500",
+        #             "transactions": [
+        #                 {
+        #                     "auth_change": false,
+        #                     "fee": "100",
+        #                     "fee_level": "2560",
+        #                     "max_spend_drops": "100",
+        #                     "seq": 6
+        #                 },
+        #                 ... (trimmed for length) ...
+        #                 {
+        #                     "LastLedgerSequence": 10,
+        #                     "auth_change": true,
+        #                     "fee": "100",
+        #                     "fee_level": "2560",
+        #                     "max_spend_drops": "100",
+        #                     "seq": 10
+        #                 }
+        #             ],
+        #             "txn_count": 5
+        #         },
+        #         "validated": false
+        #     }
+        # }
+
+        account_info_response = self.client.request(AccountInfo(account=self.classic_address))
+
+
+        # acct_info = AccountInfo(
+        #     account="rBtXmAdEYcno9LWRnAGfT9qBxCeDvuVRZo",
+        #     ledger_index="current",
+        #     queue=True,
+        #     strict=True,
+        # )
+        # response = client.request(acct_info)
+        result = account_info_response.result
+        self.account_data = result["account_data"]
+
+
+        
+    @property
+    def balance(self): 
+        return self.account_data['Balance'] / DROPS_IN_XRP
+
+
+    def generate_payment_request(self, xrp_amount, memo="generated payment request"):
+        """Generate a payment request
+        """
+
+        # expires = dt.now()+timedelta(minutes=60)
+
+        payment_request_dict = {
+            'amount': xrp_amount,
+            'amount_drops': int(xrp_to_drops(xrp_amount)),
+            'address':self.classic_address,
+            'network_endpoint':self.network_endpoint,
+            # 'network_type': get_network_type(self.network_endpoint),
+            'memo':memo,
+            'request_hash':shortuuid.uuid(),
+        }
+
+        # json_str = json.dumps(payment_request_dict)
+        # base64_message, base_64_sig = self.sign_msg(json_str)
+        # payment_request=f"{base64_message}:{base_64_sig}"
+        # return payment_request_dict, payment_request
+
+        create_payload = {
+            'txjson': {
+                    'TransactionType' : 'Payment',
+                    'Destination' : self.classic_address,
+                    'Amount': str(xrp_to_drops(xrp_amount)),
+            },
+            "custom_meta": {
+                "identifier": "payment_request",
+                "blob": json.dumps(payment_request_dict),
+                "instruction": memo
+            }
+        }   
+
+        created = sdk.payload.create(create_payload)
+
+        return created.to_dict()
+
+
+
+
 
 class XUrlWallet:
     def __init__(self, network="https://s.altnet.rippletest.net:51234/", seed=None, isFaucet=False):
@@ -117,9 +288,10 @@ class XUrlWallet:
         private_key: must be hex
         """
 
-        base64_message, base64_signature =  sign_message(message, self.private_key)
+        # base64_message, base64_signature =  sign_message(message, self.private_key)
 
-        return base64_message, base64_signature
+        # return base64_message, base64_signature
+        pass
 
 
     def generate_payment_request(self, amount, memo="generated payment request"):
@@ -130,6 +302,7 @@ class XUrlWallet:
 
         payment_request_dict = {
             'amount': amount,
+            'amount_drops': int(xrp_to_drops(amount)),
             'public_key':self.pub_key,
             'address':self.wallet.classic_address,
             'expires':expires.timestamp(),
@@ -148,6 +321,116 @@ class XUrlWallet:
 functional methods
 ==========================
 """
+
+"""
+If you don't run your own rippled server, you can use the following public servers to submit transactions or read data from the ledger.
+
+Operator	Network	JSON-RPC URL	WebSocket URL	Notes
+XRP Ledger Foundation	Mainnet	https://xrplcluster.com/
+https://xrpl.ws/ ²	wss://xrplcluster.com/
+wss://xrpl.ws/ ²	Full history server cluster.
+Ripple¹	Mainnet	https://s1.ripple.com:51234/	wss://s1.ripple.com/	General purpose server cluster
+Ripple¹	Mainnet	https://s2.ripple.com:51234/	wss://s2.ripple.com/	Full-history server cluster
+Sologenic	Mainnet		wss://x1.sologenic.org	Websocket Server
+Ripple¹	Testnet	https://s.altnet.rippletest.net:51234/	wss://s.altnet.rippletest.net/	Testnet public server
+Ripple¹	Devnet	https://s.devnet.rippletest.net:51234/	wss://s.devnet.rippletest.net/	Devnet public server
+"""
+
+xrp_lookup = {
+    's.altnet.rippletest.net':{
+        'json_rpc':'https://s.altnet.rippletest.net:51234',
+        'websocket':'wss://s.altnet.rippletest.net:51233',
+        'type':'testnet',
+    },
+    's.devnet.rippletest.net':{  
+        'json_rpc':'https://s.devnet.rippletest.net:51234',
+        'websocket':'wss://s.devnet.rippletest.net:51233',
+        'type':'devnet',
+    },
+    's1.ripple.com':{
+        'json_rpc':'https://s1.ripple.com:51234',
+        'websocket':'wss://s1.ripple.com:51233',
+        'type':'mainnet',
+    },
+    's2.ripple.com':{
+        'json_rpc':'https://s2.ripple.com:51234',
+        'websocket':'wss://s2.ripple.com:51233',
+        'type':'mainnet',
+    },
+    'xrplcluster.com':{
+        'json_rpc':'https://xrplcluster.com',
+        'websocket':'wss://xrplcluster.com',
+        'type':'mainnet',
+    },
+    'xrpl.ws':{
+        'json_rpc':'https://xrpl.ws',
+        'websocket':'wss://xrpl.ws',
+        'type':'mainnet',
+    },
+    'x1.sologenic.org':{
+        'json_rpc':'',
+        'websocket':'wss://x1.sologenic.org',
+        'type':'mainnet',
+    },
+    'xrpl.link':{
+        'json_rpc':'https://xrpl.link',
+        'websocket':'wss://xrpl.link',
+        'type':'mainnet',
+    },
+    'testnet.xrpl-labs.com':{
+        'json_rpc':'https://testnet.xrpl-labs.com',
+        'websocket':'wss://testnet.xrpl-labs.com',
+        'type':'testnet',
+    },
+
+}
+
+def get_rpc_network_from_jwt(jwt_body):
+    rpc_network = xrp_lookup['s.altnet.rippletest.net']['json_rpc']
+    if 'net' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['net'])
+        # app.logger.info(f"rpc_network: {rpc_network} net:{jwt_body['net']}")
+    elif 'network_endpoint' in jwt_body:
+        rpc_network = get_rpc_network_from_wss(jwt_body['network_endpoint'])
+        # app.logger.info(f"rpc_network: {rpc_network} network_endpoint:{jwt_body['network_endpoint']}")
+    return rpc_network
+
+def get_rpc_network_from_wss(wss_endpoint):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['websocket'] == wss_endpoint:
+            return xrp_lookup[domain]['json_rpc']
+    
+    return 'none'
+
+def get_rpc_network_type(network):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['json_rpc'] == network:
+            return xrp_lookup[domain]['type']
+    
+    return 'none'
+
+def get_wss_network_type(network):
+    for domain in xrp_lookup.keys():
+        if xrp_lookup[domain]['websocket'] == network:
+            return xrp_lookup[domain]['type']
+    
+    return 'none'
+
+
+def get_account_info(address, network="https://s.altnet.rippletest.net:51234/"):
+    client = JsonRpcClient(network)
+    acct_info = AccountInfo(
+        account=address,
+        ledger_index="current",
+        queue=True,
+        strict=True,
+    )
+    response = client.request(acct_info)
+    result = response.result
+    return result
+
+def xrp_to_drops(xrp):
+    return int(xrp*DROPS_IN_XRP)
 
 def drops_to_xrp(drops):
     return int(drops/DROPS_IN_XRP)
@@ -173,51 +456,51 @@ def verify_msg(base64_message, base64_signature, public_key):
             "Derived keypair did not generate verifiable signature",
         )
 
-def send_payment_from_request():
-    receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=config['WALLET_SECRET_R'])
+# def send_payment_from_request():
+#     receiving_wallet = XUrlWallet(network=config['JSON_RPC_URL'], seed=config['WALLET_SECRET_R'])
     
-    payment_request = receiving_wallet.generate_payment_request(amount=120)
-    print(payment_request)
+#     payment_request = receiving_wallet.generate_payment_request(amount=120)
+#     print(payment_request)
 
 
-    # ok now lets pay it with a faucet
-    # decode the payment request
-    pr_parts = payment_request.split(":")
+#     # ok now lets pay it with a faucet
+#     # decode the payment request
+#     pr_parts = payment_request.split(":")
 
-    # verify the signed message
-    message_payload = json.loads(base64.b64decode(pr_parts[0].encode('utf-8')))
-    sig = base64.b64decode(pr_parts[1].encode('utf-8'))
-    print(message_payload, sig)
+#     # verify the signed message
+#     message_payload = json.loads(base64.b64decode(pr_parts[0].encode('utf-8')))
+#     sig = base64.b64decode(pr_parts[1].encode('utf-8'))
+#     print(message_payload, sig)
 
-    # use the public key to verify
+#     # use the public key to verify
 
-    try:
-        sending_wallet = XUrlWallet(network=config['JSON_RPC_URL']) #this is a faucet wallet
-        account_info = sending_wallet.get_account_info()
-        print(account_info)
+#     try:
+#         sending_wallet = XUrlWallet(network=config['JSON_RPC_URL']) #this is a faucet wallet
+#         account_info = sending_wallet.get_account_info()
+#         print(account_info)
         
-        # this will throw an exception if the signature is not valid
-        verify_msg(pr_parts[0].encode('utf-8'), sig, message_payload['public_key'])
+#         # this will throw an exception if the signature is not valid
+#         verify_msg(pr_parts[0].encode('utf-8'), sig, message_payload['public_key'])
 
-        # Memos": [
-        # {
-        #     "Memo": {
-        #         "MemoType": "687474703a2f2f6578616d706c652e636f6d2f6d656d6f2f67656e65726963",
-        #         "MemoData": "72656e74"
-        #     }
-        #     }
-        # ],
+#         # Memos": [
+#         # {
+#         #     "Memo": {
+#         #         "MemoType": "687474703a2f2f6578616d706c652e636f6d2f6d656d6f2f67656e65726963",
+#         #         "MemoData": "72656e74"
+#         #     }
+#         #     }
+#         # ],
 
-        tx_response_status, tx_response_result = sending_wallet.send_payment(
-            amount_xrp=message_payload['amount'],
-            destination_address=message_payload['address']
-        )
+#         tx_response_status, tx_response_result = sending_wallet.send_payment(
+#             amount_xrp=message_payload['amount'],
+#             destination_address=message_payload['address']
+#         )
 
-        print(tx_response_status, tx_response_result)
+#         print(tx_response_status, tx_response_result)
 
 
-    except Exception as e:
-        print("=== COULD NOT VERIFY", e)
+#     except Exception as e:
+#         print("=== COULD NOT VERIFY", e)
 
 
 # def create_new_wallet(network=config['JSON_RPC_URL']):
@@ -249,13 +532,29 @@ def sign_basic():
     public_key = wallet.public_key
     private_key = wallet.private_key
     classic_address = wallet.classic_address     
-    base64_message, base64_signature = sign_message("message", private_key, encoding='utf-8') 
-    print(f"message: {base64_message} signature: {base64_signature}") 
+    # base64_message, base64_signature = sign_message("message", private_key, encoding='utf-8') 
+    # print(f"message: {base64_message} signature: {base64_signature}") 
     try:
-        verify_msg(base64_message, base64_signature, public_key) 
+        # verify_msg(base64_message, base64_signature, public_key) 
         print("message verified")
     except Exception as e:
         print("=== COULD NOT VERIFY", e)
+
+
+async def get_xapp_tokeninfo(xumm_token):
+
+
+    url = f"https://xumm.app/api/v1/platform/xapp/ott/{xumm_token}"
+
+    headers = {
+        "accept": "application/json",
+        "X-API-Key": f"{config['XUMM_API_KEY']}",
+        "X-API-Secret": f"{config['XUMM_API_SECRET']}",
+    }
+
+    response = requests.get(url, headers=headers)
+
+    return json.loads(response.text)
 
 
 
@@ -282,28 +581,28 @@ def main():
         public_key, private_key = derive_keypair(seed)
         print(f"public_key: {public_key}, private_key: {private_key}")
 
-    # wallet from seed
-    if 'wallet' in args and args.wallet == 'create' and 'faucet' in args and args.faucet == 'True':
-        wallet = XUrlWallet(network=config['JSON_RPC_URL'], isFaucet=True)
-        print(json.dumps(wallet.serialize(), indent=4))
+    # # wallet from seed
+    # if 'wallet' in args and args.wallet == 'create' and 'faucet' in args and args.faucet == 'True':
+    #     wallet = XUrlWallet(network=config['JSON_RPC_URL'], isFaucet=True)
+    #     print(json.dumps(wallet.serialize(), indent=4))
 
-    # sign a message
-    if 'sign' in args and args.sign and 'private_key' in args and args.private_key:
-        message = args.sign
-        private_key = args.private_key
-        message,signature = sign_message(message, private_key)
-        print(f"message: {message} signature: {signature}")
+    # # sign a message
+    # if 'sign' in args and args.sign and 'private_key' in args and args.private_key:
+    #     message = args.sign
+    #     private_key = args.private_key
+    #     message,signature = sign_message(message, private_key)
+    #     print(f"message: {message} signature: {signature}")
 
-    # verify a message
-    if 'verify' in args and args.verify and 'public_key' in args and args.public_key and 'signature' in args and args.signature:
-        message = args.verify
-        pk = args.public_key
-        sig = args.signature
-        try:
-            verify_msg(message.encode('utf-8'), sig.encode('utf-8'), pk)
-            print("message verified")
-        except Exception as e:
-            print("=== COULD NOT VERIFY", e)   
+    # # verify a message
+    # if 'verify' in args and args.verify and 'public_key' in args and args.public_key and 'signature' in args and args.signature:
+    #     message = args.verify
+    #     pk = args.public_key
+    #     sig = args.signature
+    #     try:
+    #         verify_msg(message.encode('utf-8'), sig.encode('utf-8'), pk)
+    #         print("message verified")
+    #     except Exception as e:
+    #         print("=== COULD NOT VERIFY", e)   
 
    
 
