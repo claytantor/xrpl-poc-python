@@ -76,7 +76,7 @@ const PaymentItemViewer = ({xummState}) => {
                     <h2 className="text-2xl break-words w-96 text-center">{paymentItem.name}</h2>
                   </div>
                   <div className="m-1 flex flex-row justify-center w-96 rounded p-1">
-                    <img className="card-img-top w-64 rounded drop-shadow-xl" src={itemImage} alt="{paymentItem.name}" />
+                    <img className="card-img-top w-64 rounded drop-shadow-xl" src={itemImage} alt={paymentItem.name} />
                   </div>
                   <div className="m-1 flex flex-row justify-center">
                     <div className="text-xs w-96 text-slate-700 text-center">{paymentItem.description}</div>

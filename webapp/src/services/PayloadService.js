@@ -8,4 +8,7 @@ export const PayloadService = {
     getAll(){
         return AxiosService.get(`/payload`);     
     }, 
+    update(payload){
+        return AxiosService.put(`/payload`, payload);     
+    }
 };

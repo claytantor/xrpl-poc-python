@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import JSONResponse 
+from fastapi.responses import JSONResponse
 # from fastapi.logger import logger as fastapi_logger
 # from fastapi.middleware.cors import CORSMiddleware
 # from starlette.middleware.cors import CORSMiddleware
@@ -36,8 +36,8 @@ from fastapi.encoders import jsonable_encoder
 import logging
 
 from api import routes
-from api.models import Message
-from api.schema import MessageSchema
+# from api.models import Message
+# from api.schema import MessageSchema
 
 from dotenv import dotenv_values
 config = {
@@ -45,7 +45,7 @@ config = {
     **os.environ,  # override loaded values with environment variables
 }
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 ulogger = logging.getLogger("uvicorn.error")
 
 
@@ -80,7 +80,7 @@ class MyMiddleware:
 
 def create_app():
     app = FastAPI(title="xurlpay API",
-    description="Sample FastAPI Application with Swagger and Sqlalchemy",
+    description="Durable payment automation for XRP",
     version=config['API_VERSION'],)
 
     return app
@@ -100,14 +100,23 @@ def validation_exception_handler(request, err):
 
 @app.middleware("http")
 async def CorsSupportMiddleware(request: Request, call_next):
-    #  fastapi_logger.info("CorsSupportMiddleware works!")
-    # ulogger.info("CorsSupportMiddleware was called")
-    response = await call_next(request)
-    origins = ["*"]
+    ulogger.info("CorsSupportMiddleware was called")
 
-    response.headers['Access-Control-Allow-Origin'] = "*"
-    response.headers['Access-Control-Allow-Methods'] = "GET, POST, PUT, DEL"
-    response.headers['Access-Control-Allow-Header'] = "Content-Type"
+    headers_cors = {}
+    headers_cors["Access-Control-Allow-Origin"] = "*"
+    headers_cors["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    headers_cors["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    headers_cors["Access-Control-Max-Age"] = "86400"
+    headers_cors["Access-Control-Allow-Credentials"] = "true"
+    headers_cors["Access-Control-Expose-Headers"] = "Content-Length, Content-Range"
+
+    if request.method == "OPTIONS":
+        #return JSONResponse(status_code=204, headers=headers_cors, content={})
+        return PlainTextResponse("OK", status_code=200, headers=headers_cors)
+
+    response = await call_next(request) 
+
+    response.headers.update(headers_cors)
     return response
 
 

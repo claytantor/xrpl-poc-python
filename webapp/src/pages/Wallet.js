@@ -75,7 +75,7 @@ const Wallet = ({xummState}) => {
                         <span className="w-24 inline-flex justify-center items-center 
                         px-2 text-sm font-medium text-gray-800 bg-pink-200 
                         rounded-full dark:bg-gray-700 dark:text-gray-300">
-                            {walletInfo.wallet_user_info.network_type}</span>   
+                            {walletInfo.xrp_network.type}</span>   
                     </div>
                     <div className="flex md:flex-row justify-between">
                         

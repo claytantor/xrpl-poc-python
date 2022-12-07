@@ -11,6 +11,8 @@ import { w3cwebsocket as W3CWebSocket } from "websocket";
 import {BiCheckCircle} from "react-icons/bi"
 import {BiQrScan} from "react-icons/bi"
 
+import {PayloadService} from "../services/PayloadService"
+
 const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
     
     const [xummPayload, setXummPayload] = useState();
@@ -21,10 +23,7 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
     const [wsclient, setWsclient] = useState(new W3CWebSocket(paymentRequest.refs.websocket_status));
     const [isConnected, setIsConnected] = useState(true);
 
-    // const wsclient = new W3CWebSocket(paymentRequest.refs.websocket_status);
-
     let count = 0;
-    // let isConnected = true;
 
     useEffect(() => {
       console.log("PaymentRequest", paymentRequest);
@@ -39,11 +38,20 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
         console.log("GOT MESSAGE", m_payload, count, isConnected);
         if ("expires_in_seconds" in m_payload) {
           setExpiresSecs(m_payload.expires_in_seconds);
-        } else if ("payload_uuidv4" in m_payload) {
-          // setExpiresSecs(null);
+        } else if ("payload_uuidv4" in m_payload) {         
           setPayloadState("RESOLVED");
           setTimeout(() => {
-            wsclient.close();
+            console.log("CLOSE ", paymentRequest.refs.websocket_status);
+            let newPayload = {
+              payload_uuidv4: m_payload.payload_uuidv4,
+              is_signed: m_payload.signed,
+              txid: m_payload.txid
+            };
+            console.log("newPayload", newPayload);
+            PayloadService.update(newPayload).then((res) => {
+              console.log("updated payload", res);
+              wsclient.close();
+            });
           }, 3000);    
         } else if ("opened" in m_payload) {
           setPayloadState("OPENED");
@@ -96,7 +104,7 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
       <>
         <div className="p-4">
           <div className="rounded bg-slate-100 w-96 p-3">
-            {error && <div className="text-red-500 text-2xl w-full rounded bg-pink-200">{error}</div>}
+            {error && <div className="text-red-500 w-full rounded bg-pink-200 p-2">Error: {error}</div>}
             <div className="flex flex-row font-bold text-2xl justify-center">
               <div>SCAN TO PAY</div>
             </div>
@@ -110,7 +118,7 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
                 <span className="inline-flex justify-center items-center p-1 m-1 text-sm font-medium text-gray-800 bg-pink-200 rounded-lg dark:bg-gray-700 dark:text-gray-300">{customPayloadMeta.network_type.toLowerCase()}</span>   
             </div>
             <div>
-                <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(customPayloadMeta.amount).toFixed(2)} <SiXrp className="ml-1"/></div>
+                <div className="flex justify-center text-4xl font-bold font-monospace text-pink-600 link-align-center">{parseFloat(customPayloadMeta.xrp_amount).toFixed(2)} <SiXrp className="ml-1"/></div>
             </div></>}
             <div className="w-full">
               <div className="w-full flex flex-col justify-center">

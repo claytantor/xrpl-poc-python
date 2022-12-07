@@ -29,7 +29,7 @@ const PaymentItemSummary = ({
                     <button className="text-xs flex underline hover:text-pink-500 bg-orange rounded-lg m-1 p-1" onClick={()=>addPaymentItemToCart(paymentItem)}>
                             <div className='mt-1 align-bottom'>Add to Cart</div></button>
                 </div> */}
-                <img className="card-img-top" src={image} alt="{paymentItem.name}" />
+                <img className="card-img-top" src={image} alt={paymentItem.name} />
                 <div className="px-6 py-1">
                     <div className="font-bold text-xl mb-1">{paymentItem.name}</div>
                     <p className="text-gray-700 text-sm">{paymentItem.description}</p>

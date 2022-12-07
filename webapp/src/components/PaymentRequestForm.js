@@ -17,7 +17,8 @@ const PaymentRequestForm = ({ setPaymentRequest }) => {
 
   useEffect(() => {
       WalletService.getXrpPrice(userCurrency).then((xrpPrice) => {
-          setXrpPrice(xrpPrice.data.XRP);
+          console.log("xrpPrice", xrpPrice.data.xrpRate);
+          setXrpPrice(xrpPrice.data.xrpRate);
       });
   }, [userCurrency]);   
 
@@ -38,7 +39,8 @@ const PaymentRequestForm = ({ setPaymentRequest }) => {
 
     if(!error) {
       //convert amount to xrp
-      const newFormState = { ...formState, 'amount': formState.amount / xrpPrice };
+      const newFormState = { ...formState, 'xrp_amount': formState.amount / xrpPrice };
+      // const newFormState = { 'memo':'none', 'xrp_amount': 12.23 };
       console.log("newFormState", newFormState);
 
       WalletService.postPayRequest(newFormState).then(r => {

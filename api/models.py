@@ -16,6 +16,61 @@ config = {
 
 Base = declarative_base()
 
+class XrpNetwork():
+    def __init__(self,     
+        json_rpc: str,
+        websocket: str,
+        type: str,
+        domain: str):
+        self.json_rpc = json_rpc
+        self.websocket = websocket
+        self.type = type
+        self.domain = domain
+
+    def __init__(self, data):
+        self.from_dict(data)
+    
+
+    def from_dict(self, data):
+        for field in ['json_rpc', 'websocket', 'type', 'domain']:
+            if field in data:
+                setattr(self, field, data[field])
+
+    def to_dict(self):
+        return {
+            "json_rpc": self.json_rpc,
+            "websocket": self.websocket,
+            "type": self.type,
+            "domain": self.domain
+        }
+
+
+class XrpCurrencyRate():
+    #   
+    def __init__(self, 
+        fiatCurrencyI8NCode: str,
+        fiatCurrencyName: str,
+        fiatCurrencySymbol: str,
+        fiatCurrencyIsoDecimals: int,
+        xrpRate: float):
+
+        self.fiatCurrencyI8NCode = fiatCurrencyI8NCode
+        self.fiatCurrencyName = fiatCurrencyName
+        self.fiatCurrencySymbol = fiatCurrencySymbol
+        self.fiatCurrencyIsoDecimals = fiatCurrencyIsoDecimals
+        self.xrpRate = xrpRate
+
+
+    def to_dict(self):
+        return {
+            "fiatCurrencyI8NCode": self.fiatCurrencyI8NCode,
+            "fiatCurrencyName": self.fiatCurrencyName,
+            "fiatCurrencySymbol": self.fiatCurrencySymbol,
+            "fiatCurrencyIsoDecimals": self.fiatCurrencyIsoDecimals,
+            "xrpRate": self.xrpRate
+        }
+
+
 class ApiInfo():
     version = config['API_VERSION']
 
@@ -65,14 +120,14 @@ class Wallet(Base):
     def __repr__(self):
         return f"<Wallet(wallet_id={self.wallet_id})>"
 
-    def serialize(self):
+    def to_dict(self):
         return {
             "wallet_id": self.wallet_id,
-            "public_key": self.public_key,
+            # "public_key": self.public_key,
             "classic_address": self.classic_address,
-            "fiat_i8n_currency": self.fiat_i8n_currency,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at
+            # "fiat_i8n_currency": self.fiat_i8n_currency,
+            "created_at": str(self.created_at),
+            "updated_at": str(self.updated_at)
         }
 
 
@@ -114,6 +169,12 @@ class XummPayload(Base):
     def __repr__(self):
         return f"<XummPayload(xumm_payload_id={self.xumm_payload_id})>"
 
+    def from_dict(self, data):
+        for field in ['xumm_payload_id', 'body', 'webhook_body', 'created_at', 'updated_at', 'payload_uuidv4', 'wallet_id', 'is_signed', 'txid']:
+            if field in data:
+                if data[field] != None:
+                    setattr(self, field, data[field])
+
     @property
     def is_signed_bool(self):
         return False if self.is_signed == 0 else True
@@ -121,6 +182,11 @@ class XummPayload(Base):
     def set_is_signed_bool(self, is_signed_bool=False):
         self.is_signed = 1 if is_signed_bool else 0
 
+    
+    def to_dict(self):
+        return self.serialize()
+
+        
     def serialize(self):
         is_signed = False if self.is_signed == 0 else True
 
@@ -128,8 +194,8 @@ class XummPayload(Base):
             "xumm_payload_id": self.xumm_payload_id,
             "is_signed": is_signed,
             "payload_uuidv4": self.payload_uuidv4,
-            "created_at": self.created_at,
-            "updated_at": self.updated_at,
+            "created_at": str(self.created_at),
+            "updated_at": str(self.updated_at),
             "txid": self.txid,
         }
 

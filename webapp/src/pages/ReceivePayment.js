@@ -16,7 +16,12 @@ const ReceivePayment = ({xummState}) => {
             xummState={xummState}> 
             <div className="p-4"> 
                 <div className="p-1 flex w-full justify-center">
-                {paymentRequest ? <PaymentRequest xummState={xummState} paymentRequest={paymentRequest} setPaymentRequest={setPaymentRequest}/>:
+                {paymentRequest ? 
+
+                    <>{/* <div>{JSON.stringify(paymentRequest,null,2)}</div> */}
+                    <PaymentRequest xummState={xummState} paymentRequest={paymentRequest.body} setPaymentRequest={setPaymentRequest}/>
+                    </>
+                :
                 <PaymentRequestForm setPaymentRequest={setPaymentRequest}/>}
                 </div>
             </div>

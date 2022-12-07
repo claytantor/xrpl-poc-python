@@ -1,3 +1,4 @@
+
 import io
 from pydoc import describe
 import uuid
@@ -9,38 +10,41 @@ import shortuuid
 import json
 import base64
 from datetime import datetime as dt, timedelta
-import jwt
 import xumm
 import asyncio
 from PIL import Image
 
 from fastapi import APIRouter
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI, HTTPException, Request, Form
+from fastapi.responses import JSONResponse, Response
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
+from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema
-from api.models import Message, ApiInfo
-from api.decorators import cross_origin
+from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentRequestSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
+from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, XrpCurrencyRate, XummPayload
+from api.decorators import verify_user_jwt_scopes
+from api.jwtauth import make_signed_token, get_token_body
+from api.dao import PaymentItemDao, XummPayloadDao, get_db, WalletDao
+from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
+
 import logging
-
-logger = logging.getLogger("uvicorn.error") 
-
+ulogger = logging.getLogger("uvicorn.error")
 
 router = APIRouter()
 
 # from api.exchange_rates import xrp_price
-# from api.xqr import generate_qr_code
+from api.xqr import generate_qr_code
 # from api.xrpcli import get_rpc_network_from_jwt, get_rpc_network_type, get_wss_network_type
 # from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
-# from api.serializers import PaymentItemDetailsSerializer
+from api.serializers import PaymentItemDetailsSerializer
 # from api.xrpcli import xrp_to_drops, get_xapp_tokeninfo, get_rpc_network_from_wss, get_account_info
 
 
 # from . import db
 # from .decorators import log_decorator, verify_user_jwt_scopes
 # from .jwtauth import is_token_valid, has_all_scopes, get_token_body, get_token_sub
-# from .s3utils import save_image
+from .s3utils import save_image
 
 
 from dotenv import dotenv_values
@@ -51,24 +55,22 @@ config = {
 }
 
 
-# @router.get("/")
-# async def root():
-#     return {"message": "hello world again"}
+sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
 
-# sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
+scopes = {
+    'wallet_owner': [
+        'wallet.view',
+        'wallet.transfer',
+        'wallet.sign',
+        'wallet.receive',
+        'wallet.request'],
+    'wallet_owner_refresh': ['wallet.refresh'],
+}
 
-# scopes = {
-#     'wallet_owner': [
-#         'wallet.view',
-#         'wallet.transfer',
-#         'wallet.sign',
-#         'wallet.receive',
-#         'wallet.request'],
-#     'wallet_owner_refresh': ['wallet.refresh'],
-# }
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-@router.get('/', tags=["Message"], response_model=MessageSchema,status_code=200)
+@router.get('/', tags=["ApiInfo"], response_model=MessageSchema,status_code=200)
 async def get_index():
     message = Message()
     message.message = "hello xurl"
@@ -81,181 +83,65 @@ def get_api_info():
     # return jsonify({'version': config['APP_VERSION']}), 200
     return ApiInfo().to_dict()
 
+@router.post("/token",tags=["Auth"], response_model=OAuth2TokenSchema,status_code=200)
+def auth_token(username: str = Form(), password: str = Form()):
+    ulogger.info(f"get_spoof_token {username} {password}")
+    jwt_token = make_signed_token(password, {'sub':username, 'net':config['XRP_WS_NET']})
+    return {"access_token":jwt_token}
 
-# @router.route("/xrp/price/<fiat_i8n_currency>", methods=['GET'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xrp_price_from_currency(fiat_i8n_currency):
+@router.get("/wallet", tags=["Wallet"], response_model=WalletSchema, status_code=200)
+# @router.get("/wallet",status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+async def get_wallet(request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    ulogger.info(f"get_wallet {token}")
+    jwt_body = get_token_body(token)
 
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found"}), HTTPStatus.NOT_FOUND
-
-#     # print('should fetch rates')
-#     # sdk = xumm.XummSdk(
-#     #     cls.json_fixtures['api']['key'],
-#     #     cls.json_fixtures['api']['secret']
-#     # )
-
-#     # mock_get.return_value = Mock(status_code=200)
-#     # mock_get.return_value.json.return_value = cls.json_fixtures['rates']
-#     # cls.assertEqual(sdk.get_rates('usd').to_dict(), cls.json_fixtures['rates'])
-
-#     # get rates from xumm
-#     rates = sdk.get_rates(fiat_i8n_currency).to_dict()
-#     app.logger.info(f"==== xumm rates: {rates}")
-
-
-
-
-#     # xrp_quote = asyncio.run(xrp_price(fiat_i8n_currency))
-#     return jsonify(rates), 200
-
-
-# @router.route('/auth/access_token', methods=['POST', 'OPTIONS'])
-# @cross_origin(origins=['*', 'https://rapaygo.com', 'https://dev.rapaygo.com/'])
-# @log_decorator(app.logger)
-# def post_access_token():
-
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
-#                                                  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-#                                                  'Access-Control-Allow-Methods': 'POST, OPTIONS'}
-#     if request.method == 'POST':
-#         json_body = request.json
-#         # app.logger.info(json.dumps(json_body, indent=4))
-#         if json_body is None:
-#             return jsonify({"message": "empty body not allowed"}), HTTPStatus.BAD_REQUEST
-
-#         if 'classic_address' not in list(json_body.keys()):
-#             return jsonify({"message": "Missing required body element classic_address"}), HTTPStatus.BAD_REQUEST
-#         if 'private_key' not in list(json_body.keys()):
-#             return jsonify({"message": "Missing required body element private_key"}), HTTPStatus.BAD_REQUEST
-
-#         classic_address = json_body['classic_address']
-#         private_key = json_body['private_key']
-#         app.logger.debug(f"auth body: {json_body}")
-#         wallet = db.session.query(Wallet).filter_by(
-#             classic_address=classic_address, private_key=private_key).first()
-
-#         # dont let them know the wallet_id is wrong
-#         if wallet is None:
-#             return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
-
-#         return get_auth(wallet, classic_address, private_key, wallet.private_key,
-#                         scopes['wallet_owner'], scopes_refresh=scopes['wallet_owner_refresh'])
-
-
-# def get_auth_base(wallet, username, scopes, scopes_refresh):
-
-#     exp_time = dt.utcnow()+timedelta(hours=24)
-#     exp_time_refresh = dt.utcnow()+timedelta(days=30)
-
-#     jwt_body = {"sid": username,
-#                 'scopes': scopes,
-#                 "exp": int(exp_time.timestamp())}
-
-#     token = jwt.encode(
-#         jwt_body,
-#         wallet.private_key,
-#         algorithm="HS256")
-
-#     refresh_body = {"sid": username,
-#                     'scopes': scopes_refresh,
-#                     "exp": int(exp_time_refresh.timestamp())}
-
-#     refresh_token = jwt.encode(
-#         refresh_body,
-#         wallet.private_key,
-#         algorithm="HS256")
-
-#     return token, refresh_token
-
-
-# def get_auth(wallet, username, test_phrase, pass_phrase, scopes, scopes_refresh):
-
-#     token, refresh_token = get_auth_base(
-#         wallet, username, scopes, scopes_refresh)
-
-#     return jsonify({'access_token': token,
-#                     'refresh_token': refresh_token,
-#                     "wallet_id": wallet.wallet_id}), 200, {'subject': token}
-
-
-# def make_wallet(classic_address):
-#     wallet = Wallet(classic_address=classic_address)
-#     db.session.add(wallet)
-#     db.session.commit()
-#     return wallet
-
-
-# @router.route("/wallet", methods=['GET'])
-# # @verify_user_jwt_scopes(scopes['wallet_owner'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def get_wallet():
-
-#     app.logger.info(
-#         f"{request} {request.args} {request.headers} {request.environ} {request.method} {request.url}")
-
-
-
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
-
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found"}), HTTPStatus.NOT_FOUND
-#         # create a new wallet
-#         # wallet = make_wallet(classic_address=jwt_body['sub']) # create a new wallet
-
-#     # # {
-#     #     "client_id": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-#     #     "ott_uuidv4": "1e068541-a8c2-4a24-9023-65b42b578e7d",
-#     #     "app_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-#     #     "app_name": "dev-xurlpay",
-#     #     "aud": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-#     #     "sub": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
-#     #     "iss": "https://xumm.app",
-#     #     "usr": "5cc95aba-7e42-4485-befc-97fe087938eb",
-#     #     "net": "wss://testnet.xrpl-labs.com",
-#     #     "iat": 1668826143,
-#     #     "exp": 1668912543
-#     #     }
-
-
-#     app.logger.info(f"jwt body: {json.dumps(jwt_body, indent=4)}")
-#     rpc_network = 'https://s.altnet.rippletest.net:51234'
-#     if 'net' in jwt_body:
-#         rpc_network = get_rpc_network_from_wss(jwt_body['net'])
-#         app.logger.info(f"rpc_network: {rpc_network} net:{jwt_body['net']}")
-#     elif 'network_endpoint' in jwt_body:
-#         rpc_network = get_rpc_network_from_wss(jwt_body['network_endpoint'])
-#         app.logger.info(f"rpc_network: {rpc_network} network_endpoint:{jwt_body['network_endpoint']}")
-
-#     if rpc_network is 'none':
-#         return jsonify({"message": "invalid network"}), HTTPStatus.BAD_REQUEST
     
-#     account_info = get_account_info(wallet.classic_address, rpc_network)
+    try:
+        xrp_network = get_xrp_network_from_jwt(jwt_body)
+        account_info = await get_account_info(wallet.classic_address, xrp_network.json_rpc)
 
-#     return jsonify({
-#         'classic_address': wallet.classic_address,
-#         'wallet_info': wallet.serialize(),
-#         'wallet_user_info': jwt_body,
-#         'account_data': account_info['account_data']}), 200
+        wallet_dict = wallet.to_dict()
+        wallet_dict['account_data'] = account_info['account_data']
+        wallet_dict['xrp_network'] = xrp_network.to_dict()     
+        return wallet_dict
 
+    except Exception as e:
+        ulogger.error(f"get_wallet {e}")
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": str(e)})
 
-# @router.route("/wallet", methods=['POST'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def create_wallet():
+@router.get("/xrp/price/{fiat_i8n_currency}", tags=["XRP"], response_model=XrpCurrencyRateSchema, status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def xrp_price_from_currency(fiat_i8n_currency:str, request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    ulogger.info(f"get_xrp_price {fiat_i8n_currency}")
+    rates = sdk.get_rates(fiat_i8n_currency).to_dict()
+    ulogger.info(f"rates: {rates}")
+
+    rate_dict = XrpCurrencyRate(
+        fiatCurrencyI8NCode=fiat_i8n_currency,
+        fiatCurrencyName=rates['__meta']['currency']['en'],
+        fiatCurrencySymbol=rates['__meta']['currency']['symbol'],
+        fiatCurrencyIsoDecimals=rates['__meta']['currency']['isoDecimals'],
+        xrpRate=rates['XRP'],
+    ).to_dict()
+
+    return rate_dict
+
+@router.post("/wallet", tags=["Wallet"], response_model=WalletSchema, status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def post_create_wallet():
+    pass
 #     jwt_body = get_token_body(dict(request.headers)[
 #                               "Authorization"].replace("Bearer ", ""))
 
@@ -275,147 +161,154 @@ def get_api_info():
 #         'account_data': account_info}), 200
 
 
-# @router.route("/pay_request", methods=['POST'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def create_pay_request():
-#     json_body = request.get_json()
+@router.get("/payload", tags=["Xumm"], response_model=list[XummPayloadSchema], status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def get_wallet_payloads(request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#     # lookup the wallet by the classic address in the jwt
-#     #classic_address = get_token_sid(dict(request.headers)["Authorization"])
+    jwt_body = get_token_body(token)
 
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-#     app.logger.info(f"jwt body: {json.dumps(jwt_body, indent=4)}")
+    payloads = XummPayloadDao.fetch_by_wallet_id(db=db, wallet_id=wallet.wallet_id)
+    return JSONResponse(status_code=HTTPStatus.OK, content=[p.to_dict() for p in payloads])
 
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+@router.put("/payload", tags=["Xumm"], response_model=XummPayloadSchema, status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def update_wallet_payload(
+    payloadRequest:XummPayloadSchema,
+    request: Request,
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#     if 'amount' not in list(json_body.keys()):
-#         return jsonify({"message": "Missing required body element amount"}), HTTPStatus.BAD_REQUEST
-#     xrp_amount = float(json_body['amount'])
+    jwt_body = get_token_body(token)
 
-#     memo = f"xURL payment request {shortuuid.uuid()[:8]}"
-#     if 'memo' in list(json_body.keys()):
-#         memo = json_body['memo']
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+
+    ulogger.info(f"update_wallet_payload {payloadRequest}")
+    payload_exists = XummPayloadDao.fetch_by_wallet_payload_uuidv4(db=db, wallet_id=wallet.wallet_id, payload_uuidv4=payloadRequest.payload_uuidv4)
+
+    if payload_exists is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "payload does not belong to wallet"})
+
+    payload_exists.from_dict(payloadRequest.__dict__) 
+    payload = XummPayloadDao.update(db=db, payload=payload_exists)
+
+    return payload.to_dict()
 
 
-#         payment_request_dict = {
-#             'amount': xrp_amount,
-#             'amount_drops': int(xrp_to_drops(xrp_amount)),
-#             'address':wallet.classic_address,
-#             'network_endpoint':get_rpc_network_from_jwt(jwt_body),
-#             'network_type': get_rpc_network_type(get_rpc_network_from_jwt(jwt_body)),
-#             'memo':memo,
-#             'request_hash':shortuuid.uuid(),
-#         }
+@router.post("/pay_request", tags=["Xumm"], response_model=XummPayloadSchema, status_code=200)
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def create_pay_request(
+    paymentRequest:PaymentRequestSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#         # json_str = json.dumps(payment_request_dict)
-#         # base64_message, base_64_sig = self.sign_msg(json_str)
-#         # payment_request=f"{base64_message}:{base_64_sig}"
-#         # return payment_request_dict, payment_request
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-#         create_payload = {
-#             'txjson': {
-#                     'TransactionType' : 'Payment',
-#                     'Destination' : wallet.classic_address,
-#                     'Amount': str(xrp_to_drops(xrp_amount)),
-#             },
-#             "custom_meta": {
-#                 "identifier": f"payment_request:{shortuuid.uuid()[:12]}",
-#                 "blob": json.dumps(payment_request_dict),
-#                 "instruction": memo
-#             }
-#         }   
+    pr_hash = shortuuid.uuid()[:12]
+    payment_request_dict = {
+        'xrp_amount': paymentRequest.xrp_amount,
+        'amount_drops': int(xrp_to_drops(paymentRequest.xrp_amount)),
+        'address':wallet.classic_address,
+        'network_endpoint':get_rpc_network_from_jwt(jwt_body),
+        'network_type': get_rpc_network_type(get_rpc_network_from_jwt(jwt_body)),
+        'memo':paymentRequest.memo,
+        'request_hash':pr_hash,
+    }
+
+    # json_str = json.dumps(payment_request_dict)
+    # base64_message, base_64_sig = self.sign_msg(json_str)
+    # payment_request=f"{base64_message}:{base_64_sig}"
+    # return payment_request_dict, payment_request
+
+    create_payload = {
+        'txjson': {
+                'TransactionType' : 'Payment',
+                'Destination' : wallet.classic_address,
+                'Amount': str(xrp_to_drops(paymentRequest.xrp_amount)),
+        },
+        "custom_meta": {
+            "identifier": f"payment_request:{pr_hash}",
+            "blob": json.dumps(payment_request_dict),
+            "instruction": paymentRequest.memo
+        }
+    }   
      
-#     created = sdk.payload.create(create_payload)
-#     xumm_payload = created.to_dict()
-#     m_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-#                             wallet_id=wallet.wallet_id,
-#                             payload_uuidv4=xumm_payload['uuid'])
+    created = sdk.payload.create(create_payload)
+    xumm_payload = created.to_dict()
+    m_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                            wallet_id=wallet.wallet_id,
+                            payload_uuidv4=xumm_payload['uuid'])
 
-#     db.session.add(m_payload)
-#     db.session.commit()
+    db.add(m_payload)
+    db.commit()
 
-#     return jsonify(xumm_payload), 200
-
-
-# @router.route("/payload", methods=['GET'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def get_wallet_payloads():
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
-
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
-
-#     # print(wallet.serialize())
-#     # #payloads = db.session.query(XummPayload).where(XummPayload.wallet_id==wallet.wallet_id).order_by(describe (XummPayload.created_at)).all()
-#     # payloads = db.session.execute(select(XummPayload).where(BalanceNotify.wallet_id==wallet_id).order_by(desc (BalanceNotify.created_at)))
-#     # payloads = db.session.query(XummPayload).where(XummPayload.wallet_id==wallet.wallet_id).order_by(describe (XummPayload.created_at)).all()
-#     # # print(payloads)
-#     payloads = XummPayload.get_wallet_payloads(wallet.wallet_id)
-#     # print(payloads)
-
-#     return jsonify([p.serialize() for p in payloads]), 200
+    return m_payload.to_dict()
 
 
-# def save_images(images_dict, payment_item, app):
-#     for image in images_dict:
-#         app.logger.info(image)
-#         # {'data_url': 'https://s3.us-west-2.amazonaws.com/dev.rapaygo.com/uploaded_images/c053789c-4d0a-4dc2-a175-39eb0d694d6f.png', 'id': 28}
-#         if 'id' not in image or image['id'] is None:
+def save_images(db: Session, images_dict:dict, payment_item:PaymentItem):
+    for image in images_dict:
+        ulogger.info(image)
+        # {'data_url': 'https://s3.us-west-2.amazonaws.com/dev.rapaygo.com/uploaded_images/c053789c-4d0a-4dc2-a175-39eb0d694d6f.png', 'id': 28}
+        if 'id' not in image or image['id'] is None:
 
-#             im = Image.open(io.BytesIO(base64.b64decode(
-#                 image['data_url'].split(',')[1])))
-#             file_name = f"{uuid.uuid4()}.png"
+            im = Image.open(io.BytesIO(base64.b64decode(
+                image['data_url'].split(',')[1])))
+            file_name = f"{uuid.uuid4()}.png"
 
-#             url_saved = save_image(im, app.config["AWS_BUCKET_NAME"],
-#                                    f"{app.config['AWS_UPLOADED_IMAGES_PATH']}/{file_name}")
+            url_saved = save_image(im, config["AWS_BUCKET_NAME"],
+                                   f"{config['AWS_UPLOADED_IMAGES_PATH']}/{file_name}")
 
-#             url_saved = f'https://s3.us-west-2.amazonaws.com/{app.config["AWS_BUCKET_NAME"]}/uploaded_images/{file_name}'
+            url_saved = f'https://s3.us-west-2.amazonaws.com/{app.config["AWS_BUCKET_NAME"]}/uploaded_images/{file_name}'
 
-#             payment_item_image = PaymentItemImage(
-#                 type="PaymentItemImage", file_path=url_saved, file_name=file_name, file_size=0, original_name=file_name)
+            payment_item_image = PaymentItemImage(
+                type="PaymentItemImage", file_path=url_saved, file_name=file_name, file_size=0, original_name=file_name)
 
-#             payment_item.images.append(payment_item_image)
+            payment_item.images.append(payment_item_image)
 
-#         elif 'file_path' in image:
-#             payment_item_image = PaymentItemImage.query.filter_by(
-#                 id=image['id']).first()
-#             payment_item_image.file_path = image['file_path']
-#             payment_item_image.file_name = image['file_name']
-#             payment_item_image.original_name = image['original_name']
-#             payment_item_image.file_size = image['file_size']
+        elif 'file_path' in image:
+            payment_item_image = PaymentItemImage.query.filter_by(
+                id=image['id']).first()
+            payment_item_image.file_path = image['file_path']
+            payment_item_image.file_name = image['file_name']
+            payment_item_image.original_name = image['original_name']
+            payment_item_image.file_size = image['file_size']
 
-#         db.session.commit()
+        db.commit()
 
 
-# def save_images_for_request(request, payment_item, app):
+# def save_images_for_request(request, db: Session, payment_item:PaymentItem):
 
 #     if 'images' in request.json:
-#         save_images(request.json['images'], payment_item, app)
+#         save_images(request.json['images'], payment_item)
 
 
-# @router.route('/payment_item', methods=['GET'])  # depricated
-# @cross_origin()
-# def get_payment_items():
+@router.get('/payment_item') 
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def get_payment_items(request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.wallet_id)
+
+    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items])
+
+
 
 #     # get all the payment items for this wallet
 #     payment_items = db.session.query(PaymentItem).filter_by(
@@ -448,27 +341,24 @@ def get_api_info():
 #     return jsonify({"message": "payment item deleted"}), HTTPStatus.OK
 
 
-# @router.route('/payment_item/<id>', methods=['GET']) 
-# @cross_origin()
-# def get_payment_item_by_id(id):
+@router.get('/payment_item/{id}') 
+def get_payment_item_by_id(id:int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
-
-#     # get all the payment items for this wallet
-#     payment_item = db.session.query(PaymentItem).filter_by(
-#         wallet_id=wallet.wallet_id, payment_item_id=id).first()
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.wallet_id, payment_item_id=id)
     
-#     if payment_item is None:
-#         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+    if payment_item is None:
+        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
-#     return jsonify(PaymentItemDetailsSerializer(payment_item).serialize()), 200
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item).serialize())
+
 
 
 # @router.route('/payment_item/xumm/payload/<id>', methods=['GET'])  # depricated
@@ -843,33 +733,25 @@ def get_api_info():
 #         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
 
 
-# @router.route('/xumm/qr', methods=['GET', 'OPTIONS'])
-# def serve_qr_img():
-#     app.logger.info("==== xumm webhook")
+@router.get('/xumm/qr')
+def serve_qr_img(url: str):
+    # lookup the wallet by the classic address in the jwt
+    # url = request.args.get('url')
+    if url is None:
+        url = 'https://dev.xurlpay.org/xapp' 
 
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
-#                                                  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-#                                                  'Access-Control-Allow-Methods': 'POST, OPTIONS'}
+    ulogger.info(f"==== making qr for {url}")                                                
 
-#     # lookup the wallet by the classic address in the jwt
-#     url = request.args.get('url')
-#     if url is None:
-#         url = 'https://dev.xurlpay.org/xapp' 
+    img = generate_qr_code({'url': url})
+    return serve_pil_image(img)
 
-#     app.logger.info(f"==== making qr for {url}")                                                
+def serve_pil_image(pil_img, type='PNG', mimetype='image/png'):
+    img_io = io.BytesIO()
+    pil_img.save(img_io, type, quality=70)
+    img_io.seek(0)
+    return Response(content=img_io.getvalue(), media_type="image/png")
 
-#     img = generate_qr_code({'url': url})
-#     return serve_pil_image(img)
-
-# def serve_pil_image(pil_img, type='PNG', mimetype='image/png'):
-#     img_io = io.BytesIO()
-#     pil_img.save(img_io, type, quality=70)
-#     img_io.seek(0)
-#     return send_file(img_io, mimetype=mimetype)
-
-# # def serve_pil_image_bytes(pil_img, type='PNG', mimetype='image/png'):
-# #     img_io = BytesIO()
-# #     pil_img.save(img_io, 'JPEG', quality=70)
-# #     img_io.seek(0)
-# #     return send_file(img_io, mimetype='image/jpeg')
+# def get_image()
+#     image_bytes: bytes = generate_cat_picture()
+#     # media_type here sets the media type of the actual response sent to the client.
+#     return Response(content=image_bytes, media_type="image/png")

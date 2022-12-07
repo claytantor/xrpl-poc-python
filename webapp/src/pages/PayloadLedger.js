@@ -24,6 +24,10 @@ const BasePayload = ({payload}) => {
               {payload.is_signed &&  <div className="m-1 mr-3 h-6 rounded bg-green-600 p-1 text-xs font-bold text-white text-center">
                 SIGNED</div>}   
           </div>
+          {payload.is_signed && payload.txid && <div className="flex flex-row justify-center text-2xl">
+                <GoLinkExternal className="hover:text-pink-600" 
+                  onClick={() => {window.location.href = `${xummConfig.xrp_endpoint_explorer}/transactions/${payload.txid}`}}/>
+              </div>}
         </div>
         <div className="font-mono text-xs break-all p-1">
             {JSON.stringify(payload)}
@@ -47,7 +51,7 @@ const PaymentItemPayload = ({payload}) => {
                   
             <div className="flex items-center p-1">
               <FaShoppingBag className="ml-2"/>
-              <span className="ml-2">{payload.payload_uuidv4}</span>
+              <span className="ml-2">{payload.txid}</span>
               <div className="flex flex-row justify-center">
                 {!payload.is_signed && <div className="m-1 mr-3 h-6 rounded bg-gray-400 p-1 text-xs font-bold text-white text-center">
                   PENDING</div>}
@@ -82,7 +86,7 @@ const PaymentRequestPayload = ({payload}) => {
                      
               <div className="flex items-center p-1">
                 <FaMoneyCheck className="ml-2"/>
-                <span className="ml-2">{payload.payload_uuidv4}</span>
+                <span className="ml-2">{payload.txid}</span>
                 <div className="flex flex-row justify-center">
                   {!payload.is_signed && <div className="m-1 mr-3 h-6 rounded bg-gray-400 p-1 text-xs font-bold text-white text-center">
                   PENDING</div>}
@@ -141,7 +145,7 @@ const PayloadLedger = ({xummState}) => {
     <Page withSidenav={true} 
       xummState={xummState}>
       <div className="p-4">
-        <h2 className="text-2xl">Ledger</h2>
+        <h2 className="text-2xl">Payload Ledger</h2>
         {payloads && payloads.length > 0 && payloads.map((payload) => {
             return <PayloadItem payload={payload} />
         })}
