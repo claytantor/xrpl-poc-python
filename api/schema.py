@@ -7,6 +7,8 @@ class MessageSchema(BaseModel):
 
 class ApiInfoSchema(BaseModel):
     version: str
+    commit_sha: str
+    api_branch: str
 
 
 class OAuth2AuthSchema(BaseModel):

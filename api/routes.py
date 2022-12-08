@@ -81,6 +81,7 @@ async def get_index():
 def get_api_info():
     # app.logger.info(f"version: {config['APP_VERSION']}")
     # return jsonify({'version': config['APP_VERSION']}), 200
+    ulogger.info(f"get_api_info {ApiInfo().to_dict()}")
     return ApiInfo().to_dict()
 
 @router.post("/token",tags=["Auth"], response_model=OAuth2TokenSchema,status_code=200)

@@ -3,18 +3,23 @@ import React, {useEffect, useState} from "react"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
-import { deploymentEnv, xummConfig, whitepaperUrl } from "../env"
-
+import { deploymentEnv, xummConfig, whitepaperUrl, commitSha, branch, appVersion } from "../env"
+import { WalletService } from "../services/WalletService"
 
 const Footer = () => {
 
-    let [version, setVersion] = useState("0.1.3");
+    let [apiInfo, setApiInfo] = useState();
     let [count, setCount] = useState(0);
 
     useEffect(() => {
         console.log("Footer useEffect", count);
         let cv = count+1;
-        setCount(cv); 
+        setCount(cv);
+        WalletService.getInfo().then((apiInfo) => {
+            setApiInfo(apiInfo.data);
+        }).catch((error) => {
+            console.log("error", error, error.code, error.message, error.response.status);
+        }); 
     },[]);
 
     return (
@@ -24,7 +29,8 @@ const Footer = () => {
                 <div className="grid gap-x-0.8 grid-cols-1 md:grid-cols-2">
                     <div className="mb-6 sm:w-full md:w-1/2">
                         <h5 className="text-pink-300 font-bold text-lg">xurlpay.org</h5>
-                        <div className="font-bold font-mono text-slate-400">v{version} {deploymentEnv}</div>
+                        <div className="font-bold font-mono text-slate-400">APP v{appVersion} {deploymentEnv} {commitSha.substring(0,8)}</div>
+                        <div className="font-bold font-mono text-slate-400">API v{apiInfo?.version} {apiInfo?.commit_sha.substring(0,8)}</div>
                         <div className="text-slate-900 rounded-lg bg-pink-200 w-fit pr-1 pl-1">{xummConfig.xrp_network}</div>
                         <div>xApp Reference implementation of the <span className="font-bold text-pink-500">xURL</span> protocol for XRP.
                         </div>                                                            

@@ -73,11 +73,15 @@ class XrpCurrencyRate():
 
 class ApiInfo():
     version = config['API_VERSION']
-
+    commit_sha = config['API_GIT_SHA']
+    api_branch = config['API_GIT_BRANCH']
 
     def to_dict(self):
         return {
-            'version':self.version
+            'name':'xumm-api',
+            'version':self.version,
+            'commit_sha':self.commit_sha,
+            'api_branch':self.api_branch
         }
 
 

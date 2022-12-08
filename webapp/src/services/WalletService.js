@@ -5,8 +5,8 @@ import {AxiosService} from "./AxiosService";
 Axios.defaults.withCredentials = false; 
 
 export const WalletService = {
-    getVersion(){
-        return AxiosService.get(`/version`);     
+    getInfo(){
+        return AxiosService.get(`/info`);     
     },
     getXrpPrice(currency){
         return AxiosService.get(`/xrp/price/${currency}`);     
