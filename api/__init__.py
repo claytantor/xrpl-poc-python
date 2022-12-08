@@ -82,8 +82,8 @@ def create_app():
     app = FastAPI(title="xurlpay API",
     description="Durable payment automation for XRP",
     version=config['API_VERSION'],
-    openapi_url=config['API_OPENAPI_URL'],)
-
+    openapi_url=config['API_OPENAPI_URL'],
+    root_path=config['API_ROOT_PATH'])
     return app
 
 
