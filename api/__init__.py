@@ -81,7 +81,8 @@ class MyMiddleware:
 def create_app():
     app = FastAPI(title="xurlpay API",
     description="Durable payment automation for XRP",
-    version=config['API_VERSION'],)
+    version=config['API_VERSION'],
+    openapi_url=config['API_OPENAPI_URL'],)
 
     return app
 
