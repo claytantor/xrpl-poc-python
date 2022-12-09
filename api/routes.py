@@ -480,7 +480,39 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
     # ulogger.info(
     #     f"==== xumm_webhook {request.method} {request.url} {request.headers} {r_json}")
 
-    if 'signed' in json_body['payloadResponse'] and json_body['payloadResponse']['signed'] == True:
+    # {
+    #     'meta': {
+    #         'url': 'https://devapi.xurlpay.org/v1/xumm/webhook',
+    #         'application_uuidv4': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce',
+    #         'payload_uuidv4': '2bdee365-bacf-4d30-9cf2-8a2b92dee638',
+    #         'opened_by_deeplink': False
+    #     },
+    #     'custom_meta': {
+    #         'identifier': 'payment_item:8FmNYNKRxXfJ',
+    #         'blob': '{"type": "payment_item", "payment_item_id": 2, "xrp_quote": 0.05913825, "fiat_i8n_currency": "USD", "fiat_i8n_price": 0.15, "request_hash": "EmpKQDks9Jtcd7qyKikZGX", "network_endpoint": "https://s.altnet.rippletest.net:51234/", "network_type": "testnet"}',
+    #         'instruction': 'Pay 0.15 USD for item Atomic Fireball Jawbdreaker - Single Wrapped'
+    #     },
+    #     'payloadResponse': {
+    #         'payload_uuidv4': '2bdee365-bacf-4d30-9cf2-8a2b92dee638',
+    #         'reference_call_uuidv4': 'ac352677-f303-4801-9735-391a29ce6092',
+    #         'signed': True,
+    #         'user_token': True,
+    #         'return_url': {
+    #             'app': None,
+    #             'web': None
+    #         },
+    #         'txid': 'BB38CB80F3C13F58E5853AC4358E91DBA20968D8FC55AE8609EDB3A5B966851A'
+    #     },
+    #     'userToken': {
+    #         'user_token': '83234d7d-54d6-4240-89a3-e86cb97603cd',
+    #         'token_issued': 1668293195,
+    #         'token_expiration': 1673145614
+    #     }
+    # }
+
+    ulogger.info(f"==== xumm webhook signed:{json_body['payloadResponse']['signed']}")
+
+    if json_body['payloadResponse']['signed'] == True:
         ulogger.info("==== xumm webhook payload is signed")
 
         # get the xumm payload by the payload_uuidv4
