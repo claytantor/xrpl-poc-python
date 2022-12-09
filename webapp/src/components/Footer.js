@@ -3,7 +3,7 @@ import React, {useEffect, useState} from "react"
 import {FaGithubAlt} from "react-icons/fa"
 import {IoIosPaper} from "react-icons/io"
 import {TbCertificate} from "react-icons/tb"
-import { deploymentEnv, xummConfig, whitepaperUrl, commitSha, branch, appVersion } from "../env"
+import { deploymentEnv, xummConfig, whitepaperUrl, commitSha, backendBaseUrl, appVersion } from "../env"
 import { WalletService } from "../services/WalletService"
 
 const Footer = () => {
@@ -30,7 +30,9 @@ const Footer = () => {
                     <div className="mb-6 sm:w-full md:w-1/2">
                         <h5 className="text-pink-300 font-bold text-lg">xurlpay.org</h5>
                         <div className="font-bold font-mono text-slate-400">APP v{appVersion} {deploymentEnv} {commitSha.substring(0,8)}</div>
-                        <div className="font-bold font-mono text-slate-400">API v{apiInfo?.version} {apiInfo?.commit_sha.substring(0,8)}</div>
+                        {apiInfo && <div className="mb-2 font-bold font-mono text-slate-400 underline cursor-pointer hover:text-pink-500" 
+                            onClick={()=>{ window.location = `${backendBaseUrl}/docs/`}}>
+                                API v{apiInfo?.version} {apiInfo?.api_branch} {apiInfo?.commit_sha.substring(0,8)}</div>}
                         <div className="text-slate-900 rounded-lg bg-pink-200 w-fit pr-1 pl-1">{xummConfig.xrp_network}</div>
                         <div>xApp Reference implementation of the <span className="font-bold text-pink-500">xURL</span> protocol for XRP.
                         </div>                                                            

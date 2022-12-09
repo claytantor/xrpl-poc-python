@@ -67,14 +67,7 @@ scopes = {
     'wallet_owner_refresh': ['wallet.refresh'],
 }
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-@router.get('/', tags=["ApiInfo"], response_model=MessageSchema,status_code=200)
-async def get_index():
-    message = Message()
-    message.message = "hello xurl"
-    return message.to_dict() 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 
 @router.get("/info",tags=["ApiInfo"], response_model=ApiInfoSchema,status_code=200)
