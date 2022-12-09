@@ -529,7 +529,7 @@ def update_payment_item(
 
 
 
-@router.get("/xumm/webhook", methods=['GET', 'POST', 'OPTIONS'])
+@router.get("/xumm/webhook")
 def xumm_webhook(request: Request):
 
     ulogger.info(
@@ -656,7 +656,6 @@ def xumm_webhook(request: Request):
 
 @router.get("/xumm/xapp")
 def xumm_xapp(request: Request):
-
     ulogger.info(
         f"==== xumm xapp {request} {request.method} {request.url}")
 
