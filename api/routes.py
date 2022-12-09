@@ -16,13 +16,13 @@ from PIL import Image
 
 from fastapi import APIRouter
 from fastapi import Depends, FastAPI, HTTPException, Request, Form
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, RedirectResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
 from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
-from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, XrpCurrencyRate, XummPayload
+from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
 from api.dao import PaymentItemDao, XummPayloadDao, get_db, WalletDao
@@ -79,7 +79,7 @@ async def get_index():
 
 @router.get("/info",tags=["ApiInfo"], response_model=ApiInfoSchema,status_code=200)
 def get_api_info():
-    # app.logger.info(f"version: {config['APP_VERSION']}")
+    # ulogger.info(f"version: {config['APP_VERSION']}")
     # return jsonify({'version': config['APP_VERSION']}), 200
     ulogger.info(f"get_api_info {ApiInfo().to_dict()}")
     return ApiInfo().to_dict()
@@ -358,66 +358,68 @@ def get_payment_item_by_id(id:int,
 #     if payment_item is None:
 #         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
 
-#     app.logger.info(payment_item.serialize())
+#     ulogger.info(payment_item.serialize())
 
 #     try:
 #         return make_payment_item_payload_response(payment_item)
 #     except Exception as e:
         
-#         app.logger.error(e)
+#         ulogger.error(e)
 #         app.log_exception(e)
 #         return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 
 
-# def make_payment_item_payload_response(payment_item):
+def make_payment_item_payload_response(payment_item:PaymentItem, db: Session):
 
-#     # get the wallet for this payment item
-#     wallet = db.session.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+    # get the wallet for this payment item
+    wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
 
-#     # convert the payment item to a xumm payload
-#     xrp_quote = asyncio.run(xrp_price(payment_item.fiat_i8n_currency))
-#     xrp_amount = payment_item.fiat_i8n_price / xrp_quote
+    ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency}")
+    rates = sdk.get_rates(payment_item.fiat_i8n_currency).to_dict()
+    ulogger.info(f"rates: {rates}")
+    xrp_price = rates['XRP']*payment_item.fiat_i8n_price
+    xrp_amount = payment_item.fiat_i8n_price / xrp_price
     
-#     payment_request_dict = {
-#         'type': 'payment_item',
-#         'payment_item_id': payment_item.payment_item_id,       
-#         'xrp_quote': xrp_quote,
-#         'fiat_i8n_currency': payment_item.fiat_i8n_currency,
-#         'fiat_i8n_price': payment_item.fiat_i8n_price,
-#         'request_hash':shortuuid.uuid(),
-#         'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
-#         'network_type': config['XRP_NETWORK_TYPE'],     
-#     }
+    payment_request_dict = {
+        'type': 'payment_item',
+        'payment_item_id': payment_item.payment_item_id,       
+        'xrp_quote': xrp_price,
+        'fiat_i8n_currency': payment_item.fiat_i8n_currency,
+        'fiat_i8n_price': payment_item.fiat_i8n_price,
+        'request_hash':shortuuid.uuid(),
+        'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
+        'network_type': config['XRP_NETWORK_TYPE'],     
+    }
 
-#     create_payload = {
-#         'txjson': {
-#                 'TransactionType' : 'Payment',
-#                 'Destination' : wallet.classic_address,
-#                 'Amount': str(xrp_to_drops(xrp_amount)),
-#         },
-#         "custom_meta": {
-#             "identifier": f"payment_item:{shortuuid.uuid()[:12]}",
-#             "blob": json.dumps(payment_request_dict),
-#             "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
-#         }
-#     }   
+    create_payload = {
+        'txjson': {
+                'TransactionType' : 'Payment',
+                'Destination' : wallet.classic_address,
+                'Amount': str(xrp_to_drops(xrp_amount)),
+        },
+        "custom_meta": {
+            "identifier": f"payment_item:{shortuuid.uuid()[:12]}",
+            "blob": json.dumps(payment_request_dict),
+            "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
+        }
+    }   
 
-#     created = sdk.payload.create(create_payload)
-#     xumm_payload = created.to_dict()
-#     p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-#                             wallet_id=wallet.wallet_id,
-#                             payload_uuidv4=xumm_payload['uuid'])
+    created = sdk.payload.create(create_payload)
+    xumm_payload = created.to_dict()
+    p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                            wallet_id=wallet.wallet_id,
+                            payload_uuidv4=xumm_payload['uuid'])
 
-#     db.session.add(p_xumm_payload)
-#     db.session.commit()
+    db.add(p_xumm_payload)
+    db.commit()
 
-#     # return xumm_payload
-#     app.logger.info(f"xumm_payload:{xumm_payload}")
-#     return redirect(xumm_payload['next']['always'], code=302)
+    # return xumm_payload
+    ulogger.info(f"xumm_payload:{xumm_payload}")
+    return RedirectResponse(xumm_payload['next']['always'])
 
 
 @router.post('/payment_item')
@@ -469,64 +471,6 @@ def update_payment_item(
 
     payload = PaymentItemDao.update(db=db, payment_item=payment_item)
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
-
-
-#     app.logger.info("create payment item")
-
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
-
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
-
-#     if request.method == 'PUT': # update
-#             # get all the payment items for this wallet
-#         payment_item_id = request.json.get('payment_item_id')
-#         if payment_item_id is None:
-#             return jsonify({"message": "payment_item_id is required"}), HTTPStatus.BAD_REQUEST
-
-#         payment_item = db.session.query(PaymentItem).filter_by(
-#             wallet_id=wallet.wallet_id, payment_item_id=payment_item_id).first()
-
-#         if payment_item is None:
-#             return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
-        
-#         payment_item.name = request.json.get('name')
-#         payment_item.fiat_i8n_currency = request.json.get('fiat_i8n_currency')
-#         payment_item.fiat_i8n_price = float(request.json.get('fiat_i8n_price'))
-#         payment_item.description = request.json.get('description')
-
-#         save_images_for_request(request, payment_item, app)
-
-
-#     elif request.method == 'POST': # create
-
-#         payment_item_name = request.json.get('name')
-#         description = request.json.get('description')
-#         price = float(request.json.get('fiat_i8n_price'))
-#         currency = request.json.get('fiat_i8n_currency')
-#         sku_id = str(uuid.uuid4()).replace("-", "")[:10]
-
-#         payment_item = PaymentItem(
-#             wallet_id=wallet.wallet_id, 
-#             name=payment_item_name,
-#             description=description,
-#             fiat_i8n_price=price, 
-#             fiat_i8n_currency=currency, 
-#             sku_id=sku_id)
-
-#         save_images_for_request(request, payment_item, app)
-#         db.session.add(payment_item)
-    
-#     db.session.commit()
-#     response = {'full_messages': ['PaymentItem updated successfully']}
-#     response.update(PaymentItemDetailsSerializer(payment_item).data)
-#     return jsonify(response)
-
-
 
 
 @router.get("/xumm/webhook")
@@ -603,9 +547,9 @@ def xumm_webhook(request: Request):
     
 
 #     json_body = request.get_json()
-#     app.logger.info(f"==== xumm webhook payload:\n{json.dumps(json_body, indent=4)}")
+#     ulogger.info(f"==== xumm webhook payload:\n{json.dumps(json_body, indent=4)}")
 #     if 'signed' in json_body['payloadResponse'] and json_body['payloadResponse']['signed'] == True:
-#         app.logger.info("==== xumm webhook payload is signed")
+#         ulogger.info("==== xumm webhook payload is signed")
 
 #         # get the xumm payload by the payload_uuidv4
 #         payload = XummPayload.get_by_payload_uuidv4(
@@ -624,7 +568,7 @@ def xumm_webhook(request: Request):
 #             # get the custom_meta blob
 #             if 'custom_meta' in json_body and json_body['payloadResponse']['txid'] is not None:
 #                 custom_meta_blob = json.loads(json_body['custom_meta']['blob'].replace("\\", ''))
-#                 app.logger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
+#                 ulogger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
 #                 if custom_meta_blob['type'] == 'payment_item':
 #                     # get the payment item
 #                         # get all the payment items for this wallet
@@ -640,7 +584,7 @@ def xumm_webhook(request: Request):
 
 # def send_slack_message(message):
 #     """Send a message to slack"""
-#     app.logger.info(f"==== send_slack_message: {message} to {app.config['SLACK_WEBHOOK_URL']}")
+#     ulogger.info(f"==== send_slack_message: {message} to {app.config['SLACK_WEBHOOK_URL']}")
 #     try:
 #         slack_data = {'text': message}
 #         response = requests.post(
@@ -648,37 +592,25 @@ def xumm_webhook(request: Request):
 #             headers={'Content-Type': 'application/json'}
 #         )
 #         if response.status_code != 200:
-#             app.logger.error(f"==== slack webhook error: {response.status_code}")
+#             ulogger.error(f"==== slack webhook error: {response.status_code}")
 #     except Exception as e:
 #         app.log_exception(f"==== slack webhook error: {e}")
 
 
 
 @router.get("/xumm/xapp")
-def xumm_xapp(request: Request):
-    ulogger.info(
-        f"==== xumm xapp {request} {request.method} {request.url}")
+def xumm_xapp(xAppStyle:str, 
+    xAppToken:str,
+    request: Request,
+    db: Session = Depends(get_db)):
 
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
-#                                                  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-#                                                  'Access-Control-Allow-Methods': 'POST, OPTIONS'}
-
-#     # lookup the wallet by the classic address in the jwt
-#     xAppStyle = request.args.get('xAppStyle')
-#     if xAppStyle is None:
-#         xAppStyle = "LIGHT"
-
-#     xAppToken = request.args.get('xAppToken')
-#     if xAppToken is None:
-#         return jsonify({"xAppToken": "token not found unauthorized"}), HTTPStatus.UNAUTHORIZED
+    xapp_session = asyncio.run(get_xapp_tokeninfo(xAppToken)) 
+    if xapp_session is None:
+        # return jsonify({"xAppToken": "cannot create payload"}), HTTPStatus.UNAUTHORIZED
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"xAppToken": "cannot create payload"})
 
 
-#     xapp_session = asyncio.run(get_xapp_tokeninfo(xAppToken)) 
-#     if xapp_session is None:
-#         return jsonify({"xAppToken": "cannot create payload"}), HTTPStatus.UNAUTHORIZED
-
-#     app.logger.info(f"==== xapp_session:\n{xapp_session}")
+    ulogger.info(f"==== xapp_session: {xapp_session}")
 #     # {
 #     #     "version": "2.3.1",
 #     #     "locale": "en",
@@ -718,44 +650,50 @@ def xumm_xapp(request: Request):
 #     #     }
 #     #     }
 
-#     # lookup the action by the xAppNavigateData
+    # lookup the action by the xAppNavigateData
 
-#     # make sure they are using the correct network
-#     if get_wss_network_type(xapp_session['nodewss']).lower() != str(config['XRP_NETWORK_TYPE']).lower():
-#         app.logger.error(f"==== xapp_session nodewss network type {get_wss_network_type(xapp_session['nodewss'])} does not match config {config['XRP_NETWORK_TYPE']}")
-#         return jsonify({"message": f"wrong network was expecting {config['XRP_NETWORK_TYPE']}, please switch and scan again"}), HTTPStatus.BAD_REQUEST
+    # make sure they are using the correct network
+    if get_wss_network_type(xapp_session['nodewss']).lower() != str(config['XRP_NETWORK_TYPE']).lower():
+        ulogger.error(f"==== xapp_session nodewss network type {get_wss_network_type(xapp_session['nodewss'])} does not match config {config['XRP_NETWORK_TYPE']}")
+        
+        # return jsonify({"message": f"wrong network was expecting {config['XRP_NETWORK_TYPE']}, please switch and scan again"}), HTTPStatus.BAD_REQUEST
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": f"wrong network was expecting {config['XRP_NETWORK_TYPE']}, please switch and scan again"})
 
-#     if 'xAppNavigateData' not in xapp_session:
-#         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+    if 'xAppNavigateData' not in xapp_session:
+        return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
 
-#     xAppNavigateData = xapp_session['xAppNavigateData']
-#     if xAppNavigateData is None:
-#         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+    xAppNavigateData = xapp_session['xAppNavigateData']
+    if xAppNavigateData is None:
+        return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
     
-#     app.logger.info(f"==== xAppNavigateData:\n{xAppNavigateData}")
-#     if xAppNavigateData['TransactionType'] is None:
-#         # not an xurlpay transaction
-#         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+    ulogger.info(f"==== xAppNavigateData:\n{xAppNavigateData}")
+    if xAppNavigateData['TransactionType'] is None:
+        # not an xurlpay transaction
+        return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
     
-#     if xAppNavigateData['LookupType'] is None:
-#         # not an xurlpay transaction
-#         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+    if xAppNavigateData['LookupType'] is None:
+        # not an xurlpay transaction
+        return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
 
-#     lookupType = xAppNavigateData['LookupType']
-#     if(lookupType == "PaymentItem"):
-#         reference = xAppNavigateData['LookupRef']
-#         if reference is None:
-#             return jsonify({"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"}), HTTPStatus.BAD_REQUEST
-#         payment_item = db.session.query(PaymentItem).filter_by(payment_item_id=int(reference)).first()
+    lookupType = xAppNavigateData['LookupType']
+    if(lookupType == "PaymentItem"):
+        reference = xAppNavigateData['LookupRef']
+        if reference is None:
+            # return jsonify({"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"}), HTTPStatus.BAD_REQUEST
+
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"})
+
+        payment_item = db.query(PaymentItem).filter_by(payment_item_id=int(reference)).first()
     
-#         if payment_item is None:
-#             return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+        if payment_item is None:
+            # return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
+            return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
-#         return make_payment_item_payload_response(payment_item)
+        return make_payment_item_payload_response(payment_item)
 
-#     else:
-#         # not an xurlpay transaction
-#         return redirect(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}', code=302)
+    else:
+        # not an xurlpay transaction
+        return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
 
 
 @router.get('/xumm/qr')
@@ -776,7 +714,3 @@ def serve_pil_image(pil_img, type='PNG', mimetype='image/png'):
     img_io.seek(0)
     return Response(content=img_io.getvalue(), media_type="image/png")
 
-# def get_image()
-#     image_bytes: bytes = generate_cat_picture()
-#     # media_type here sets the media type of the actual response sent to the client.
-#     return Response(content=image_bytes, media_type="image/png")
