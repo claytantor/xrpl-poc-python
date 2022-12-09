@@ -474,10 +474,11 @@ def update_payment_item(
 
 
 @router.post("/xumm/webhook")
-def xumm_webhook(request: Request):
+async def xumm_webhook(request: Request):
 
+    r_json = await request.json()
     ulogger.info(
-        f"==== xumm_webhook {request.method} {request.url} {request.headers} {request.json()}")
+        f"==== xumm_webhook {request.method} {request.url} {request.headers} {r_json}")
 
 
 #     # ADHOC PAYMENT
