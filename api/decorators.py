@@ -62,7 +62,7 @@ def verify_user_jwt_scopes(method_or_name):
                     authorization = request.headers['authorization']
                     # print(f"=== authorization {authorization}")
                     # dont do anything with it yet
-                    print(f"=== method type {type(method)} {inspect.iscoroutinefunction(method)}")
+                    # print(f"=== method type {type(method)} {inspect.iscoroutinefunction(method)}")
                     if inspect.iscoroutinefunction(method):
                         return await method(*args, **kwargs)
                     else:

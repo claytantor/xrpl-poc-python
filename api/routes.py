@@ -21,7 +21,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentRequestSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
+from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
 from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
@@ -191,7 +191,7 @@ def update_wallet_payload(
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    ulogger.info(f"update_wallet_payload {payloadRequest}")
+    # ulogger.info(f"update_wallet_payload {payloadRequest}")
     payload_exists = XummPayloadDao.fetch_by_wallet_payload_uuidv4(db=db, wallet_id=wallet.wallet_id, payload_uuidv4=payloadRequest.payload_uuidv4)
 
     if payload_exists is None:
@@ -257,9 +257,9 @@ def create_pay_request(
     return m_payload.to_dict()
 
 
-def save_images(db: Session, images_dict:dict, payment_item:PaymentItem):
-    for image in images_dict:
-        ulogger.info(image)
+def save_images(db: Session, images_list:dict, payment_item:PaymentItem):
+    for image in images_list:
+        ulogger.info(f"SAVING IMAGE {image}")
         # {'data_url': 'https://s3.us-west-2.amazonaws.com/dev.rapaygo.com/uploaded_images/c053789c-4d0a-4dc2-a175-39eb0d694d6f.png', 'id': 28}
         if 'id' not in image or image['id'] is None:
 
@@ -270,12 +270,15 @@ def save_images(db: Session, images_dict:dict, payment_item:PaymentItem):
             url_saved = save_image(im, config["AWS_BUCKET_NAME"],
                                    f"{config['AWS_UPLOADED_IMAGES_PATH']}/{file_name}")
 
-            url_saved = f'https://s3.us-west-2.amazonaws.com/{app.config["AWS_BUCKET_NAME"]}/uploaded_images/{file_name}'
+            url_saved = f'https://s3.us-west-2.amazonaws.com/{config["AWS_BUCKET_NAME"]}/uploaded_images/{file_name}'
 
             payment_item_image = PaymentItemImage(
                 type="PaymentItemImage", file_path=url_saved, file_name=file_name, file_size=0, original_name=file_name)
 
-            payment_item.images.append(payment_item_image)
+            db.add(payment_item_image)
+            payment_item.images = [payment_item_image]
+
+            db.commit()
 
         elif 'file_path' in image:
             payment_item_image = PaymentItemImage.query.filter_by(
@@ -285,13 +288,7 @@ def save_images(db: Session, images_dict:dict, payment_item:PaymentItem):
             payment_item_image.original_name = image['original_name']
             payment_item_image.file_size = image['file_size']
 
-        db.commit()
-
-
-# def save_images_for_request(request, db: Session, payment_item:PaymentItem):
-
-#     if 'images' in request.json:
-#         save_images(request.json['images'], payment_item)
+            db.commit()
 
 
 @router.get('/payment_item') 
@@ -310,36 +307,26 @@ def get_payment_items(request: Request,
     return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items])
 
 
+@router.delete('/payment_item/{id}')  
+@verify_user_jwt_scopes(scopes['wallet_owner'])
+def delete_payment_item_by_id(id:int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-#     # get all the payment items for this wallet
-#     payment_items = db.session.query(PaymentItem).filter_by(
-#         wallet_id=wallet.wallet_id).all()
-#     return jsonify([PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items]), 200
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, payment_item_id=id, wallet_id=wallet.wallet_id)
+    if payment_item is None:
+        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
-# @router.route('/payment_item/<id>', methods=['DELETE'])  
-# @cross_origin()
-# def delete_payment_item_by_id(id):
-#     # lookup the wallet by the classic address in the jwt
-#     jwt_body = get_token_body(dict(request.headers)[
-#                               "Authorization"].replace("Bearer ", ""))
+    PaymentItemDao.delete(db, payment_item)
 
-#     wallet = db.session.query(Wallet).filter_by(
-#         classic_address=jwt_body['sub']).first()
-#     if wallet is None:
-#         return jsonify({"message": "wallet not found, unauthorized"}), HTTPStatus.UNAUTHORIZED
+    return JSONResponse(status_code=HTTPStatus.OK, content={"message": "payment item deleted"})
 
-#     # get all the payment items for this wallet
-#     payment_item = db.session.query(PaymentItem).filter_by(
-#         wallet_id=wallet.wallet_id, payment_item_id=id).first()
-    
-#     if payment_item is None:
-#         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
-
-#     db.session.delete(payment_item)
-#     db.session.commit()
-
-#     return jsonify({"message": "payment item deleted"}), HTTPStatus.OK
 
 
 @router.get('/payment_item/{id}') 
@@ -433,10 +420,57 @@ def get_payment_item_by_id(id:int,
 #     return redirect(xumm_payload['next']['always'], code=302)
 
 
+@router.post('/payment_item')
+@verify_user_jwt_scopes(['wallet_owner']) 
+def create_payment_item(
+    paymentItem: PaymentItemSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-# @router.route('/payment_item', methods=['POST', 'PUT'])  # depricated
-# @cross_origin()
-# def create_payment_item():
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    payment_item = PaymentItem()
+    payment_item.sku_id = shortuuid.uuid()[:12]
+    payment_item.wallet_id = wallet.wallet_id
+    payment_item.from_dict(paymentItem.to_dict()) #must be a dict
+    images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
+    save_images(db=db, images_list=images_list, payment_item=payment_item)
+
+    payload = PaymentItemDao.create(db=db, payment_item=payment_item)
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
+
+
+
+@router.put('/payment_item')
+@verify_user_jwt_scopes(['wallet_owner']) 
+def update_payment_item(
+    paymentItem: PaymentItemSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, paymentItem.payment_item_id, wallet.wallet_id)
+    if payment_item is None:
+        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
+    
+    
+    payment_item.from_dict(paymentItem.to_dict()) #must be a dict
+    images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
+    save_images(db=db, images_list=images_list, payment_item=payment_item)
+
+    payload = PaymentItemDao.update(db=db, payment_item=payment_item)
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
+
+
 #     app.logger.info("create payment item")
 
 #     # lookup the wallet by the classic address in the jwt

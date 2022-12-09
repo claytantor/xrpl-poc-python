@@ -16,6 +16,8 @@ config = {
 
 Base = declarative_base()
 
+
+
 class XrpNetwork():
     def __init__(self,     
         json_rpc: str,
@@ -211,22 +213,6 @@ class XummPayload(Base):
 
         return s_m
 
-    # @staticmethod
-    # def get_by_payload_uuidv4(payload_uuidv4):
-    #     payload = session.query(XummPayload).filter_by(payload_uuidv4=payload_uuidv4).first()
-    #     return payload 
-
-
-    # @staticmethod
-    # def get_page_by_wallet(wallet_id, page=1, page_size=10): 
-    #     return session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
-    #     .order_by(desc(XummPayload.created_at)).paginate(page=page,per_page=page_size)
-
-    # @staticmethod
-    # def get_wallet_payloads(wallet_id):
-    #     return session.query(XummPayload).filter_by(wallet_id=str(wallet_id)) \
-    #     .order_by(desc(XummPayload.created_at)).all()
-
 
 
 class PaymentItem(Base):
@@ -264,6 +250,15 @@ class PaymentItem(Base):
 
     def __repr__(self):
         return f"<PaymentItem(payment_item_id={self.payment_item_id})>"
+
+    def from_dict(self, data):
+        for field in ['payment_item_id', 'fiat_i8n_currency', 'fiat_i8n_price', 'name', 'description', 'sku_id', 'created_at', 'updated_at']:
+            if field in data:
+                if data[field] != None:
+                    setattr(self, field, data[field])
+
+    def to_dict(self):
+        return self.serialize()
 
     def serialize(self):
         return {

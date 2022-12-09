@@ -130,3 +130,23 @@ class PaymentItemDao:
     def fetch_single_by_wallet_id(db:Session, payment_item_id:int, wallet_id:int):
         return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id, 
             PaymentItem.payment_item_id == payment_item_id)).first()
+
+    @staticmethod
+    def create(db: Session, payment_item: PaymentItem):
+        db.add(payment_item)
+        db.commit()
+        db.refresh(payment_item)
+        return payment_item
+
+    @staticmethod
+    def update(db: Session, payment_item: PaymentItem):
+        db.merge(payment_item)
+        db.commit()
+        return payment_item
+
+    @staticmethod
+    def delete(db: Session, payment_item: PaymentItem):
+        db.delete(payment_item)
+        db.commit()
+        return payment_item
+        
