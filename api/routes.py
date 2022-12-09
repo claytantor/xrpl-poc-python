@@ -473,12 +473,11 @@ def update_payment_item(
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
 
 
-@router.get("/xumm/webhook")
+@router.post("/xumm/webhook")
 def xumm_webhook(request: Request):
 
     ulogger.info(
-        f"==== xumm_webhook {request} {request.method} {request.url}")
-
+        f"==== xumm_webhook {request.method} {request.url} {request.headers} {request.body} {request.json()}")
 
 
 #     # ADHOC PAYMENT
@@ -609,49 +608,9 @@ def xumm_xapp(xAppStyle:str,
         # return jsonify({"xAppToken": "cannot create payload"}), HTTPStatus.UNAUTHORIZED
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"xAppToken": "cannot create payload"})
 
-
     ulogger.info(f"==== xapp_session: {xapp_session}")
-#     # {
-#     #     "version": "2.3.1",
-#     #     "locale": "en",
-#     #     "currency": "USD",
-#     #     "style": "LIGHT",
-#     #     "nodetype": "TESTNET",
-#     #     "origin": {
-#     #         "type": "QR",
-#     #         "data": {
-#     #         "content": "https://xumm.app/detect/xapp:sandbox.32849dc99872?classic_address=rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw&amount=10.21"
-#     #         }
-#     #     },
-#     #     "classic_address": "rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw",
-#     #     "amount": "10.21",
-#     #     "account": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
-#     #     "accounttype": "REGULAR",
-#     #     "accountaccess": "FULL",
-#     #     "nodewss": "wss://testnet.xrpl-labs.com",
-#     #     "user": "5cc95aba-7e42-4485-befc-97fe087938eb",
-#     #     "user_device": {
-#     #         "currency": "USD",
-#     #         "platform": "android"
-#     #     },
-#     #     "account_info": {
-#     #         "account": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
-#     #         "name": null,
-#     #         "domain": null,
-#     #         "blocked": false,
-#     #         "source": "",
-#     #         "kycApproved": false,
-#     #         "proSubscription": false
-#     #     },
-#     #     "subscriptions": [],
-#     #     "xAppNavigateData": {
-#     #         "classic_address": "rNDtp9V6MUnbb14fPtVrCqR2Ftd6V17RLw",
-#     #         "amount": "10.21"
-#     #     }
-#     #     }
 
     # lookup the action by the xAppNavigateData
-
     # make sure they are using the correct network
     if get_wss_network_type(xapp_session['nodewss']).lower() != str(config['XRP_NETWORK_TYPE']).lower():
         ulogger.error(f"==== xapp_session nodewss network type {get_wss_network_type(xapp_session['nodewss'])} does not match config {config['XRP_NETWORK_TYPE']}")
