@@ -477,7 +477,8 @@ def update_payment_item(
 def xumm_webhook(request: Request):
 
     ulogger.info(
-        f"==== xumm_webhook {request.method} {request.url} {request.headers} {request.body} {request.json()}")
+        f"==== xumm_webhook {request.method} {request.url} {request.headers} {request.body}")
+
 
 
 #     # ADHOC PAYMENT
