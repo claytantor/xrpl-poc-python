@@ -529,18 +529,13 @@ def update_payment_item(
 
 
 
-# # https://devapi.xurlpay.org/v1/xumm/webhook
-# @router.route("/xumm/webhook", methods=['GET', 'POST', 'OPTIONS'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_webhook():
+@router.get("/xumm/webhook", methods=['GET', 'POST', 'OPTIONS'])
+def xumm_webhook(request: Request):
 
-#     app.logger.info("==== xumm webhook")
+    ulogger.info(
+        f"==== xumm_webhook {request} {request.method} {request.url}")
 
-#     if request.method == 'OPTIONS':
-#         return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
-#                                                  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-#                                                  'Access-Control-Allow-Methods': 'POST, OPTIONS'}
+
 
 #     # ADHOC PAYMENT
 #     #  {
@@ -659,15 +654,11 @@ def update_payment_item(
 
 
 
-# @router.route("/xumm/xapp", methods=['GET', 'OPTIONS'])
-# @cross_origin()
-# @log_decorator(app.logger)
-# def xumm_xapp():
+@router.get("/xumm/xapp")
+def xumm_xapp(request: Request):
 
-#     app.logger.info("==== xumm xapp")
-
-#     app.logger.info(
-#         f"{request} {request.args} {request.headers} {request.environ} {request.method} {request.url}")
+    ulogger.info(
+        f"==== xumm xapp {request} {request.method} {request.url}")
 
 #     if request.method == 'OPTIONS':
 #         return jsonify({'message': "OK"}), 200, {'Access-Control-Allow-Origin': '*',
