@@ -474,109 +474,42 @@ def update_payment_item(
 
 
 @router.post("/xumm/webhook")
-async def xumm_webhook(request: Request):
+async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 
-    r_json = await request.json()
-    ulogger.info(
-        f"==== xumm_webhook {request.method} {request.url} {request.headers} {r_json}")
+    json_body = await request.json()
+    # ulogger.info(
+    #     f"==== xumm_webhook {request.method} {request.url} {request.headers} {r_json}")
 
+    if 'signed' in json_body['payloadResponse'] and json_body['payloadResponse']['signed'] == True:
+        ulogger.info("==== xumm webhook payload is signed")
 
-#     # ADHOC PAYMENT
-#     #  {
-#     #     "meta": {
-#     #         "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
-#     #         "application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-#     #         "payload_uuidv4": "62d7bc46-3e46-45ed-8358-e87812f15a6e",
-#     #         "opened_by_deeplink": true
-#     #     },
-#     #     "custom_meta": {
-#     #         "identifier": null,
-#     #         "blob": "{\"amount\": 1.25, \"amount_drops\": 1250000, \"address\": \"rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y\", \"network_endpoint\": \"https://s.altnet.rippletest.net:51234/\", \"network_type\": \"testnet\", \"memo\": \"its for the kids man 2\", \"request_hash\": \"M97R6EEXdgXxyKd9myFgD8\"}",
-#     #         "instruction": "its for the kids man 2"
-#     #     },
-#     #     "payloadResponse": {
-#     #         "payload_uuidv4": "62d7bc46-3e46-45ed-8358-e87812f15a6e",
-#     #         "reference_call_uuidv4": "11b36850-eaaf-406d-bf3d-622e3882c678",
-#     #         "signed": true,
-#     #         "user_token": true,
-#     #         "return_url": {
-#     #             "app": null,
-#     #             "web": null
-#     #         },
-#     #         "txid": "8340735242F2B65392F5734A49209A13BD4BC77DAED4CC99B5ACFB8C67BE9E76"
-#     #     },
-#     #     "userToken": {
-#     #         "user_token": "83234d7d-54d6-4240-89a3-e86cb97603cd",
-#     #         "token_issued": 1668293195,
-#     #         "token_expiration": 1670986728
-#     #     }
-#     # }
-
-
-#     # PAYMENT ITEM
-#     # {
-#     # "meta": {
-#     #     "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
-#     #     "application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-#     #     "payload_uuidv4": "ca14725e-a628-4d16-8a07-99932a916763",
-#     #     "opened_by_deeplink": false
-#     # },
-#     # "custom_meta": {
-#     #     "identifier": null,
-#     #     "blob": "{\"type\": \"payment_item\", \"payment_item_id\": 1, \"xrp_quote\": 0.37941592, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.15, \"request_hash\": \"c9qjoB5P4sMhtA7EBgRMSU\"}",
-#     #     "instruction": "Pay 0.15 USD for item Tootsie Roll Chocolate Midgee"
-#     # },
-#     # "payloadResponse": {
-#     #     "payload_uuidv4": "ca14725e-a628-4d16-8a07-99932a916763",
-#     #     "reference_call_uuidv4": "453f76bd-584e-42d5-bb53-d710e9c2426b",
-#     #     "signed": true,
-#     #     "user_token": true,
-#     #     "return_url": {
-#     #         "app": null,
-#     #         "web": null
-#     #     },
-#     #     "txid": "3A2EE5A74AA760C6E40402A11E4416029D97E66F15B58C62987DC0808D4BE011"
-#     # },
-#     # "userToken": {
-#     #     "user_token": "83234d7d-54d6-4240-89a3-e86cb97603cd",
-#     #     "token_issued": 1668293195,
-#     #     "token_expiration": 1671130384
-#     # }
-#     # }
-
-    
-
-#     json_body = request.get_json()
-#     ulogger.info(f"==== xumm webhook payload:\n{json.dumps(json_body, indent=4)}")
-#     if 'signed' in json_body['payloadResponse'] and json_body['payloadResponse']['signed'] == True:
-#         ulogger.info("==== xumm webhook payload is signed")
-
-#         # get the xumm payload by the payload_uuidv4
-#         payload = XummPayload.get_by_payload_uuidv4(
-#             json_body['payloadResponse']['payload_uuidv4'])
+        # get the xumm payload by the payload_uuidv4
+        payload = XummPayload.get_by_payload_uuidv4(
+            json_body['payloadResponse']['payload_uuidv4'])
         
-#         if payload is None:
-#             return jsonify({'message': 'payload not found'}), 404
+        if payload is None:
+            # return jsonify({'message': 'payload not found'}), 404
+            return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payload not found"})
 
-#         # dont run this if the payload is already processed
-#         if not payload.is_signed:
-#             payload.set_is_signed_bool(json_body['payloadResponse']['signed'])
-#             payload.txid = json_body['payloadResponse']['txid']
-#             payload.webhook_body = json.dumps(json_body)
-#             db.session.commit()
+        # dont run this if the payload is already processed
+        if not payload.is_signed:
+            payload.set_is_signed_bool(json_body['payloadResponse']['signed'])
+            payload.txid = json_body['payloadResponse']['txid']
+            payload.webhook_body = json.dumps(json_body)
+            db.commit()
 
-#             # get the custom_meta blob
-#             if 'custom_meta' in json_body and json_body['payloadResponse']['txid'] is not None:
-#                 custom_meta_blob = json.loads(json_body['custom_meta']['blob'].replace("\\", ''))
-#                 ulogger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
-#                 if custom_meta_blob['type'] == 'payment_item':
-#                     # get the payment item
-#                         # get all the payment items for this wallet
-#                     payment_item = db.session.query(PaymentItem).filter_by( payment_item_id=int(custom_meta_blob['payment_item_id'])).first()
-#                     if payment_item is not None:
-#                         # asyncio.run(send_slack_message(f"Payment Item id:{payment_item.payment_item_id} {payment_item.name} has just been purchased for {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency}!"))
-#                         send_slack_message(f"Payment Item {payment_item.name} has just been purchased! payment item id:{payment_item.payment_item_id} price:{payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} {config['XRP_NETWORK_EXPLORER']}/transactions/{json_body['payloadResponse']['txid']}")
-#                         # dont block if this fails
+            # # get the custom_meta blob
+            # if 'custom_meta' in json_body and json_body['payloadResponse']['txid'] is not None:
+            #     custom_meta_blob = json.loads(json_body['custom_meta']['blob'].replace("\\", ''))
+            #     ulogger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
+            #     if custom_meta_blob['type'] == 'payment_item':
+            #         # get the payment item
+            #             # get all the payment items for this wallet
+            #         payment_item = db.session.query(PaymentItem).filter_by( payment_item_id=int(custom_meta_blob['payment_item_id'])).first()
+            #         if payment_item is not None:
+            #             # asyncio.run(send_slack_message(f"Payment Item id:{payment_item.payment_item_id} {payment_item.name} has just been purchased for {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency}!"))
+            #             send_slack_message(f"Payment Item {payment_item.name} has just been purchased! payment item id:{payment_item.payment_item_id} price:{payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} {config['XRP_NETWORK_EXPLORER']}/transactions/{json_body['payloadResponse']['txid']}")
+            #             # dont block if this fails
 
 #     return jsonify({'message': 'xumm_webhook'}), 200
 
