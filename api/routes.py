@@ -369,8 +369,6 @@ def get_payment_item_by_id(id:int,
 #         return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-
-
 def make_payment_item_payload_response(payment_item:PaymentItem, db: Session):
 
     # get the wallet for this payment item
@@ -378,10 +376,10 @@ def make_payment_item_payload_response(payment_item:PaymentItem, db: Session):
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
 
-    ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency}")
+    ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency} {payment_item.fiat_i8n_price}")
     rates = sdk.get_rates(payment_item.fiat_i8n_currency).to_dict()
     ulogger.info(f"rates: {rates}")
-    xrp_price = rates['XRP']*payment_item.fiat_i8n_price
+    xrp_price = rates['XRP']
     xrp_amount = payment_item.fiat_i8n_price / xrp_price
     
     payment_request_dict = {
@@ -446,7 +444,6 @@ def create_payment_item(
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
 
 
-
 @router.put('/payment_item')
 @verify_user_jwt_scopes(['wallet_owner']) 
 def update_payment_item(
@@ -477,40 +474,6 @@ def update_payment_item(
 async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 
     json_body = await request.json()
-    # ulogger.info(
-    #     f"==== xumm_webhook {request.method} {request.url} {request.headers} {r_json}")
-
-    # {
-    #     'meta': {
-    #         'url': 'https://devapi.xurlpay.org/v1/xumm/webhook',
-    #         'application_uuidv4': '1b144141-440b-4fbc-a064-bfd1bdd3b0ce',
-    #         'payload_uuidv4': '2bdee365-bacf-4d30-9cf2-8a2b92dee638',
-    #         'opened_by_deeplink': False
-    #     },
-    #     'custom_meta': {
-    #         'identifier': 'payment_item:8FmNYNKRxXfJ',
-    #         'blob': '{"type": "payment_item", "payment_item_id": 2, "xrp_quote": 0.05913825, "fiat_i8n_currency": "USD", "fiat_i8n_price": 0.15, "request_hash": "EmpKQDks9Jtcd7qyKikZGX", "network_endpoint": "https://s.altnet.rippletest.net:51234/", "network_type": "testnet"}',
-    #         'instruction': 'Pay 0.15 USD for item Atomic Fireball Jawbdreaker - Single Wrapped'
-    #     },
-    #     'payloadResponse': {
-    #         'payload_uuidv4': '2bdee365-bacf-4d30-9cf2-8a2b92dee638',
-    #         'reference_call_uuidv4': 'ac352677-f303-4801-9735-391a29ce6092',
-    #         'signed': True,
-    #         'user_token': True,
-    #         'return_url': {
-    #             'app': None,
-    #             'web': None
-    #         },
-    #         'txid': 'BB38CB80F3C13F58E5853AC4358E91DBA20968D8FC55AE8609EDB3A5B966851A'
-    #     },
-    #     'userToken': {
-    #         'user_token': '83234d7d-54d6-4240-89a3-e86cb97603cd',
-    #         'token_issued': 1668293195,
-    #         'token_expiration': 1673145614
-    #     }
-    # }
-
-    ulogger.info(f"==== xumm webhook signed:{json_body['payloadResponse']['signed']}")
 
     if json_body['payloadResponse']['signed'] == True:
         ulogger.info("==== xumm webhook payload is signed")
