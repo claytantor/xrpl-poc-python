@@ -689,7 +689,7 @@ def xumm_xapp(xAppStyle:str,
             # return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
             return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
-        return make_payment_item_payload_response(payment_item)
+        return make_payment_item_payload_response(payment_item=payment_item, db=db)
 
     else:
         # not an xurlpay transaction
