@@ -516,7 +516,7 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
         ulogger.info("==== xumm webhook payload is signed")
 
         # get the xumm payload by the payload_uuidv4
-        payload = XummPayload.get_by_payload_uuidv4(
+        payload = XummPayloadDao.fetch_by_payload_uuidv4(
             json_body['payloadResponse']['payload_uuidv4'])
         
         if payload is None:
