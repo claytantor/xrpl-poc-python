@@ -1,0 +1,5 @@
+INSERT INTO payment_item (payment_item_id,fiat_i8n_currency,fiat_i8n_price,wallet_id,name,description,sku_id,created_at,updated_at) VALUES
+	 (3,'USD',0.21,8,'Tootsie Roll Chocolate Midgees','Tootsie Roll Chocolatey Twist Midgees Resealable Standup Bag, Peanut Free, Gluten Free original, Allergy Friendly, Mini Midgees','bd209ac51b','2022-11-14 17:25:12.317136','2022-11-14 17:25:12.317142'),
+	 (4,'USD',0.16,8,'Atomic Fireball Jawbdreaker - Single Wrapped','Red hot flavor: Atomic Fireballs are the original super intense cinnamon jawbreaker candy that will leave you wanting more; Exhilarate your taste buds with their seriously fiery cinnamon sweetness
+','033ac306b6','2022-11-22 15:47:21.344198','2022-11-22 15:47:21.344205'),
+	 (5,'USD',0.21,8,'A Special Pony','The cute pink pony ran down the road looking slightly uncomfortable. She gave her hand a shake of an uncertain look.','KhiHwJNo4Vts','2022-12-08 17:46:47.805462','2022-12-08 17:46:47.805469');
