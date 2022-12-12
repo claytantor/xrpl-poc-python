@@ -65,3 +65,25 @@ Its is also possible to run the xurlpay/xurlpay-api docker image locally with a 
 
 [The xurlpay/xurlpay/xrplpay-api Docker Image as a Local DEV Environment](./docker/API.md)
 
+
+## Building And Running The React Frontend
+
+The client react app is intended deployed as a react app that talks to the API. Its in the [webapp](./webapp) directory and you will need to work from there when trying to run locally.
+
+**Getting the react app depends installed**
+
+```bash
+cd ./webapp
+npm install
+```
+
+**Running the react app**
+There is a little bit of scripting that runs included when you want to run local.
+
+```bash
+npm run serve-local
+```
+
+This will start the react app with the local deployment configuration and use the certs and keys in the local directory so it runs under https. Since this is a self signed certificate you will need to tell the browser its ok to proceed.
+
+[https://localhost:3001/](https://localhost:3001/)
