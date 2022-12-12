@@ -29,9 +29,7 @@ config = {
 
 logger.info("Connecting to database: %s %s", config['DATABASE_URL'], os.path.dirname(__file__))
 
-engine = create_engine(
-    config['DATABASE_URL'].replace("..",f"{os.path.dirname(__file__)}/.."), connect_args={"check_same_thread": False}, echo=True
-)
+engine = create_engine(config['DATABASE_URL'],  echo=True)
 
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -150,3 +148,8 @@ class PaymentItemDao:
         db.commit()
         return payment_item
         
+
+if __name__ == "__main__":
+    logger.info("Attempting database connection")
+    # db = SessionLocal()
+    # print(db.query(Wallet).all())

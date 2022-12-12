@@ -1,6 +1,11 @@
 
 import os, sys
 import shortuuid
+import xrpl
+import os
+import json
+import click
+
 
 from xrpl.clients import JsonRpcClient, WebsocketClient
 from xrpl.models.transactions import Payment
@@ -40,6 +45,8 @@ import bech32
 
 import logging
 ulogger = logging.getLogger("uvicorn.error")
+
+cli_logger = logging.getLogger("xrpcli")
 
 # from dotenv import load_dotenv
 # load_dotenv()  # take environment variables from .env.
@@ -642,11 +649,186 @@ def main():
     #     except Exception as e:
     #         print("=== COULD NOT VERIFY", e)   
 
-   
+# CLI helper functions
+def save_or_log(out_file=None, dict_out={}):
+    s_dict = json.dumps(dict_out, indent=4)
+    if out_file == None:
+        cli_logger.info(s_dict)
+    else:
+        # Writing to sample.json
+        with open(out_file, "w") as outfile:
+            outfile.write(s_dict)
 
+def hydrate_wallet(client:JsonRpcClient, infile):
+    # load the wallet file
+    click.echo(f'loading wallet: {infile}')
+    # Opening JSON file
+    with open(infile, 'r') as openfile:
+        # Reading from json file
+        json_object = json.load(openfile)
+
+    # get the account info so you cat get the sequence
+    acct_info = AccountInfo(
+        account=json_object['classic_address'],
+        ledger_index="current",
+        queue=True,
+        strict=True,
+    )
+    response = client.request(acct_info)
+    a_dict = response.result
+
+    h_wallet = Wallet(seed=json_object['seed'], sequence=a_dict['account_data']['Sequence'])
+    return h_wallet
+
+
+# ============================================================
+# CLI Functions
+# ============================================================
   
-  
-# Using the special variable 
-# __name__
-if __name__=="__main__":
-    main()
+@click.group()
+def cli():
+    pass
+
+@cli.command()
+@click.option('--out', help='json outfile')
+def create_wallet(out):
+    client = JsonRpcClient(config['JSON_RPC_URL'])
+
+    if config['XRP_NETWORK_TYPE'] != 'testnet':
+        raise ValueError('cant create faucet on this network')
+    cli_logger.info("creating wallet")
+    wallet = generate_faucet_wallet(client, debug=True) #issuer
+    wallet_info = {
+        'public_key':wallet.public_key,
+        'private_key':wallet.private_key,
+        'classic_address':wallet.classic_address,
+        'seed':wallet.seed
+    }
+
+    save_or_log(out_file=out, dict_out=wallet_info)
+
+# @cli.command()
+# @click.option('--infile', help='json infile')
+# def get_account(infile, out):
+#     click.echo(f'loading wallet: {infile}')
+#     # Opening JSON file
+#     with open(infile, 'r') as openfile:
+#         # Reading from json file
+#         json_object = json.load(openfile)
+    
+#     logger.debug(json.dumps(json_object, indent=4))
+    
+#     acct_info = AccountInfo(
+#         account=json_object['classic_address'],
+#         ledger_index="current",
+#         queue=True,
+#         strict=True,
+#     )
+#     response = client.request(acct_info)
+#     logger.debug(json.dumps(response, indent=4))
+
+# @cli.command()
+# @click.option('--infile', help='issuer wallet infile')
+# def issuer_settings_tx(infile):
+
+#     # issuer_wallet = Wallet(seed=json_object['seed'], sequence=a_dict['account_data']['Sequence'])
+#     issuer_wallet = hydrate_wallet(infile)
+
+#     # Configure issuer (issuer  address) settings -------------------------------------
+#     issuer_settings_tx = xrpl.models.transactions.AccountSet(
+#         account=issuer_wallet.classic_address,
+#         transfer_rate=0,
+#         tick_size=5,
+#         domain=bytes.hex(config['XRP_ISSUER_CURRENCY_TRUST_DOMAIN'].encode("ASCII")),
+#         set_flag=xrpl.models.transactions.AccountSetFlag.ASF_DEFAULT_RIPPLE,
+#     )
+#     cst_prepared = xrpl.transaction.safe_sign_and_autofill_transaction(
+#         transaction=issuer_settings_tx,
+#         wallet=issuer_wallet,
+#         client=client,
+#     )
+#     logger.debug("Sending issuer address AccountSet transaction...")
+#     response = xrpl.transaction.send_reliable_submission(cst_prepared, client)
+#     logger.debug(response)
+#     # logger.debug(json.dumps(response, indent=4))
+
+# @cli.command()
+# @click.option('--infile', help='receiver wallet infile')
+# def receiver_settings_tx(infile):
+
+#     receiver_wallet = hydrate_wallet(infile)
+
+#     # Configure receiver address settings -----------------------------------------------
+#     receiver_settings_tx = xrpl.models.transactions.AccountSet(
+#         account=receiver_wallet.classic_address,
+#         set_flag=xrpl.models.transactions.AccountSetFlag.ASF_REQUIRE_AUTH,
+#     )
+#     hst_prepared = xrpl.transaction.safe_sign_and_autofill_transaction(
+#         transaction=receiver_settings_tx,
+#         wallet=receiver_wallet,
+#         client=client,
+#     )
+#     logger.debug("Sending receiver address AccountSet transaction...")
+#     response = xrpl.transaction.send_reliable_submission(hst_prepared, client)
+#     logger.debug(response)
+
+
+# @cli.command()
+# @click.option('--issuer', help='issuer wallet infile')
+# @click.option('--receiver', help='receiver wallet infile')
+# def create_trust_line(issuer, receiver):
+
+#     issuer_wallet = hydrate_wallet(issuer)
+#     receiver_wallet = hydrate_wallet(receiver)
+
+#     # Create trust line from receiver to issuer  address -----------------------------------
+#     currency_code = config['XRP_CURRENCY_NAME']
+#     trust_set_tx = xrpl.models.transactions.TrustSet(
+#         account=receiver_wallet.classic_address,
+#         limit_amount=xrpl.models.amounts.issued_currency_amount.IssuedCurrencyAmount(
+#             currency=currency_code,
+#             issuer=issuer_wallet.classic_address,
+#             value="10000000000", # Large limit, arbitrarily chosen
+#         )
+#     )
+#     ts_prepared = xrpl.transaction.safe_sign_and_autofill_transaction(
+#         transaction=trust_set_tx,
+#         wallet=receiver_wallet,
+#         client=client,
+#     )
+#     logger.debug("Creating trust line from receiver address to issuer...")
+#     response = xrpl.transaction.send_reliable_submission(ts_prepared, client)
+#     logger.debug(response)
+
+# @cli.command()
+# @click.option('--issuer', help='issuer wallet infile')
+# @click.option('--receiver', help='receiver wallet infile')
+# @click.option('--amount', help='amount to send')
+# def send_tokens(issuer, receiver, amount:int=100):
+#     issuer_wallet = hydrate_wallet(issuer)
+#     receiver_wallet = hydrate_wallet(receiver)
+
+#     currency_code = config['XRP_CURRENCY_NAME']
+
+#     # issue_quantity = "3840"
+#     send_token_tx = xrpl.models.transactions.Payment(
+#         account=issuer_wallet.classic_address,
+#         destination=receiver_wallet.classic_address,
+#         amount=xrpl.models.amounts.issued_currency_amount.IssuedCurrencyAmount(
+#             currency=currency_code,
+#             issuer=issuer_wallet.classic_address,
+#             value=amount
+#         )
+#     )
+#     pay_prepared = xrpl.transaction.safe_sign_and_autofill_transaction(
+#         transaction=send_token_tx,
+#         wallet=issuer_wallet,
+#         client=client,
+#     )
+#     logger.debug(f"Sending {amount} {currency_code} to {receiver_wallet.classic_address}...")
+#     response = xrpl.transaction.send_reliable_submission(pay_prepared, client)
+#     logger.debug(response)    
+
+if __name__ == '__main__':
+    cli()
+      

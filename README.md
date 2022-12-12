@@ -1,162 +1,62 @@
-# xurlpay.org - a proof of concept for the xurl protocol
-A POS (Point of Sale) proof of concept for a new way to do payments for the XRP Ledger API using a proposed protocol called "xurl" which opens up a number of new use cases.
+# xurlpay.org - a proof of concept for the xurl protocol for durable xumm payloads
+A POS (Point of Sale) proof of concept for a new way to do payments for the XRP Ledger API using a proposed protocol called "xurl" which opens up a number of new use cases. 
+
+The xurl protocol is intended to work closely with the [xumm](https://xumm.app) platform. This project is a proof of concept for the xurl protocol, and is not intended for production use but could be uses as a starting point for a production implementation that uses durable payment requests for a Xumm Application.
+
 
 **Features**
 
-* generation of "scan to pay" invoices
-* generation of payment memos
+* generation of "scan to pay" invoices that generate xumm payloads
+* backend orchestration of xumm payments
 * stateful payment requests
 
 This readme is primarily intended to be the project setup playbook for a developer who wants to run a local dev setup, please see the [White Paper](./docs/whitepaper.md) for more information on the technical approach and motivation for this project.
 
-## Local Setup
-
-### environment variables
-environment variables are used to configure the application and can contain secrets, for that reason they are not included in the repository.
-
-**example**
+# Configuration
+The project is configured using environment variables. The project uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load environment variables from a .env file. The .env file is not checked into the repo, so you will need to create your own. You can use the .env.example file as a template.
 
 ```bash
 JSON_RPC_URL="https://s.altnet.rippletest.net:51234/"
-WALLET_ADDRESS_R="rU32wptoF4YPK3USvuYipUeDMqjF371B9J"
-WALLET_SECRET_R="<secret>"
-DATABASE_URL="sqlite:////data/xurl.db"
+DATABASE_URL="postgresql://postgres:SooperSecret!@xurlpay-postgres-10:5432/xurlpay"
 APP_LOG_LEVEL="DEBUG"
+APP_LOG_PATH="/home/foo/logs/xrpl-poc-python-api.log"
+API_VERSION="0.1.3"
+API_OPENAPI_URL="/openapi.json"
+API_ROOT_PATH="/"
+API_TOKEN_PATH="/token"
+APP_BASEURL_API="http://localhost:5000"
+XRP_NETWORK_ENDPOINT="https://s.altnet.rippletest.net:51234/"
+XRP_NETWORK_TYPE="testnet"
+XRP_NETWORK_EXPLORER="https://testnet.xrpl.org"
+XRP_WS_NET="wss://s.altnet.rippletest.net:51233"
+XUMM_API_KEY="1b144141-..."
+XUMM_API_SECRET="7acffb42-..."
+XUMM_APP_DEEPLINK="https://xumm.app/detect/xapp:sandbox.32849dc99872"
+AWS_BUCKET_NAME="dev.xurlpay.org"
+AWS_UPLOADED_IMAGES_PATH="uploaded_images"
+AWS_ACCESS_KEY_ID="AKIA..."
+AWS_SECRET_ACCESS_KEY="Uougc3..."
 ```
+If you want to upload images to AWS S3 you will need to set up an AWS account and create an S3 bucket. You will also need to create an IAM user with access to the bucket. 
 
-### run the cli app
-`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api.xrpcli`
+## Building And Running The Project
+There are a number of ways that someone can build and run the project. You can build and run the project locally, or you can use the docker image. The docker image is intended to be used for local development or deployed in a workload cluster.
 
-**signing a message**
-
-`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api.xrpcli -s goodboy -sk EDFCA0B2956D54A4AD70823638E8ADFE6F5SOOPERSECRET5DC8D46FB692D896E50
-message: Z29vZGJveQ== signature: IvFIAA9XxCAuNkUQSHyFTqDWxqme301NRd+VLcoS6mPNdQDjqIe2dsyLGywmaVhavDzHhmo9EhJQz0opjWc3BA==`
-
-**verify a message**
-
-`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api.xrpcli -v Z29vZGJveQ== -pk ED706ED2E4C67EC9603327D46F66DB9CAC999C6AA527FC111C8BC47C74A0BC812C -g IvFIAA9XxCAuNkUQSHyFTqDWxqme301NRd+VLcoS6mPNdQDjqIe2dsyLGywmaVhavDzHhmo9EhJQz0opjWc3BA==
-message verified`
-
-### running the flask app
-
-**local deployment**
-Local deployment has two components:
-
-1. The flask app (deployed and fronted as the API in AWS API Gateway)
-2. The xrpcli react app (deployed and fronted as a Cloudfront edge using the awscli)
-
-A [script is provided](./app.sh) to start the flask app, or you can just start the flask app directly.
-
-**running the flask app**
+### Building and Running Locally
+The project is built using python 3.8.5 and pipenv. You can install the dependencies using pipenv and run the project using the pipenv shell.
 
 ```bash
-#!/bin/bash
-FLASK_APP=api APP_CONFIG=env/local/xrpl-poc-python-app.env flask run  --host=0.0.0.0 --port=5000 --cert=cert.pem --key=key.pem --debugger --reload
+pipenv install
+pipenv shell
+python -m uvicorn app.main:app --reload
 ```
 
-**migrations**
-```
-FLASK_APP=api APP_CONFIG=env/local/xrpl-poc-python-app.env flask db init
+If you choose to build and run locally you will need to set up a postgres database and configure the app to use it. You can use the a docker instance stand up a postgres database if you wish. You will need to create a database and user for the app to use. You can use the following commands to create the database and user.
 
-FLASK_APP=api APP_CONFIG=env/local/xrpl-poc-python-app.env flask db migrate
+[Standing Up a Postgres 10 Database with Docker](./docker/POSTGRES10.md)
 
-FLASK_APP=api APP_CONFIG=env/local/xrpl-poc-python-app.env flask db upgrade
-```
+## The xurlpay/xurlpay-api docker image as a local dev environment
+Its is also possible to run the xurlpay/xurlpay-api docker image locally with a postgres database, and start it up using docker exec.
 
+[The xurlpay/xurlpay/xrplpay-api Docker Image as a Local DEV Environment](./docker/API.md)
 
-### running client react app
-The client react app is intended deployed as a react app that talks to the API. Its in the [webapp](./webapp) directory and you will need to work from there when trying to run locally.
-
-**getting the react app installs**
-
-```bash
-cd ./webapp
-npm install
-```
-
-**running the react app**
-
-There is a little bit of scripting that runs included when you want to run local.
-
-```bash
-npm run serve-local
-```
-
-This will start the react app with the local deployment configuration and use the certs and keys in the local directory so it runs under https. Since this is a self signed certificate you will need to tell the browser its ok to proceed.
-
-[https://localhost:3001/](https://localhost:3001/)
-
-## generating certs and keys for flask app
-
-```bash
-sudo apt install libnss3-tools -y
-sudo apt install openssl -y
-
-wget https://github.com/FiloSottile/mkcert/releases/download/v1.4.3/mkcert-v1.4.3-linux-amd64
-sudo cp mkcert-v1.4.3-linux-amd64 /usr/local/bin/mkcert
-sudo chmod +x /usr/local/bin/mkcert
-
-openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365 -subj "/C=US/ST=Oregon/L=Portland/O=XurlPay.org/CN=dev-xurlpay.org"
-
-```
-
-# rsync to ec2 instance
-
-```bash
-bash cicd/sh/rsync-api.sh
-```
-
-# xApp webhook response
-
-```json
-{
-    "meta": {
-        "url": "https://devapi.xurlpay.org/v1/xumm/webhook",
-        "application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-        "payload_uuidv4": "a44e2edf-563f-4c59-b551-4b442a009477",
-        "opened_by_deeplink": false
-    },
-    "custom_meta": {
-        "identifier": null,
-        "blob": null,
-        "instruction": null
-    },
-    "payloadResponse": {
-        "payload_uuidv4": "a44e2edf-563f-4c59-b551-4b442a009477",
-        "reference_call_uuidv4": "b608d181-520f-4282-a0bd-6e6e7de7d14d",
-        "signed": true,
-        "user_token": true,
-        "return_url": {
-            "app": null,
-            "web": null
-        },
-        "txid": "336EFE27BEB7B494150D9DB7C59F8AA6AD3FDDE4E2AC51364797C9EBEF0BD599"
-    },
-    "userToken": {
-        "user_token": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
-        "token_issued": 1667957297,
-        "token_expiration": 1670553892
-    }
-}
-```
-
-
-https://dev.xurlpay.org/api/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25
-
-https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25
-
-
-`https://devapi.xurlpay.org/v1/xumm/deeplink?classic_address=rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y&amount=9.25` and it redirects to my xApp as `https://xumm.app/detect/xapp:sandbox.32849dc99872?amount={amount}&memo={memo}&classic_address={classic_address}` but when it comes back to my server the params have been stripped: `<Request 'http://ec2-34-211-56-213.us-west-2.compute.amazonaws.com:5000/xumm/app?xAppStyle=LIGHT&xAppToken=4dc0be9a-922b-4665-97d7-1c1fa73e76fc' [GET]` 
-
-
-#  running the app
-
-`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api`
-
-# migrations
-APP_CONFIG=env/local/xrpl-poc-python-app.env alembic -c migrations/alembic.ini upgrade head
-
-
-PYTHONPATH=$(pwd)/api:$PYTHONPATH APP_CONFIG=env/local/xrpl-poc-python-app.env  alembic -c migrations/alembic.ini upgrade head
-
-PYTHONPATH=$(pwd)/api:$PYTHONPATH APP_CONFIG=env/local/xrpl-poc-python-app.env  alembic -c migrations/alembic.ini current

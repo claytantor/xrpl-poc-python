@@ -6,6 +6,13 @@ import os
 from datetime import datetime as dt
 import json
 
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG)
+ulogger = logging.getLogger("uvicorn.error")
+ulogger.info("APP CONFIG PATH: " + os.getenv("APP_CONFIG"))
+
 from dotenv import dotenv_values
 config = {
     **dotenv_values(os.getenv("APP_CONFIG")),  # load shared development variables

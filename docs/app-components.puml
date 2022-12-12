@@ -1,0 +1,48 @@
+@startuml
+
+[Route53] as route53
+
+package "Browser Webapp" {
+    [Client] as webapp
+}
+
+package "Static Assets" {
+    [Cloudfront] as cloudfront
+    [S3 Bucket] as s3  
+}
+
+package "API Microservices" {
+    [APIGateway] as api 
+    [Lambda] as lambda
+    [Elastic IP] as ip
+    [EC2 Instance] as ec2
+}
+
+note left of cloudfront
+    Serves static webapp, 
+    manages cert for 
+    https://xurlpay.org
+end note
+
+' webapp
+webapp -> route53 : DNS
+route53 --> cloudfront : CDN
+cloudfront --> s3
+route53 --> api : API Gateway
+
+
+' api workloads
+api -> lambda : CORS
+note right of api
+    Serves API domain, 
+    manages cert for 
+    https://api.xurlpay.org
+end note
+
+
+api --> ip
+ip --> ec2 :Request Worker
+
+
+
+@enduml

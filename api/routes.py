@@ -67,8 +67,7 @@ scopes = {
     'wallet_owner_refresh': ['wallet.refresh'],
 }
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/v1/token")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=config['API_TOKEN_PATH'])
 
 @router.get("/info",tags=["ApiInfo"], response_model=ApiInfoSchema,status_code=200)
 def get_api_info():

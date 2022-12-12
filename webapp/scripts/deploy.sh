@@ -19,7 +19,7 @@ if [[ $env == "dev" ]]; then
     dist_id='E2KA72YAVWV3TJ'
     s3_bucket='dev.xurlpay.org'
 elif [[ $env == "prd" ]]; then
-    dist_id=''
+    dist_id='E2S5U274K83PDZ'
     s3_bucket='xurlpay.org'
 fi
 

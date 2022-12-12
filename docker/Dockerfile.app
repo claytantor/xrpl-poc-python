@@ -1,5 +1,5 @@
 # Build image
-FROM python:3.8 as builder
+FROM python:3.9 as builder
 
 # Setup virtualenv
 ENV VIRTUAL_ENV=/opt/venv
@@ -18,14 +18,7 @@ RUN python -m pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
 
 # Production image
-FROM python:3.8 as xurlpay-api
-# FROM ubuntu:20.04 as xurlpay-api
-
-# RUN apt-get update && apt-get install -y software-properties-common gcc && \
-#     add-apt-repository -y ppa:deadsnakes/ppa
-
-# RUN apt-get update && apt-get install -y python3.7 python3-distutils python3-pip python3-apt
-
+FROM python:3.9 as xurlpay-api
 
 # Run as non-root
 USER 1000:1000
@@ -35,6 +28,12 @@ ENV VIRTUAL_ENV="/opt/venv"
 COPY --from=builder --chown=1000:1000 $VIRTUAL_ENV $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+#ARGS
+ARG BUILD_TS
+ARG BUILD_BRANCH
+ARG BUILD_SHA
+# required
+ARG APP_CONFIG 
 
 # Copy in app source
 WORKDIR /app
@@ -42,8 +41,17 @@ COPY --chown=1000:1000 api /app/api
 COPY --chown=1000:1000 migrations /app/migrations
 ENV PYTHONPATH "${PYTHONPATH}:/app/api"
 
-EXPOSE 5200
+# export API_TIMESTAMP=$(date +%s)
+# export API_GIT_BRANCH=${CIRCLE_BRANCH:-$(git branch | grep \* | cut -d ' ' -f2)}
+# export API_GIT_SHA=$(git rev-parse --verify HEAD)
 
-ENTRYPOINT [ "flask" ]
+ENV API_TIMESTAMP $BUILD_TS
+ENV API_GIT_BRANCH $BUILD_BRANCH
+ENV API_GIT_SHA $BUILD_SHA
+ENV APP_CONFIG $APP_CONFIG
 
-CMD [ "run","-h","0.0.0.0","-p","5000" ]
+EXPOSE 5000
+
+ENTRYPOINT [ "python" ]
+
+CMD [ "-m","api" ]

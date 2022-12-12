@@ -26,3 +26,5 @@ webapp/.parcel-cache/*
 webapp/dist/
 webapp/dist/*
 webapp/src/env.js
+pgdata/
+pgdata/*

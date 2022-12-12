@@ -1,4 +1,5 @@
 import os
+import uvicorn
 
 from http.client import HTTPException
 from fastapi import FastAPI
@@ -36,18 +37,20 @@ from fastapi.encoders import jsonable_encoder
 import logging
 
 from api import routes
-# from api.models import Message
-# from api.schema import MessageSchema
+
+
+logging.basicConfig(level=logging.DEBUG)
+ulogger = logging.getLogger("uvicorn.error")
+ulogger.info("APP START")
+log_config = uvicorn.config.LOGGING_CONFIG
+log_config["formatters"]["access"]["fmt"] = "%(asctime)s - %(levelname)s - %(message)s"
+ulogger.info("APP CONFIG PATH: " + os.getenv("APP_CONFIG"))
 
 from dotenv import dotenv_values
 config = {
     **dotenv_values(os.getenv("APP_CONFIG")),  # load shared development variables
     **os.environ,  # override loaded values with environment variables
 }
-
-logging.basicConfig(level=logging.DEBUG)
-ulogger = logging.getLogger("uvicorn.error")
-
 
 
 # formatter = logging.Formatter('%(levelname)s\t%(asctime)s - %(name)s - %(message)s')
