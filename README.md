@@ -49,8 +49,9 @@ The project is built using python 3.9.0 and pipenv. You can install the dependen
 export API_TIMESTAMP=$(date +%s)
 export API_GIT_BRANCH=${CIRCLE_BRANCH:-$(git branch | grep \* | cut -d ' ' -f2)}
 export API_GIT_SHA=$(git rev-parse --verify HEAD)
+export API_ENVIRONMENT="local"
 
-APP_CONFIG=env/$1/xrpl-poc-python-app.env python -m api
+APP_CONFIG=env/$API_ENVIRONMENT/xrpl-poc-python-app.env python -m api
 ```
 
 The `APP_CONFIG` environment variable is used to select the environment configuration file to use. The `xrpl-poc-python-app.env` file is not checked into the repo, so you will need to create your own. You can use the `env.example` file as a template.
