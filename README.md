@@ -39,7 +39,7 @@ AWS_SECRET_ACCESS_KEY="Uougc3..."
 ```
 If you want to upload images to AWS S3 you will need to set up an AWS account and create an S3 bucket. You will also need to create an IAM user with access to the bucket. 
 
-## Building And Running The Project
+## Building And Running The API
 There are a number of ways that someone can build and run the project. You can build and run the project locally, or you can use the docker image. The docker image is intended to be used for local development or deployed in a workload cluster.
 
 ### Building and Running Locally
