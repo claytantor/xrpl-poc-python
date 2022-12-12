@@ -12,7 +12,7 @@ The xurl protocol is intended to work closely with the [xumm](https://xumm.app) 
 
 This readme is primarily intended to be the project setup playbook for a developer who wants to run a local dev setup, please see the [White Paper](./docs/whitepaper.md) for more information on the technical approach and motivation for this project.
 
-# Configuration
+## Configuration
 The project is configured using environment variables. The project uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load environment variables from a .env file. The .env file is not checked into the repo, so you will need to create your own. You can use the .env.example file as a template.
 
 ```bash
@@ -60,7 +60,7 @@ If you choose to build and run locally you will need to set up a postgres databa
 
 [Standing Up a Postgres 10 Database with Docker](./docker/POSTGRES10.md)
 
-## The xurlpay/xurlpay-api docker image as a local dev environment
+### The xurlpay/xurlpay-api docker image as a local dev environment
 Its is also possible to run the xurlpay/xurlpay-api docker image locally with a postgres database, and start it up using docker exec.
 
 [The xurlpay/xurlpay/xrplpay-api Docker Image as a Local DEV Environment](./docker/API.md)
