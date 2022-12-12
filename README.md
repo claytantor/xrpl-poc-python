@@ -43,13 +43,17 @@ If you want to upload images to AWS S3 you will need to set up an AWS account an
 There are a number of ways that someone can build and run the project. You can build and run the project locally, or you can use the docker image. The docker image is intended to be used for local development or deployed in a workload cluster.
 
 ### Building and Running Locally
-The project is built using python 3.8.5 and pipenv. You can install the dependencies using pipenv and run the project using the pipenv shell.
+The project is built using python 3.9.0 and pipenv. You can install the dependencies using pipenv and [requirements.txt](./requirements.txt) file and run the project using the pipenv shell.
 
 ```bash
-pipenv install
-pipenv shell
-python -m uvicorn app.main:app --reload
+export API_TIMESTAMP=$(date +%s)
+export API_GIT_BRANCH=${CIRCLE_BRANCH:-$(git branch | grep \* | cut -d ' ' -f2)}
+export API_GIT_SHA=$(git rev-parse --verify HEAD)
+
+APP_CONFIG=env/$1/xrpl-poc-python-app.env python -m api
 ```
+
+The `APP_CONFIG` environment variable is used to select the environment configuration file to use. The `xrpl-poc-python-app.env` file is not checked into the repo, so you will need to create your own. You can use the `env.example` file as a template.
 
 If you choose to build and run locally you will need to set up a postgres database and configure the app to use it. You can use the a docker instance stand up a postgres database if you wish. You will need to create a database and user for the app to use. You can use the following commands to create the database and user.
 
