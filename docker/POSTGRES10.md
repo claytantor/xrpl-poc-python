@@ -60,6 +60,9 @@ postgres=# \q
 ```
 
 ### Loading the base data into postgres
+1. Run the api container to load the base schema into the database.
+2. Run the load command to load the base data into the database.
+
 Note: we need to still work out the permissions on the pgdata dir so that the docker container can write to it. For now, we just set the permissions to 777.
 
 ```bash
