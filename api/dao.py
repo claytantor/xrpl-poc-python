@@ -18,6 +18,8 @@ from fastapi.encoders import jsonable_encoder
 from api.models import Base, PaymentItem, Wallet, XummPayload
 
 import logging
+
+from api.schema import WalletCreateSchema
 logger = logging.getLogger("uvicorn.error") 
 
 from dotenv import dotenv_values
@@ -44,12 +46,14 @@ def get_db():
 
 class WalletDao:
     
-#  async def create(db: Session, item: ItemCreateSchema):
-#         db_item = Item(name=item.name,price=item.price,description=item.description,store_id=item.store_id)
-#         db.add(db_item)
-#         db.commit()
-#         db.refresh(db_item)
-#         return db_item
+    def create(db: Session, item: WalletCreateSchema):
+        d_v = item.dict()
+        logger.info("WalletDao.create: %s", d_v)
+        db_item = Wallet(classic_address=d_v['classic_address'])
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+        return db_item
     
     def fetch_by_id(db: Session, _id):
         return db.query(Wallet).filter(Wallet.id == _id).first()

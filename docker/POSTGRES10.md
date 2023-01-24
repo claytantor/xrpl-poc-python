@@ -47,7 +47,7 @@ c77adf723174   postgres:10                      "docker-entrypoint.s…"   47 se
 
 ### Create the database
 ```bash
-docker exec -it xurlpay-postgres-10 psql -U postgres
+docker exec -it xurlpay-postgres-10 psql -U postgres  
 
 ```
 

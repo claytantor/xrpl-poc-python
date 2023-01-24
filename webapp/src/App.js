@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Outlet, Navigate, useNavigate } from "rea
 
 
 import Home from "./pages/Home";
-import Login from "./pages/Login";
 import Wallet from "./pages/Wallet";
 import XummApp from "./pages/XummApp";
 import ReceivePayment from "./pages/ReceivePayment";
@@ -82,6 +81,7 @@ const PrivateRoute = ({xummState}) => {
 
 const App = () => {
 
+  
   const [xAppLoginError, setXAppLoginError] = useState();
   const [xummState, setXummState] = useState();
 
@@ -152,13 +152,13 @@ const App = () => {
 
   const xummSignInHandler = (jwt, sdk) => {
     const accessTokenInfo = AuthenticationService.getAccessTokenInfo(jwt);
-        const _xummState = {
-          jwt: jwt,
-          me: accessTokenInfo.payload,
-          sdk: sdk
-        }
-        setXummState(_xummState);
-        AxiosService.setUser(_xummState);
+    const _xummState = {
+      jwt: jwt,
+      me: accessTokenInfo.payload,
+      sdk: sdk
+    }
+    setXummState(_xummState);
+    AxiosService.setUser(_xummState);
   };
   
   return (

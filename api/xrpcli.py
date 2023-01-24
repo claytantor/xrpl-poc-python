@@ -469,7 +469,7 @@ async def get_account_info(address, network="https://s.altnet.rippletest.net:512
         )
         response = await client.request_impl(acct_info)
         result = response.result
-        return result
+        return result # this is a dict
     except Exception as e:
         ulogger.error(f"get_account_info: {e}")
         raise e

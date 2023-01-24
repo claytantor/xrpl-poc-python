@@ -20,7 +20,6 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
   const [wallet] = useState(null);
   const [errors, setErrors] = useState([]);
 
-
   useEffect(() => {
     if(formType==='edit' && paymentItem){
       const returnedTarget = Object.assign({}, paymentItem);
@@ -40,7 +39,6 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
       setSavedStatus("start")
     }
   }, [paymentItem]);
-
 
   function isNumber(n) { return /^-?[\d.]+(?:e-?\d+)?$/.test(n); }
 

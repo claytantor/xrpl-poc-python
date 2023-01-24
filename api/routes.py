@@ -21,7 +21,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
+from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema
 from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
@@ -71,8 +71,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=config['API_TOKEN_PATH'])
 
 @router.get("/info",tags=["ApiInfo"], response_model=ApiInfoSchema,status_code=200)
 def get_api_info():
-    # ulogger.info(f"version: {config['APP_VERSION']}")
-    # return jsonify({'version': config['APP_VERSION']}), 200
     ulogger.info(f"get_api_info {ApiInfo().to_dict()}")
     return ApiInfo().to_dict()
 
@@ -83,25 +81,45 @@ def auth_token(username: str = Form(), password: str = Form()):
     return {"access_token":jwt_token}
 
 @router.get("/wallet", tags=["Wallet"], response_model=WalletSchema, status_code=200)
-# @router.get("/wallet",status_code=200)
 @verify_user_jwt_scopes(scopes['wallet_owner'])
 async def get_wallet(request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    ulogger.info(f"get_wallet {token}")
+    # ulogger.info(f"get_wallet {token}")
     jwt_body = get_token_body(token)
+    ulogger.info(f"body {json.dumps(jwt_body, indent=4)}")
 
     wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
     if wallet is None:
-        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+        # return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+        ulogger.error(f"get_wallet wallet not found")
+        create_item = WalletCreateSchema(classic_address=jwt_body['sub'])
+        wallet = WalletDao.create(db, create_item)
 
-    
+    ulogger.info(f"get_wallet {wallet.to_dict()}")
+
+# {
+#     "client_id": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+#     "scope": "XummPkce",
+#     "aud": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+#     "sub": "r9DvujRNfGrZr4nBjudEJJWFBNfkDfcwNA",
+#     "email": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce+r9DvujRNfGrZr4nBjudEJJWFBNfkDfcwNA@xumm.me",
+#     "app_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+#     "app_name": "dev-xurlpay",
+#     "payload_uuidv4": "4dbbb16e-d651-47c5-ba24-c9b90237964c",
+#     "usertoken_uuidv4": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
+#     "network_type": "TESTNET",
+#     "network_endpoint": "wss://testnet.xrpl-labs.com",
+#     "iat": 1674590544,
+#     "exp": 1674676944,
+#     "iss": "https://oauth2.xumm.app"
+# }
     try:
         xrp_network = get_xrp_network_from_jwt(jwt_body)
-        account_info = await get_account_info(wallet.classic_address, xrp_network.json_rpc)
+        account_info = await get_account_info(jwt_body['sub'], xrp_network.json_rpc)
 
         wallet_dict = wallet.to_dict()
         wallet_dict['account_data'] = account_info['account_data']
         wallet_dict['xrp_network'] = xrp_network.to_dict()     
-        return wallet_dict
+        return JSONResponse(status_code=HTTPStatus.OK, content=wallet_dict)
 
     except Exception as e:
         ulogger.error(f"get_wallet {e}")
@@ -113,9 +131,9 @@ def xrp_price_from_currency(fiat_i8n_currency:str, request: Request, db: Session
 
     jwt_body = get_token_body(token)
 
-    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
-    if wallet is None:
-        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    # wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    # if wallet is None:
+    #     return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
     ulogger.info(f"get_xrp_price {fiat_i8n_currency}")
     rates = sdk.get_rates(fiat_i8n_currency).to_dict()
@@ -189,7 +207,10 @@ def update_wallet_payload(
     if payload_exists is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "payload does not belong to wallet"})
 
-    payload_exists.from_dict(payloadRequest.__dict__) 
+    py_r = payloadRequest.dict()
+    ulogger.info(f"update_wallet_payload {py_r}")
+    payload_exists.from_dict(py_r)
+    payload_exists.set_is_signed_bool(py_r['is_signed']) 
     payload = XummPayloadDao.update(db=db, payload=payload_exists)
 
     return payload.to_dict()

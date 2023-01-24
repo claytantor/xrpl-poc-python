@@ -146,9 +146,11 @@ const PayloadLedger = ({xummState}) => {
       xummState={xummState}>
       <div className="p-4">
         <h2 className="text-2xl">Payload Ledger</h2>
-        {payloads && payloads.length > 0 && payloads.map((payload) => {
-            return <PayloadItem payload={payload} />
-        })}
+        {payloads && payloads.length > 0 ? 
+          payloads.map((payload, index) => {
+            return <div key={index}><PayloadItem payload={payload} /></div>
+          }):
+          <div className="text-left text-base">No payloads found</div>}
       </div>
     </Page>
   );

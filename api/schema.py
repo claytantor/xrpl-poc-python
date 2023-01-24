@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel
 
 # ===== schemas
@@ -9,7 +9,6 @@ class ApiInfoSchema(BaseModel):
     version: str
     commit_sha: str
     api_branch: str
-
 
 class OAuth2AuthSchema(BaseModel):
     grant_type: str
@@ -108,6 +107,20 @@ class XummPayloadSchema(BaseModel):
     body: Optional[dict]
     webhook_body: Optional[dict]
 
+class WalletCreateSchema(BaseModel):
+    # seed = Optional[str]
+    # private_key = Optional[str]
+    # public_key = Optional[str]
+    classic_address: str
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+        self.classic_address = data['classic_address']
+        print("WalletCreateSchema.__init__", self.__dict__)
+        
+
+    
+    
 class WalletSchema(BaseModel):
 
     """
