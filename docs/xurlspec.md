@@ -36,7 +36,7 @@ The xURL protocol is intended to be used in a variety of contexts. The following
 
 ## 1.4 Sequence of Events in xURL lifecycle
 
-![xURL Sequence of Events](../out/docs/xurl2-sequence/xUrl_sequence.png)
+![xURL Sequence of Events](./images/xUrl_sequence.png)
 
 # 2. xURL Specification
 xUrl is a URI specification to explain to a a backend on how to generate payloads. The intention is that given a URI, a backend can generate a payload that can be signed and submitted to the XRP Ledger. The URI is designed to be extensible and flexible, and to be used in a variety of contexts.
