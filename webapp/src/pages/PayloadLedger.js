@@ -38,9 +38,6 @@ const BasePayload = ({payload}) => {
 
 const PaymentItemPayload = ({payload}) => {
 
-  // useEffect(() => {
-  //   console.log(payload, xummConfig);
-  // }, [payload]);
   
   let payloadCustomMeta = JSON.parse(payload.webhook_body.custom_meta.blob.replaceAll("\\",""));
   //"{\"type\": \"payment_item\", \"payment_item_id\": 1, \"xrp_quote\": 0.38509692500000003, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.15, \"request_hash\": \"Aed73UUPkHNc2G6LjxHKXP\"}",
@@ -99,9 +96,9 @@ const PaymentRequestPayload = ({payload}) => {
               </div>}
               </div>
               <div>
-                  <span className="flex justify-end px-1 py-1 text-2xl font-semibold text-gray-700 mr-1 mb-2 items-center">
+                  {/* <span className="flex justify-end px-1 py-1 text-2xl font-semibold text-gray-700 mr-1 mb-2 items-center">
                       {payloadCustomMeta.amount.toLocaleString('fullwide', {maximumFractionDigits:4})} <SiXrp />
-                  </span>
+                  </span> */}
               </div>
           </div>
           <div className="font-mono text-xs break-all p-1">

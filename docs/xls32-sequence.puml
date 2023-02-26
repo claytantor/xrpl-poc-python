@@ -1,0 +1,50 @@
+@startuml xUrl_sequence
+
+title xUrl Sequence Diagram using xls32 Response
+
+actor Requestor as Requestor
+actor "Payer Wallet (xumm)" as Payer
+participant "xURL Web Frontend\nusing SDK" as xUrlApp
+participant "xUrl App Backend" as xUrlBackend
+participant "tx WSS" as txWS
+participant "XRP Ledger" as xrpLedger
+
+
+Requestor -> xrpLedger: Create Wallet
+
+group Payment Item Creation
+    Requestor -> xUrlApp: Sign in and get JWT credentials
+    Requestor -> xUrlBackend: Use Wallet Credentials to Create Payment Item\n(with id, description, amount, currency, etc.)
+    note left: the backend allows for new invoices\nto be created and tracked
+    xUrlBackend -> xUrlBackend: Create Payment\nItem in Database
+    xUrlBackend -> xUrlBackend: Generate xUrl
+    xUrlBackend -> Requestor: Return xUrl
+end
+
+group Payment
+Requestor -> "Payer": Sends xUrl
+Payer -> xUrlApp: Scans OR
+Payer -> xUrlApp: Clicks "Payment link"
+note left: the app could be a mobile \napp like xumm or another \nwallet that supports xUrl \ngenerated XRP payloads \nthe content type would need to \nbe able to launch the app \nthat will sign the transaction
+Payer-> xUrlBackend: Lookup Payment Item by Id
+xUrlBackend -> xUrlBackend: Get Payment Item from Database
+xUrlBackend -> xUrlBackend: Business Logic to determine if payment\nis valid, covert to XRP, etc.
+xUrlBackend -> xUrlBackend: Build XRP Transaction Payload
+xUrlBackend -> xUrlApp: Return XRP Transaction\nPayload as xls32
+xUrlApp -> xUrlApp: convert xls32 URL to\nXRP Native Payload
+xUrlApp -> txWS: sunscribe to XRP Transaction Stream
+Payer -> xUrlApp: Sign Transaction
+xUrlApp -> xrpLedger: Send Transaction
+xUrlApp -> xUrlBackend: POST signed\n"TX"
+end
+
+group Backend Event Listener
+xUrlBackend -> xrpLedger: Listen for\n"TX" to be paid state
+note left: this could be a webhook\nor a listener on the XRP\nledger
+xUrlBackend -> xUrlBackend: Update Payment Item in Database
+xUrlBackend -> xUrlBackend: Lookup Action Response for\nPayment Item in xURL
+xUrlBackend -> xUrlBackend: Perform Action Response \nOrchestrations
+end
+
+
+@enduml

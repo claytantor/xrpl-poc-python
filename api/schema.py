@@ -179,5 +179,15 @@ class PaymentItemSchema(BaseModel):
 
     def to_dict(self):
         return self.dict()
+    
 
 
+
+class TrustlineConversion(BaseModel):
+    token_currency: str
+    i8n_currency: str
+    issuerAccount: str
+    receiverAccount: str
+    rate: float
+    datetime: str
+    txid: Optional[str]
