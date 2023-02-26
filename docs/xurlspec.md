@@ -225,7 +225,6 @@ and the serialized version:
             "country": "US"
         }
     }
-
 }
 ```
 
