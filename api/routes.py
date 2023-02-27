@@ -343,7 +343,6 @@ def delete_payment_item_by_id(id:int,
     return JSONResponse(status_code=HTTPStatus.OK, content={"message": "payment item deleted"})
 
 
-
 @router.get('/payment_item/{id}') 
 def get_payment_item_by_id(id:int, 
     request: Request, 
@@ -384,7 +383,7 @@ def get_payment_item_by_id(id:int,
 #         return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
-def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet,qty:int=1):
+def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str, qty:int=1):
 
     ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency} {payment_item.fiat_i8n_price}")
     rates = sdk.get_rates(payment_item.fiat_i8n_currency).to_dict()
@@ -400,7 +399,8 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet,qty:int=1)
         'fiat_i8n_price': payment_item.fiat_i8n_price,
         'request_hash':shortuuid.uuid(),
         'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
-        'network_type': config['XRP_NETWORK_TYPE'],     
+        'network_type': config['XRP_NETWORK_TYPE'], 
+        'verb': verb,        
     }
 
     if qty > 1:
@@ -420,40 +420,14 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet,qty:int=1)
     }
 
 
-def make_xumm_payment_item_payload_response(payment_item:PaymentItem, db: Session):
+def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:VerbType, db: Session):
 
     # # get the wallet for this payment item
     wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
 
-    # ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency} {payment_item.fiat_i8n_price}")
-    # rates = sdk.get_rates(payment_item.fiat_i8n_currency).to_dict()
-    # ulogger.info(f"rates: {rates}")
-    # xrp_price = rates['XRP']
-    # xrp_amount = payment_item.fiat_i8n_price / xrp_price
-    
-    # payment_request_dict = {
-    #     'type': 'payment_item',
-    #     'payment_item_id': payment_item.payment_item_id,       
-    #     'xrp_quote': xrp_price,
-    #     'fiat_i8n_currency': payment_item.fiat_i8n_currency,
-    #     'fiat_i8n_price': payment_item.fiat_i8n_price,
-    #     'request_hash':shortuuid.uuid(),
-    #     'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
-    #     'network_type': config['XRP_NETWORK_TYPE'],     
-    # }
-
-    # create_payload = {
-    #     'txjson': make_payment_item_payload(payment_item, db),
-    #     "custom_meta": {
-    #         "identifier": f"payment_item:{shortuuid.uuid()[:12]}",
-    #         "blob": json.dumps(payment_request_dict),
-    #         "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} for item {payment_item.name}"
-    #     }
-    # }   
-
-    created = sdk.payload.create(make_payment_item_payload(payment_item=payment_item, wallet=wallet))
+    created = sdk.payload.create(make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb))
     xumm_payload = created.to_dict()
     p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
                             wallet_id=wallet.wallet_id,
@@ -507,15 +481,13 @@ def update_payment_item(
     payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, paymentItem.payment_item_id, wallet.wallet_id)
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
-    
-    
+       
     payment_item.from_dict(paymentItem.to_dict()) #must be a dict
     images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
     save_images(db=db, images_list=images_list, payment_item=payment_item)
 
     payload = PaymentItemDao.update(db=db, payment_item=payment_item)
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
-
 
 @router.post("/xumm/webhook")
 async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
@@ -540,20 +512,11 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
             payload.webhook_body = json.dumps(json_body)
             db.commit()
 
-            # # get the custom_meta blob
-            # if 'custom_meta' in json_body and json_body['payloadResponse']['txid'] is not None:
-            #     custom_meta_blob = json.loads(json_body['custom_meta']['blob'].replace("\\", ''))
-            #     ulogger.info(f"==== xumm webhook custom_meta_blob:\n{json.dumps(custom_meta_blob, indent=4)}")
-            #     if custom_meta_blob['type'] == 'payment_item':
-            #         # get the payment item
-            #             # get all the payment items for this wallet
-            #         payment_item = db.session.query(PaymentItem).filter_by( payment_item_id=int(custom_meta_blob['payment_item_id'])).first()
-            #         if payment_item is not None:
-            #             # asyncio.run(send_slack_message(f"Payment Item id:{payment_item.payment_item_id} {payment_item.name} has just been purchased for {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency}!"))
-            #             send_slack_message(f"Payment Item {payment_item.name} has just been purchased! payment item id:{payment_item.payment_item_id} price:{payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} {config['XRP_NETWORK_EXPLORER']}/transactions/{json_body['payloadResponse']['txid']}")
-            #             # dont block if this fails
-
-#     return jsonify({'message': 'xumm_webhook'}), 200
+            # now take the payload and process it
+            ulogger.info("==== xumm webhook payload is signed, processing")
+            _process_payload_verb(payload=payload, db=db)
+    
+    return JSONResponse(status_code=HTTPStatus.OK, content={"message": "ok"})
 
 
 
@@ -571,7 +534,57 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 #     except Exception as e:
 #         app.log_exception(f"==== slack webhook error: {e}")
 
-def _make_xurl(version:XurlVersion,
+def _process_payload_verb(payload: XummPayload,
+    db: Session = Depends(get_db)):
+
+
+    ulogger.info(f"==== _process_payload_verb from payload.")
+
+    # get the payload body
+    payload_body = json.loads(payload.webhook_body)
+
+    # {
+	# 	"meta": {
+	# 		"url": "https://devapi.xurlpay.org/v1/xumm/webhook",
+	# 		"application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
+	# 		"payload_uuidv4": "75b592c8-ea95-432a-9150-958107122fb2",
+	# 		"opened_by_deeplink": false
+	# 	},
+	# 	"custom_meta": {
+	# 		"identifier": "payment_item:BekA9nqtAsQT",
+	# 		"blob": "{\"type\": \"payment_item\", \"payment_item_id\": 3, \"xrp_quote\": 0.37594, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.21, \"request_hash\": \"PWLuhAnaehH5b85uKSyKw6\", \"network_endpoint\": \"https://s.altnet.rippletest.net:51234/\", \"network_type\": \"testnet\"}",
+	# 		"instruction": "Pay 0.21 USD each for 1 Tootsie Roll Chocolate Midgees"
+	# 	},
+	# 	"payloadResponse": {
+	# 		"payload_uuidv4": "75b592c8-ea95-432a-9150-958107122fb2",
+	# 		"reference_call_uuidv4": "6049a876-09b0-4fff-9b9e-40f8285dd22a",
+	# 		"signed": true,
+	# 		"user_token": true,
+	# 		"return_url": {
+	# 			"app": null,
+	# 			"web": null
+	# 		},
+	# 		"txid": "3F6BE70D6FCFDA8E1423CA8019D21DBDCCB8038247541EBA41DA61E55739321A"
+	# 	},
+	# 	"userToken": {
+	# 		"user_token": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
+	# 		"token_issued": 1667957297,
+	# 		"token_expiration": 1680059791
+	# 	}
+	# }
+
+
+    # determine the verb type from the payload custom_meta
+    custom_meta = json.loads(payload_body['custom_meta']['blob'])
+    verb = VerbType(custom_meta['verb'])
+    # ignore no_op verbs
+    if(verb != VerbType.no_op):
+        ulogger.info(f"==== do something with the verb: {verb}")
+    else:
+        ulogger.info(f"==== no_op verb, ignoring")
+
+
+def _make_xurl_payload(version:XurlVersion,
     subject:SubjectType,
     subjectid:int,
     verb:VerbType,
@@ -597,7 +610,7 @@ def _make_xurl(version:XurlVersion,
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
         
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, qty=qty)
+        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
@@ -615,7 +628,7 @@ def xurl(
     will return a xrp native payload suitable for signing this can also be injected 
     into a xumm payload via the txjson field
     """
-    xurl_p = _make_xurl(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+    xurl_p = _make_xurl_payload(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
     ulogger.info(f"==== xurl_p: {xurl_p}")
 
     return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
@@ -657,7 +670,7 @@ def xumm_xapp(xAppStyle:str,
     
     ulogger.info(f"==== xurl:{xAppNavigateData['xurl']}")
     xurl = parse_xurl(xAppNavigateData['xurl'])
-    xumm_payload = _make_xurl(
+    xumm_payload = _make_xurl_payload(
         version=xurl.version, 
         subject=xurl.subject_type, 
         subjectid=xurl.subject_id, 

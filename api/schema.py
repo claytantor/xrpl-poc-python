@@ -134,7 +134,9 @@ class SubjectType(str, Enum):
     order_invoice = 'orderinvoice'
 
 class VerbType(str, Enum):
-    buy_now = 'buynow'
+    no_op = 'noop'
+    notify = 'notify'
+    carry_on_sign = 'carry'
 
 class Xurl(BaseModel):
     base_url: str

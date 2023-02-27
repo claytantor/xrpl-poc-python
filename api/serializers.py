@@ -1,5 +1,7 @@
 import os
 from dotenv import dotenv_values
+
+from api.schema import SubjectType, VerbType
 config = {
     # load shared development variables
     **dotenv_values(os.getenv("APP_CONFIG")),
@@ -15,11 +17,9 @@ class ImageSerializer():
         return self.data
 
 class PaymentItemDetailsSerializer():
-    def __init__(self, payment_item):
+    def __init__(self, payment_item, verb=VerbType.no_op):
 
-        # https://xumm.app/detect/xapp:sandbox.32849dc99872?TransactionType=Payment&LookupType=PaymentItem&LookupRef=1
-
-        xurl=f'{config["XUMM_APP_DEEPLINK"]}?xurl=xurl://{config["XURL_DOMAIN"]}/v1/paymentitem/{payment_item.payment_item_id}/buynow'
+        xurl=f'{config["XUMM_APP_DEEPLINK"]}?xurl=xurl://{config["XURL_DOMAIN"]}/v1/{SubjectType.payment_item}/{payment_item.payment_item_id}/{verb}'
 
         self.data = {
             'payment_item_id': payment_item.payment_item_id,

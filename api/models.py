@@ -221,7 +221,6 @@ class XummPayload(Base):
         return s_m
 
 
-
 class PaymentItem(Base):
     __tablename__ = "payment_item"   
 
@@ -234,7 +233,7 @@ class PaymentItem(Base):
     name = Column(String(255))
     description = Column(String(1024))
     sku_id = Column(String(32))
-
+    
     created_at = Column(DateTime())
     updated_at = Column(DateTime())
 
