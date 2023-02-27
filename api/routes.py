@@ -596,7 +596,8 @@ def _make_xurl(version:XurlVersion,
         qty=1
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
-            return make_payment_item_payload(payment_item=payment_item, wallet=wallet, qty=qty)
+        
+        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, qty=qty)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
