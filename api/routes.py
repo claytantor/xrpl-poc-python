@@ -614,8 +614,10 @@ def xurl(
     will return a xrp native payload suitable for signing this can also be injected 
     into a xumm payload via the txjson field
     """
+    xurl_p = _make_xurl(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+    ulogger.info(f"==== xurl_p: {xurl_p}")
 
-    return _make_xurl(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+    return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
 
 @router.get("/xumm/xapp")
 def xumm_xapp(xAppStyle:str, 
