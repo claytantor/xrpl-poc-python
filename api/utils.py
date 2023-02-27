@@ -41,10 +41,12 @@ def parse_xurl(xurl: str)->Xurl:
 
     logger.info(f"base_url: {base_url} api_version: {api_version} subject_type: {subject_type} subject_id: {subject_id} verb_type: {verb_type}")
 
-    parameters = xurl[1]
-    parameters = parameters.split("&")
-    parameters = [parameter.split("=") for parameter in parameters]
-    parameters = [{"name": parameter[0], "value": parameter[1]} for parameter in parameters]
+    parameters = []
+    if len(xurl) == 2:
+        parameters = xurl[1]
+        parameters = parameters.split("&")
+        parameters = [parameter.split("=") for parameter in parameters]
+        parameters = [{"name": parameter[0], "value": parameter[1]} for parameter in parameters]
 
     return Xurl(
         base_url=base_url,
