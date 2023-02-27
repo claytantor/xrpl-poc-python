@@ -87,3 +87,10 @@ npm run serve-local
 This will start the react app with the local deployment configuration and use the certs and keys in the local directory so it runs under https. Since this is a self signed certificate you will need to tell the browser its ok to proceed.
 
 [https://localhost:3001/](https://localhost:3001/)
+
+
+
+# run tests
+`pytest -q tests/test_*.py`
+
+`APP_CONFIG=env/local/xrpl-poc-python-app.env pytest -q api/tests/test_*.py -o log_cli=true`

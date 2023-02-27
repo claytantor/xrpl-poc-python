@@ -122,15 +122,13 @@ class WalletCreateSchema(BaseModel):
 class XurlVersion(str, Enum):
     v1 = 'v1'
 
-
 class NameValue(BaseModel):
     name: str
     value: str
 
     def __init__(self, **data: Any) -> None: 
         super().__init__(**data)
-        
-
+    
 class SubjectType(str, Enum):
     payment_item = 'paymentitem'
     order_invoice = 'orderinvoice'
@@ -139,8 +137,10 @@ class VerbType(str, Enum):
     buy_now = 'buynow'
 
 class Xurl(BaseModel):
+    base_url: str
+    version: XurlVersion
     subject_type: SubjectType
-    subject_id: int
+    subject_id: str
     verb_type: VerbType 
     parameters: Optional[list[NameValue]]   
 

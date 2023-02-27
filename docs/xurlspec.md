@@ -57,7 +57,7 @@ where:
 * `<version>` is the version of the xURL protocol
 * `<subject>` is the subject of the URI, this will be the type of transaction that will be generated based on the domain model of the backend and identified by the backend
 * `<subjectid>` is the subject ID of the URI, this will be the entity that will be used to generate the payload, this is specific to the subject chosen
-* `<verb>` is the verb of the URI, this will be the action that will be taken by the backend when the URI is signed it does NOT require and ID because it will use the context of the tx to determine its action
+* `<verb>` is the verb of the URI, this will be the action that will be taken by the backend when the URI is signed it does NOT require and ID because it will use the context of the tx to determine its action (verbs are rule based and not entity based, the action is determined by the context of subject always)
 * `<parameters>` are the parameters that will be used to generate the payload, these are specific to the subject and verb chosen. NOTE: The parameters are encoded as a query string, Using an alternative trustline is specified as a standard parameter in payment use cases. The parameters are encoded as a query string to allow for future extensibility of the protocol.
 
 ```python
@@ -115,7 +115,7 @@ This is a payment item transaction. This is a specific entry in the backend's in
 
 Given the xumm deeplink schema:
 
-`GET https://xumm.app/detect/xapp:sandbox.32849dc99872?xurl_endpoint=xurl://devapi.xurlpay.org/v1/paymentitem/3/buynow?qty=3`
+`GET https://xumm.app/detect/xapp:sandbox.32849dc99872?xurl_endpoint=xurl://devapi.xurlpay.org/v1/paymentitem/3/buynow/1?qty=3`
 
 
 **Subject Behavior:**
@@ -264,9 +264,6 @@ and the serialized version:
 }
 ```
 
-
-
-
 ## 2.3 Trustlines
 
 xURLs can specify alternative trustlines to be used for payment. This is done by specifying the `payer_account` parameter in the URI along with the desired currency to convert to for payment. 
@@ -278,15 +275,11 @@ class Trustline(BaseModel):
     issuerAccount: str
     datetime: Optional[str]
     txid: Optional[str]
-
     
 class TrustlineConversion(BaseModel):
     id: int
     trustline: Trustline
-    # token_currency: str
     i8n_currency: str
-    # issuerAccount: str
-    # receiverAccount: str
     rate: float
     
 ```
@@ -294,15 +287,23 @@ payloads with trustlines have an alternative `Amount` field that specifies the c
 
 ```json
 {
-	"Account": "r9DvujRNfGrZr4nBjudEJJWFBNfkDfcwNA",
-	"TransactionType": "Payment",
-	"Flags": 0,
-	"SigningPubKey": "",
-	"Amount": {
+  "txjson": {
+    "TransactionType": "Payment",
+    "Destination": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
+    "Amount": {
 		"currency": "4942495358000000000000000000000000000000",
 		"value": "5",
 		"issuer": "rrnR8qAP8tczCbgD1gqt4RgcwTZPcSXyn2"
 	},
-	"Destination": "rrnR8qAP8tczCbgD1gqt4RgcwTZPcSXyn2"
+    "Memos":[
+        {"content-type":"application/json", "value":{"subject": "PaymentItem", "body": {"id": "3", "qty": "3", "payload_id": "payment_item:Sw67XjAf2kAt"}}},
+        {"content-type":"application/json", "value":{"verb": "BuyNow", "context": {"subject": "PaymentItem"}}}
+    ]
+  },
+  "custom_meta": {
+    "identifier": "payment_item:Sw67XjAf2kAt",
+    "blob": "{\"type\": \"payment_item\", \"payment_item_id\": 3, \"xrp_quote\": 0.377152, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.21, \"request_hash\": \"HaziBd3faamgNcS8EsjzuX\", \"network_endpoint\": \"https://s.altnet.rippletest.net:51234/\", \"network_type\": \"testnet\", \"qty\": 5}",
+    "instruction": "Pay 0.21 USD each for 5 Tootsie Roll Chocolate Midgees"
+  }
 }
 ```

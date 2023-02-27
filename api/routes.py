@@ -571,15 +571,13 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 #     except Exception as e:
 #         app.log_exception(f"==== slack webhook error: {e}")
 
-@router.get("/xurl/{version}/{subject}/{subjectid}/{verb}")
-def xurl(
-    version:XurlVersion,
+def _make_xurl(version:XurlVersion,
     subject:SubjectType,
     subjectid:int,
     verb:VerbType,
     request: Request,
     db: Session = Depends(get_db)):
-    
+
     """
     will return a xrp native payload suitable for signing this can also be injected 
     into a xumm payload via the txjson field
@@ -598,17 +596,26 @@ def xurl(
         qty=1
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
+            return make_payment_item_payload(payment_item=payment_item, wallet=wallet, qty=qty)
+        
+    raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, qty=qty)
 
-    # return {
-    #             'TransactionType' : 'Payment',
-    #             'Destination' : "rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh",
-    #             'Amount': str(xrp_to_drops(0)),
-    #     }
+@router.get("/xurl/{version}/{subject}/{subjectid}/{verb}")
+def xurl(
+    version:XurlVersion,
+    subject:SubjectType,
+    subjectid:int,
+    verb:VerbType,
+    request: Request,
+    db: Session = Depends(get_db)):
+    
+    """
+    will return a xrp native payload suitable for signing this can also be injected 
+    into a xumm payload via the txjson field
+    """
 
-    return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"error": "cannot create payload"})
-
+    return _make_xurl(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
 
 @router.get("/xumm/xapp")
 def xumm_xapp(xAppStyle:str, 
@@ -647,35 +654,31 @@ def xumm_xapp(xAppStyle:str,
     
     ulogger.info(f"==== xurl:{xAppNavigateData['xurl']}")
     xurl = parse_xurl(xAppNavigateData['xurl'])
-
-
-    # if xAppNavigateData['TransactionType'] is None:
-    #     # not an xurlpay transaction
-    #     return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
+    xumm_payload = _make_xurl(
+        version=xurl.version, 
+        subject=xurl.subject_type, 
+        subjectid=xurl.subject_id, 
+        verb=xurl.verb_type, 
+        request=request, db=db)
     
-    # if xAppNavigateData['LookupType'] is None:
-    #     # not an xurlpay transaction
-    #     return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
-
-    # lookupType = xAppNavigateData['LookupType']
-    # if(lookupType == "PaymentItem"):
-    #     reference = xAppNavigateData['LookupRef']
-    #     if reference is None:
-    #         # return jsonify({"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"}), HTTPStatus.BAD_REQUEST
-
-    #         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"xAppNavigateData": "xAppNavigateData LookupRef not found unauthorized"})
-
-    #     payment_item = db.query(PaymentItem).filter_by(payment_item_id=int(reference)).first()
+    # look up the wallet based on the destination address
+    wallet = db.query(Wallet).filter_by(classic_address=xumm_payload['txjson']['Destination']).first()
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "wallet not found"})
     
-    #     if payment_item is None:
-    #         # return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
-    #         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
+    created = sdk.payload.create(xumm_payload)
+    xumm_payload = created.to_dict()
+    p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                            wallet_id=wallet.wallet_id,
+                            payload_uuidv4=xumm_payload['uuid'])
 
-    #     return make_xumm_payment_item_payload_response(payment_item=payment_item, db=db)
+    db.add(p_xumm_payload)
+    db.commit()
 
-    # else:
-    #     # not an xurlpay transaction
-    #     return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
+    # return xumm_payload
+    ulogger.info(f"xumm_payload:{xumm_payload}")
+    return RedirectResponse(xumm_payload['next']['always'])
+
 
 
 @router.get('/xumm/qr')

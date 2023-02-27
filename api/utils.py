@@ -1,7 +1,10 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from api.schema import SubjectType, VerbType, Xurl
+from api.schema import SubjectType, VerbType, Xurl, XurlVersion
+
+logger = logging.getLogger(__name__)
+
 #----------------------------------------------------------------------
 def create_rotating_log(path, logger, level=logging.INFO, maxBytes=1000000, backupCount=5):
     """
@@ -25,17 +28,25 @@ def parse_xurl(xurl: str)->Xurl:
     assert xurl.startswith("xurl://")
     xurl = xurl[7:]
     xurl = xurl.split("?")
-    subject = xurl[0]
-    subject = subject.split("/")
-    subject_type = subject[0]
-    subject_id = subject[1]
-    verb_type = subject[2]
+    xurl_path = xurl[0]
+
+    xurl_parts = xurl_path.split("/")
+    base_url = "/".join(xurl_parts[0:-4])
+    api_version = xurl_parts[-4:-3][0]
+    subject_type = xurl_parts[-3:-2][0]
+    subject_id = xurl_parts[-2:-1][0]
+    verb_type = xurl_parts[-1:][0]
+
+    logger.info(f"base_url: {base_url} api_version: {api_version} subject_type: {subject_type} subject_id: {subject_id} verb_type: {verb_type}")
+
     parameters = xurl[1]
     parameters = parameters.split("&")
     parameters = [parameter.split("=") for parameter in parameters]
     parameters = [{"name": parameter[0], "value": parameter[1]} for parameter in parameters]
 
     return Xurl(
+        base_url=base_url,
+        version=XurlVersion(api_version),
         subject_type=SubjectType(subject_type), 
         subject_id=subject_id, 
         verb_type=VerbType(verb_type), 
