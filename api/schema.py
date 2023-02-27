@@ -1,6 +1,6 @@
 from typing import Optional, Any
 from pydantic import BaseModel
-
+from enum import Enum, IntEnum
 # ===== schemas
 class MessageSchema(BaseModel):
     message: str
@@ -119,8 +119,36 @@ class WalletCreateSchema(BaseModel):
         print("WalletCreateSchema.__init__", self.__dict__)
         
 
-    
-    
+class XurlVersion(str, Enum):
+    v1 = 'v1'
+
+
+class NameValue(BaseModel):
+    name: str
+    value: str
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+        
+
+class SubjectType(str, Enum):
+    payment_item = 'paymentitem'
+    order_invoice = 'orderinvoice'
+
+class VerbType(str, Enum):
+    buy_now = 'buynow'
+
+class Xurl(BaseModel):
+    subject_type: SubjectType
+    subject_id: int
+    verb_type: VerbType 
+    parameters: Optional[list[NameValue]]   
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+
+
+
 class WalletSchema(BaseModel):
 
     """
