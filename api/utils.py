@@ -25,6 +25,8 @@ def create_rotating_log(path, logger, level=logging.INFO, maxBytes=1000000, back
 
 def parse_xurl(xurl: str)->Xurl:
 
+    logger.info(f"PARSING XURL: {xurl}")
+
     assert xurl.startswith("xurl://")
     xurl = xurl[7:]
     xurl = xurl.split("?")
