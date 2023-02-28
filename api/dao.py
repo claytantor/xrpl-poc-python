@@ -123,6 +123,9 @@ class XummPayloadDao:
         return payload
 
 class PaymentItemDao:
+    @staticmethod
+    def fetch_by_id(db:Session, payment_item_id:int):
+        return db.query(PaymentItem).filter(PaymentItem.payment_item_id == payment_item_id).first()
 
     @staticmethod
     def fetch_all_by_wallet_id(db:Session, wallet_id:int):

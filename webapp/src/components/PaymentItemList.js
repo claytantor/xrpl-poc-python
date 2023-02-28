@@ -1,7 +1,6 @@
 import React , { useState, useEffect }from 'react'
-import PaymentItemSummary from "./PaymentItemSummary";
+import PaymentItemSummary, {ShopPaymentItemSummary} from "./PaymentItemSummary";
 import { PaymentItemService } from '../services/PaymentItemService'
-// import NewPagination from "./NewPagination";
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from "./ConfirmModal";
 
@@ -15,6 +14,7 @@ const Spinner = ({animation}) => {
     )
 };
 
+
 const PaymentItemList = () => {
 
     let navigate = useNavigate();
@@ -22,7 +22,6 @@ const PaymentItemList = () => {
     const [loading, setLoading] = useState(true);
     const [paymentItems, setPaymentItems] = useState([]);
     const [currentPage, setCurrentPage] = useState({page:1, page_size:5});
-    // const [currentPageMeta, setCurrentPageMeta] = useState({total_items_count:5, current_page_number:1, total_pages_count:1});
 
     const [showModal, setShowModal] = useState(false);
     const [deleteId, setDeleteId] = useState();
@@ -59,10 +58,6 @@ const PaymentItemList = () => {
         });
         setShowModal(false);
     }
-
-    // const handlePageChange = (e) => {
-    //     setCurrentPage({page: 1, page_size: parseInt(e)});
-    // }
     
 
     const listItems = paymentItems.map((paymentItem) => (
@@ -92,6 +87,53 @@ const PaymentItemList = () => {
 
     </>);
 };
+
+export const ShopPaymentItemList = ({address}) => {
+
+    const [loading, setLoading] = useState(true);
+    const [paymentItems, setPaymentItems] = useState([]);
+    const [currentPage, setCurrentPage] = useState({page:1, page_size:5});
+
+
+    useEffect(() => {
+        fetchPaymentItems(address, currentPage);
+    },[currentPage]);
+    
+    let fetchPaymentItems = (address, pageInfo) => {
+        setLoading(true);
+        PaymentItemService.getShopItems(address).then(res => {
+            setPaymentItems(res.data);
+            setLoading(false);
+        }).catch(err => {      
+            console.error(err);
+        });       
+    };
+    
+    const listItems = paymentItems.map((paymentItem) => (
+        <div className="w-64 p-2 m-1 rounded" key={paymentItem.payment_item_id}>  
+            <ShopPaymentItemSummary
+                paymentItem={paymentItem}
+                address={address}/>       
+        </div>    
+    ));
+
+    return (<>
+
+        <div>
+            {loading && <Spinner animation='border' />}
+            {paymentItems.length>0 ? 
+                // <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                <div className='flex flex-row justify-center'>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>{listItems}</div>
+                </div>
+            : 
+                <div>No Payment Items</div>}
+        </div>
+
+    </>);
+};
+
+
 
 export default PaymentItemList;
 

@@ -12,9 +12,10 @@ import xummLogo from "../assets/img/xumm_logo.png"
 
 import { xummConfig } from "../env";
 
-const PaymentItemViewer = ({xummState}) => {
+const ShopItemViewer = ({xummState}) => {
 
-  const { id } = useParams();
+  const { address, id } = useParams();
+
 
   const [paymentItem, setPaymentItem] = useState();
   let [xrpPrice, setXrpPrice] = useState(null);
@@ -22,13 +23,15 @@ const PaymentItemViewer = ({xummState}) => {
   let [itemImage, setItemImage] = useState('https://picsum.photos/200/200');
   let [copied, setCopied] = useState(false);
 
+  const navigate = useNavigate();
+
 
 
   useEffect(() => {
     console.log("useEffect", id)
     PaymentItemService.getById(id).then(r => {
       let p_i = r.data;
-      console.log("PaymentItemViewer", p_i);
+      console.log("ShopItemViewer", p_i);
       setPaymentItem(p_i);
       if (p_i.images && p_i.images.length > 0) {
         setItemImage(p_i.images[0]['data_url'])
@@ -42,9 +45,12 @@ const PaymentItemViewer = ({xummState}) => {
   }, [id]); 
   
   return (
-    <Page withSidenav={true} 
+    <Page withSidenav={false} 
       xummState={xummState}>
       <div className='p-4'>
+        <div className="flex flex-row w-full justify-center">
+          <div className="link-common" onClick={()=>navigate(`/shop/${address}`)}>back to shop {address}</div>
+        </div>
         
         {paymentItem && 
           <div className="w-full">
@@ -96,4 +102,4 @@ const PaymentItemViewer = ({xummState}) => {
   );
 };
 
-export default PaymentItemViewer;
+export default ShopItemViewer;

@@ -9,6 +9,7 @@ import ReceivePayment from "./pages/ReceivePayment";
 import PayloadLedger from "./pages/PayloadLedger";
 import PaymentItems from "./pages/PaymentItems";
 import PaymentItemViewer from "./pages/PaymentItemViewer";
+import ShopItemViewer from "./pages/ShopItemViewer";
 import PaymentItemEditor from "./pages/PaymentItemEditor";
 
 import { AxiosService } from "./services/AxiosService";
@@ -25,6 +26,7 @@ var sBrowser, sUsrAg = navigator.userAgent;
 
 import { XummPkce } from 'xumm-oauth2-pkce';
 import UserSettings from "./pages/UserSettings";
+import UserShop from "./pages/UserShop";
 const xummPkce = new XummPkce(xummConfig["api-key"]);
 
 const { XummSdkJwt } = require('xumm-sdk')
@@ -232,7 +234,8 @@ const App = () => {
                 xummState={xummState}/>}
             />
           </Route> 
-
+          <Route path="/shop/:address" element={<UserShop xummState={xummState} xAppLoginError={xAppLoginError}/>} />
+          <Route path="/shop/details/:address/:id" element={<ShopItemViewer xummState={xummState} xAppLoginError={xAppLoginError}/>} />
 
           <Route path="/xapp" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} />         
           <Route path="/" element={<Home xummState={xummState}/>} />

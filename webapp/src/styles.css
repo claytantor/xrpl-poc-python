@@ -3,11 +3,14 @@
 @tailwind utilities;
 
 @layer components { 
-    .btn-common {
-      @apply m-1 p-1 flex rounded-xl justify-center items-center;
-    }
     .btn-common-pink {
-      @apply m-1 flex rounded-xl justify-center items-center bg-pink-500 text-white hover:bg-white hover:text-pink-800 hover:border-pink-800 hover:border-2 border-0 p-2 font-bold;
+      @apply m-1 flex rounded-xl justify-center items-center bg-pink-500 text-white hover:bg-white hover:text-pink-800 hover:border-pink-800 hover:border-2 border-0 p-2 font-bold cursor-pointer;
+    }
+    .btn-common {
+      @apply m-1 flex rounded-xl justify-center items-center bg-slate-500 text-white hover:bg-white hover:text-slate-800 hover:border-slate-800 hover:border-2 border-0 p-2 font-bold cursor-pointer;
+    }
+    .link-common {
+      @apply m-1 flex justify-center items-center underline hover:cursor-pointer;
     }
     .link-align-center {
       @apply text-center justify-center items-center;

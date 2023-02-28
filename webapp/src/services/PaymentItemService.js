@@ -28,6 +28,9 @@ export const PaymentItemService = {
     getPaymentItems (){
         return AxiosService.get(`/payment_item`);
     },
+    getShopItems (account){
+        return AxiosService.get(`/payment_item/shop/${account}`);
+    },
     getPaymentItemsPaged (pageInfo={page: 1, page_size: 15}){
         return AxiosService.getPage(`/payment_item`, pageInfo);
     },

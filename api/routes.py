@@ -306,6 +306,17 @@ def save_images(db: Session, images_list:dict, payment_item:PaymentItem):
             db.commit()
 
 
+@router.get('/payment_item/shop/{user_address}')
+def get_payment_items_by_user_address(user_address:str, request: Request, db: Session = Depends(get_db)):
+    wallet = WalletDao.fetch_by_classic_address(db, user_address)
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+
+    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.wallet_id)
+
+    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items])
+
+
 @router.get('/payment_item') 
 @verify_user_jwt_scopes(scopes['wallet_owner'])
 def get_payment_items(request: Request, 
@@ -346,15 +357,15 @@ def delete_payment_item_by_id(id:int,
 @router.get('/payment_item/{id}') 
 def get_payment_item_by_id(id:int, 
     request: Request, 
-    db: Session = Depends(get_db), 
-    token: str = Depends(oauth2_scheme)):
+    db: Session = Depends(get_db)):
 
-    jwt_body = get_token_body(token)
-    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
-    if wallet is None:
-        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    # jwt_body = get_token_body(token)
+    # wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    # if wallet is None:
+    #     return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.wallet_id, payment_item_id=id)
+    # payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.wallet_id, payment_item_id=id)
+    payment_item = PaymentItemDao.fetch_by_id(db, payment_item_id=id)
     
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
@@ -537,42 +548,10 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 def _process_payload_verb(payload: XummPayload,
     db: Session = Depends(get_db)):
 
-
     ulogger.info(f"==== _process_payload_verb from payload.")
 
     # get the payload body
     payload_body = json.loads(payload.webhook_body)
-
-    # {
-	# 	"meta": {
-	# 		"url": "https://devapi.xurlpay.org/v1/xumm/webhook",
-	# 		"application_uuidv4": "1b144141-440b-4fbc-a064-bfd1bdd3b0ce",
-	# 		"payload_uuidv4": "75b592c8-ea95-432a-9150-958107122fb2",
-	# 		"opened_by_deeplink": false
-	# 	},
-	# 	"custom_meta": {
-	# 		"identifier": "payment_item:BekA9nqtAsQT",
-	# 		"blob": "{\"type\": \"payment_item\", \"payment_item_id\": 3, \"xrp_quote\": 0.37594, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.21, \"request_hash\": \"PWLuhAnaehH5b85uKSyKw6\", \"network_endpoint\": \"https://s.altnet.rippletest.net:51234/\", \"network_type\": \"testnet\"}",
-	# 		"instruction": "Pay 0.21 USD each for 1 Tootsie Roll Chocolate Midgees"
-	# 	},
-	# 	"payloadResponse": {
-	# 		"payload_uuidv4": "75b592c8-ea95-432a-9150-958107122fb2",
-	# 		"reference_call_uuidv4": "6049a876-09b0-4fff-9b9e-40f8285dd22a",
-	# 		"signed": true,
-	# 		"user_token": true,
-	# 		"return_url": {
-	# 			"app": null,
-	# 			"web": null
-	# 		},
-	# 		"txid": "3F6BE70D6FCFDA8E1423CA8019D21DBDCCB8038247541EBA41DA61E55739321A"
-	# 	},
-	# 	"userToken": {
-	# 		"user_token": "4de21968-8c2f-4fb3-9bb6-94b589a13a8c",
-	# 		"token_issued": 1667957297,
-	# 		"token_expiration": 1680059791
-	# 	}
-	# }
-
 
     # determine the verb type from the payload custom_meta
     custom_meta = json.loads(payload_body['custom_meta']['blob'])
