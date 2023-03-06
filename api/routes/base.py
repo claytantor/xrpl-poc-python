@@ -22,11 +22,11 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, SubjectType, VerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
-from api.models import Message, ApiInfo, PaymentItem, PaymentItemImage, Wallet, XrpCurrencyRate, XummPayload
+from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
+from api.models import InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
-from api.dao import PaymentItemDao, XummPayloadDao, get_db, WalletDao
+from api.dao import InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
 from api.utils import parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
 
@@ -35,19 +35,10 @@ ulogger = logging.getLogger("uvicorn.error")
 
 router = APIRouter()
 
-# from api.exchange_rates import xrp_price
+
 from api.xqr import generate_qr_code
-# from api.xrpcli import get_rpc_network_from_jwt, get_rpc_network_type, get_wss_network_type
-# from api.models import PaymentItemImage, Wallet, XummPayload, PaymentItem
 from api.serializers import PaymentItemDetailsSerializer
-# from api.xrpcli import xrp_to_drops, get_xapp_tokeninfo, get_rpc_network_from_wss, get_account_info
-
-
-# from . import db
-# from .decorators import log_decorator, verify_user_jwt_scopes
-# from .jwtauth import is_token_valid, has_all_scopes, get_token_body, get_token_sub
-from .s3utils import save_image
-
+from api.s3utils import save_image
 
 from dotenv import dotenv_values
 config = {
@@ -55,7 +46,6 @@ config = {
     **dotenv_values(os.getenv("APP_CONFIG")),
     **os.environ,  # override loaded values with environment variables
 }
-
 
 sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
 
@@ -186,7 +176,7 @@ def get_wallet_payloads(request: Request,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payloads = XummPayloadDao.fetch_by_wallet_id(db=db, wallet_id=wallet.wallet_id)
+    payloads = XummPayloadDao.fetch_by_wallet_id(db=db, wallet_id=wallet.id)
     return JSONResponse(status_code=HTTPStatus.OK, content=[p.to_dict() for p in payloads])
 
 @router.put("/payload", tags=["Xumm"], response_model=XummPayloadSchema, status_code=200)
@@ -204,7 +194,7 @@ def update_wallet_payload(
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
     # ulogger.info(f"update_wallet_payload {payloadRequest}")
-    payload_exists = XummPayloadDao.fetch_by_wallet_payload_uuidv4(db=db, wallet_id=wallet.wallet_id, payload_uuidv4=payloadRequest.payload_uuidv4)
+    payload_exists = XummPayloadDao.fetch_by_wallet_payload_uuidv4(db=db, wallet_id=wallet.id, payload_uuidv4=payloadRequest.payload_uuidv4)
 
     if payload_exists is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "payload does not belong to wallet"})
@@ -263,7 +253,7 @@ def create_pay_request(
     created = sdk.payload.create(create_payload)
     xumm_payload = created.to_dict()
     m_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                            wallet_id=wallet.wallet_id,
+                            wallet_id=wallet.id,
                             payload_uuidv4=xumm_payload['uuid'])
 
     db.add(m_payload)
@@ -272,7 +262,7 @@ def create_pay_request(
     return m_payload.to_dict()
 
 
-def save_images(db: Session, images_list:dict, payment_item:PaymentItem):
+def save_images(db: Session, images_list:dict, inventory_item:InventoryItem):
     for image in images_list:
         ulogger.info(f"SAVING IMAGE {image}")
         # {'data_url': 'https://s3.us-west-2.amazonaws.com/dev.rapaygo.com/uploaded_images/c053789c-4d0a-4dc2-a175-39eb0d694d6f.png', 'id': 28}
@@ -287,16 +277,16 @@ def save_images(db: Session, images_list:dict, payment_item:PaymentItem):
 
             url_saved = f'https://s3.us-west-2.amazonaws.com/{config["AWS_BUCKET_NAME"]}/uploaded_images/{file_name}'
 
-            payment_item_image = PaymentItemImage(
-                type="PaymentItemImage", file_path=url_saved, file_name=file_name, file_size=0, original_name=file_name)
+            inventory_item_image = InventoryItemImage(
+                type="InventoryItemImage", file_path=url_saved, file_name=file_name, file_size=0, original_name=file_name)
 
-            db.add(payment_item_image)
-            payment_item.images = [payment_item_image]
+            db.add(inventory_item_image)
+            inventory_item.images = [inventory_item_image]
 
             db.commit()
 
         elif 'file_path' in image:
-            payment_item_image = PaymentItemImage.query.filter_by(
+            payment_item_image = InventoryItemImage.query.filter_by(
                 id=image['id']).first()
             payment_item_image.file_path = image['file_path']
             payment_item_image.file_name = image['file_name']
@@ -312,9 +302,9 @@ def get_payment_items_by_user_address(user_address:str, request: Request, db: Se
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.wallet_id)
+    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.id)
 
-    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items])
+    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize() for payment_item in payment_items])
 
 
 @router.get('/payment_item') 
@@ -328,9 +318,9 @@ def get_payment_items(request: Request,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.wallet_id)
+    payment_items = PaymentItemDao.fetch_all_by_wallet_id(db, wallet.id)
 
-    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item).serialize() for payment_item in payment_items])
+    return JSONResponse(status_code=HTTPStatus.OK, content=[PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize() for payment_item in payment_items])
 
 
 @router.delete('/payment_item/{id}')  
@@ -345,7 +335,7 @@ def delete_payment_item_by_id(id:int,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, payment_item_id=id, wallet_id=wallet.wallet_id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, payment_item_id=id, wallet_id=wallet.id)
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
@@ -357,41 +347,22 @@ def delete_payment_item_by_id(id:int,
 @router.get('/payment_item/{id}') 
 def get_payment_item_by_id(id:int, 
     request: Request, 
-    db: Session = Depends(get_db)):
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
 
-    # jwt_body = get_token_body(token)
-    # wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
-    # if wallet is None:
-    #     return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    # payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.wallet_id, payment_item_id=id)
-    payment_item = PaymentItemDao.fetch_by_id(db, payment_item_id=id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.id, payment_item_id=id)
+    # payment_item = PaymentItemDao.fetch_by_id(db, payment_item_id=id)
     
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
-    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item).serialize())
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize())
 
-
-
-# @router.route('/payment_item/xumm/payload/<id>', methods=['GET'])  # depricated
-# @cross_origin()
-# def get_payment_item_payload_by_id(id):
-
-#     payment_item = db.session.query(PaymentItem).filter_by(payment_item_id=id).first()
-    
-#     if payment_item is None:
-#         return jsonify({"message": "payment item not found"}), HTTPStatus.NOT_FOUND
-
-#     ulogger.info(payment_item.serialize())
-
-#     try:
-#         return make_xumm_payment_item_payload_response(payment_item)
-#     except Exception as e:
-        
-#         ulogger.error(e)
-#         app.log_exception(e)
-#         return jsonify({"message": str(e)}), HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str, qty:int=1):
@@ -404,14 +375,14 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
     
     payment_request_dict = {
         'type': 'payment_item',
-        'payment_item_id': payment_item.payment_item_id,       
+        'payment_item_id': payment_item.id,       
         'xrp_quote': xrp_price,
         'fiat_i8n_currency': payment_item.fiat_i8n_currency,
         'fiat_i8n_price': payment_item.fiat_i8n_price,
-        'request_hash':shortuuid.uuid(),
+        'request_hash': shortuuid.uuid(),
         'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
         'network_type': config['XRP_NETWORK_TYPE'], 
-        'verb': verb,        
+        'verb': verb     
     }
 
     if qty > 1:
@@ -426,12 +397,12 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
         "custom_meta": {
             "identifier": f"payment_item:{shortuuid.uuid()[:12]}",
             "blob": json.dumps(payment_request_dict),
-            "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} each for {qty} {payment_item.name}"
+            "instruction": f"Pay {payment_item.fiat_i8n_price} {payment_item.fiat_i8n_currency} each for {qty} {payment_item.inventory_item.name}"
         }
     }
 
 
-def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:VerbType, db: Session):
+def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:XurlVerbType, db: Session):
 
     # # get the wallet for this payment item
     wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
@@ -441,7 +412,7 @@ def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:VerbT
     created = sdk.payload.create(make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb))
     xumm_payload = created.to_dict()
     p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                            wallet_id=wallet.wallet_id,
+                            wallet_id=wallet.id,
                             payload_uuidv4=xumm_payload['uuid'])
 
     db.add(p_xumm_payload)
@@ -465,15 +436,41 @@ def create_payment_item(
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
-    payment_item = PaymentItem()
-    payment_item.sku_id = shortuuid.uuid()[:12]
-    payment_item.wallet_id = wallet.wallet_id
-    payment_item.from_dict(paymentItem.to_dict()) #must be a dict
-    images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
-    save_images(db=db, images_list=images_list, payment_item=payment_item)
+    inventory_item = InventoryItem()
+    inventory_item.sku_id = shortuuid.uuid()[:12]
+    inventory_item.wallet_id = wallet.id
+    inventory_item.name = paymentItem.name
+    inventory_item.description = paymentItem.description
+    inventory_item.is_stocked_item = 1
+    inventory_item.in_stock_count = 0
+    inventory_item.on_backorder_count = 0
+    inventory_item.created_at = dt.now()
 
-    payload = PaymentItemDao.create(db=db, payment_item=payment_item)
-    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
+
+    images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
+    save_images(db=db, images_list=images_list, inventory_item=inventory_item)
+    
+    # save the inventory item
+    inventory_item = InventoryItemDao.create(db=db, inventory_item=inventory_item)
+
+    payment_item = PaymentItem()
+    payment_item.inventory_item = inventory_item
+    payment_item.wallet_id = wallet.id
+    payment_item.inventory_item.name = paymentItem.name
+    payment_item.inventory_item.description = paymentItem.description
+    payment_item.fiat_i8n_currency = paymentItem.fiat_i8n_currency
+    payment_item.fiat_i8n_price = paymentItem.fiat_i8n_price
+    payment_item.verb = paymentItem.verb
+    payment_item.in_shop = 0
+    payment_item.inventory_item.is_stocked_item = paymentItem.is_stocked_item
+    payment_item.inventory_item.in_stock_count = paymentItem.in_stock_count
+    payment_item.inventory_item.on_backorder_count = paymentItem.on_backorder_count  
+    payment_item.inventory_item.sku_id = paymentItem.sku_id
+    payment_item.inventory_item.updated_at = dt.now()
+    payment_item.inventory_item.created_at = dt.now()
+
+    pi = PaymentItemDao.create(db=db, payment_item=payment_item)
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(pi, shop_id=wallet.shop_id).serialize())
 
 
 @router.put('/payment_item')
@@ -489,16 +486,34 @@ def update_payment_item(
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, paymentItem.payment_item_id, wallet.wallet_id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, paymentItem.id, wallet.id)
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
-       
-    payment_item.from_dict(paymentItem.to_dict()) #must be a dict
+
+    # update the inventory item also
+    payment_item.inventory_item.name = paymentItem.name
+    payment_item.inventory_item.description = paymentItem.description
+    payment_item.fiat_i8n_currency = paymentItem.fiat_i8n_currency
+    payment_item.fiat_i8n_price = paymentItem.fiat_i8n_price
+    payment_item.verb = paymentItem.verb
+    payment_item.in_shop = paymentItem.in_shop
+    # payment_item.is_xurl_item = paymentItem.is_xurl_item
+    payment_item.inventory_item.is_stocked_item = paymentItem.is_stocked_item
+    payment_item.inventory_item.in_stock_count = paymentItem.in_stock_count
+    payment_item.inventory_item.on_backorder_count = paymentItem.on_backorder_count  
+    payment_item.inventory_item.sku_id = paymentItem.sku_id
+    payment_item.inventory_item.updated_at = dt.now()
+
+    if paymentItem.is_xurl_item:
+        payment_item.is_xurl_item = 1
+    else:
+        payment_item.is_xurl_item = 0
+  
     images_list = [{'id': image.id, 'data_url': image.data_url} for image in paymentItem.images]
-    save_images(db=db, images_list=images_list, payment_item=payment_item)
+    save_images(db=db, images_list=images_list, inventory_item=payment_item.inventory_item)
 
     payload = PaymentItemDao.update(db=db, payment_item=payment_item)
-    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload).serialize())
+    return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload, shop_id=wallet.shop_id).serialize())
 
 @router.post("/xumm/webhook")
 async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
@@ -555,18 +570,18 @@ def _process_payload_verb(payload: XummPayload,
 
     # determine the verb type from the payload custom_meta
     custom_meta = json.loads(payload_body['custom_meta']['blob'])
-    verb = VerbType(custom_meta['verb'])
+    verb = XurlVerbType(custom_meta['verb'])
     # ignore no_op verbs
-    if(verb != VerbType.no_op):
+    if(verb != XurlVerbType.no_op):
         ulogger.info(f"==== do something with the verb: {verb}")
     else:
         ulogger.info(f"==== no_op verb, ignoring")
 
 
 def _make_xurl_payload(version:XurlVersion,
-    subject:SubjectType,
+    subject:XurlSubjectType,
     subjectid:int,
-    verb:VerbType,
+    verb:XurlVerbType,
     request: Request,
     db: Session = Depends(get_db)):
 
@@ -577,7 +592,7 @@ def _make_xurl_payload(version:XurlVersion,
 
     ulogger.info(f"==== query params: {request.query_params}")
 
-    if subject == SubjectType.payment_item:
+    if subject == XurlSubjectType.payment_item:
         ulogger.info(f"==== xurl payment_item: {subjectid}")
         payment_item = db.query(PaymentItem).filter_by(payment_item_id=int(subjectid)).first()
         # # get the wallet for this payment item
@@ -592,25 +607,6 @@ def _make_xurl_payload(version:XurlVersion,
         return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
-
-
-@router.get("/xurl/{version}/{subject}/{subjectid}/{verb}")
-def xurl(
-    version:XurlVersion,
-    subject:SubjectType,
-    subjectid:int,
-    verb:VerbType,
-    request: Request,
-    db: Session = Depends(get_db)):
-    
-    """
-    will return a xrp native payload suitable for signing this can also be injected 
-    into a xumm payload via the txjson field
-    """
-    xurl_p = _make_xurl_payload(version=version, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
-    ulogger.info(f"==== xurl_p: {xurl_p}")
-
-    return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
 
 @router.get("/xumm/xapp")
 def xumm_xapp(xAppStyle:str, 
@@ -664,7 +660,7 @@ def xumm_xapp(xAppStyle:str,
     created = sdk.payload.create(xumm_payload)
     xumm_payload = created.to_dict()
     p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                            wallet_id=wallet.wallet_id,
+                            wallet_id=wallet.id,
                             payload_uuidv4=xumm_payload['uuid'])
 
     db.add(p_xumm_payload)

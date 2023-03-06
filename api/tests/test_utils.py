@@ -1,5 +1,5 @@
 # content of test_sample.py
-from api.schema import SubjectType, VerbType, XurlVersion
+from api.schema import XurlSubjectType, XurlVerbType, XurlVersion
 from api.utils import parse_xurl
 import logging
 
@@ -21,8 +21,8 @@ def test_parse_xurl(caplog):
     logger.info(f"XURL parsed: {xurl_p}")
     assert xurl_p.base_url == "devapi.xurlpay.org/v1/xurl"
     assert xurl_p.version == XurlVersion("v1")
-    assert xurl_p.subject_type == SubjectType.payment_item
+    assert xurl_p.subject_type == XurlSubjectType.payment_item
     assert xurl_p.subject_id == "3"
-    assert xurl_p.verb_type == VerbType.buy_now
+    assert xurl_p.verb_type == XurlVerbType.buy_now
     assert xurl_p.parameters[0].name == "qty"
     assert xurl_p.parameters[0].value == "3"

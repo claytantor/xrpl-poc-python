@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 
-from api.models import Base, PaymentItem, Wallet, XummPayload
+from api.models import Base, InventoryItem, PaymentItem, Wallet, XummPayload
 
 import logging
 
@@ -122,10 +122,21 @@ class XummPayloadDao:
         db.commit()
         return payload
 
+
+class InventoryItemDao:
+    
+    @staticmethod
+    def create(db: Session, inventory_item: InventoryItem):
+        db.add(inventory_item)
+        db.commit()
+        db.refresh(inventory_item)
+        return inventory_item
+
+
 class PaymentItemDao:
     @staticmethod
     def fetch_by_id(db:Session, payment_item_id:int):
-        return db.query(PaymentItem).filter(PaymentItem.payment_item_id == payment_item_id).first()
+        return db.query(PaymentItem).filter(PaymentItem.id == payment_item_id).first()
 
     @staticmethod
     def fetch_all_by_wallet_id(db:Session, wallet_id:int):
@@ -134,7 +145,20 @@ class PaymentItemDao:
     @staticmethod
     def fetch_single_by_wallet_id(db:Session, payment_item_id:int, wallet_id:int):
         return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id, 
-            PaymentItem.payment_item_id == payment_item_id)).first()
+            PaymentItem.id == payment_item_id)).first()
+    
+    @staticmethod
+    def fetch_xurls_by_wallet_id(db:Session, wallet_id:int):
+        return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id, 
+            PaymentItem.is_xurl_item == 1)).all()
+    
+
+    @staticmethod
+    def fetch_xurl_by_id_and_wallet_id(db:Session, id:int, wallet_id:int):
+        return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
+            PaymentItem.id == id, 
+            PaymentItem.is_xurl_item == 1)).first()
+   
 
     @staticmethod
     def create(db: Session, payment_item: PaymentItem):

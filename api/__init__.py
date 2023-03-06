@@ -36,7 +36,8 @@ from fastapi.encoders import jsonable_encoder
 
 import logging
 
-from api import routes
+from api.routes import base
+from api.routes import xurl
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -79,8 +80,6 @@ class MyMiddleware:
         return response
 
 
-
-
 def create_app():
     app = FastAPI(title="xurlpay API",
     description="Durable payment automation for XRP",
@@ -89,10 +88,9 @@ def create_app():
     root_path=config['API_ROOT_PATH'])
     return app
 
-
 app = create_app()
-app.include_router(routes.router)
-
+app.include_router(base.router)
+app.include_router(xurl.router)
 
 # my_middleware = MyMiddleware(some_attribute="some_attribute_here_if_needed")
 # app.add_middleware(BaseHTTPMiddleware, dispatch=my_middleware)
@@ -113,9 +111,9 @@ async def CorsSupportMiddleware(request: Request, call_next):
     headers_cors["Access-Control-Max-Age"] = "86400"
     headers_cors["Access-Control-Allow-Credentials"] = "true"
     headers_cors["Access-Control-Expose-Headers"] = "Content-Length, Content-Range"
-
+    
+    
     if request.method == "OPTIONS":
-        #return JSONResponse(status_code=204, headers=headers_cors, content={})
         return PlainTextResponse("OK", status_code=200, headers=headers_cors)
 
     response = await call_next(request) 

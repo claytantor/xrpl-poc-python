@@ -1,4 +1,5 @@
 import React, {useEffect, useState } from "react"
+import {useNavigate} from 'react-router-dom'
 
 import Page  from "../components/Page"
 import Spinner from "../components/Spinner"
@@ -8,7 +9,7 @@ import { WalletService } from "../services/WalletService"
 import { SiXrp } from "react-icons/si"
 import {BiLinkExternal} from "react-icons/bi"
 
-import {xummConfig, currencyLang} from "../env"
+import {xummConfig, currencyLang, xurlBaseUrl} from "../env"
 
 import { useStore } from '../zstore';
 
@@ -31,6 +32,8 @@ const AccountInfo = ({accountInfo}) => {
 const Wallet = ({xummState}) => {
 
     const userCurrency = useStore(state => state.userCurrency);
+
+    const navigate = useNavigate();
 
     let [walletInfo, setWalletInfo] = useState(null);
     let [xrpPrice, setXrpPrice] = useState(null);
@@ -97,6 +100,23 @@ const Wallet = ({xummState}) => {
                         </div>
                     </div>}
                     <AccountInfo accountInfo={walletInfo.account_data}/>  
+                    <div>
+                        <div className="text-lg">Wallet Info (JSON)</div>
+                        <div className="bg-slate-700 p-1 rounded-md m-2">
+                            <div className="font-mono mt-2">
+                                <div className="text-pink-300 text-xs break-words">
+                                <pre>{JSON.stringify(walletInfo, null, 2)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div>XURL Shop Info</div> 
+                        <div onClick={()=>window.open(`${xurlBaseUrl(walletInfo.shop_id)}/info`,'_blank')} className="link-common">{xurlBaseUrl(walletInfo.shop_id)}/info</div>
+
+                        <div className="btn-common w-[200]" onClick={()=>navigate(`/shop/${walletInfo.shop_id}`)}>My XURL Shop</div>
+
+                    </div>
 
                 </div> : <Spinner/>}
             </div>

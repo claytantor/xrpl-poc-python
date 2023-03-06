@@ -26,13 +26,6 @@ const Header = ({
         }
     }, [xummState]);
 
-    // useEffect(() => {
-    //     console.log(`Header useEffect isAuthenticated`, isAuthenticated);
-    //     if(isAuthenticated){
-    //         console.log(`Header useEffect isAuthenticated true`);
-    //         navigate("/wallet");
-    //     }
-    // }, [isAuthenticated]);
 
     let login = () => {
         console.log("login", xummState);

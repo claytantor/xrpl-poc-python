@@ -1,7 +1,66 @@
 from typing import Optional, Any
 from pydantic import BaseModel
 from enum import Enum, IntEnum
-# ===== schemas
+
+
+# ===== xurl schemas
+class XurlVersion(str, Enum):
+    v1 = 'v1'
+
+class NameValue(BaseModel):
+    name: str
+    value: str
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+
+class XurlSubjectType(str, Enum):
+    payment_item = 'paymentitem'
+    order_invoice = 'orderinvoice'
+
+class XurlSubject(BaseModel):
+    type: XurlSubjectType
+    uri: str
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+
+class XurlVerbType(str, Enum):
+    no_op = 'noop'
+    notify = 'notify'
+    carry_on_sign = 'carry'
+
+class XurlVerb(BaseModel):
+    type: XurlVerbType
+    uri: str
+    description: Optional[str]
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+
+
+
+class Xurl(BaseModel):
+    base_url: str
+    version: XurlVersion
+    subject_type: XurlSubjectType
+    subject_id: str
+    verb_type: XurlVerbType 
+    parameters: Optional[list[NameValue]]   
+
+    def __init__(self, **data: Any) -> None: 
+        super().__init__(**data)
+
+class XurlClient(BaseModel):
+    # https://rapaygo.com/.well-known/xurl.json?name=b9bcd
+    well_known_domain: str
+    name: str
+    description: Optional[str]
+    account_id: Optional[str]
+
+
+
+# ===== base schemas
 class MessageSchema(BaseModel):
     message: str
 
@@ -9,6 +68,8 @@ class ApiInfoSchema(BaseModel):
     version: str
     commit_sha: str
     api_branch: str
+    endpoint: Optional[str]
+    shop_id: Optional[str]
 
 class OAuth2AuthSchema(BaseModel):
     grant_type: str
@@ -19,8 +80,6 @@ class OAuth2TokenSchema(BaseModel):
     access_token: str
     # token_type: str
     # expires_in: int
-
-
 
 class XrpAccountDataSchema(BaseModel):
 
@@ -119,35 +178,45 @@ class WalletCreateSchema(BaseModel):
         print("WalletCreateSchema.__init__", self.__dict__)
         
 
-class XurlVersion(str, Enum):
-    v1 = 'v1'
+# class XurlVersion(str, Enum):
+#     v1 = 'v1'
 
-class NameValue(BaseModel):
-    name: str
-    value: str
+# class NameValue(BaseModel):
+#     name: str
+#     value: str
 
-    def __init__(self, **data: Any) -> None: 
-        super().__init__(**data)
-    
-class SubjectType(str, Enum):
-    payment_item = 'paymentitem'
-    order_invoice = 'orderinvoice'
+#     def __init__(self, **data: Any) -> None: 
+#         super().__init__(**data)
 
-class VerbType(str, Enum):
-    no_op = 'noop'
-    notify = 'notify'
-    carry_on_sign = 'carry'
 
-class Xurl(BaseModel):
-    base_url: str
-    version: XurlVersion
-    subject_type: SubjectType
-    subject_id: str
-    verb_type: VerbType 
-    parameters: Optional[list[NameValue]]   
+# class XurlSubjectType(str, Enum):
+#     payment_item = 'paymentitem'
+#     order_invoice = 'orderinvoice'
 
-    def __init__(self, **data: Any) -> None: 
-        super().__init__(**data)
+
+# class XurlSubject(BaseModel):
+#     subject_type: XurlSubjectType
+#     uri: str
+
+#     def __init__(self, **data: Any) -> None: 
+#         super().__init__(**data)
+
+
+# class XurlVerbType(str, Enum):
+#     no_op = 'noop'
+#     notify = 'notify'
+#     carry_on_sign = 'carry'
+
+# class Xurl(BaseModel):
+#     base_url: str
+#     version: XurlVersion
+#     subject_type: XurlSubjectType
+#     subject_id: str
+#     verb_type: XurlVerbType 
+#     parameters: Optional[list[NameValue]]   
+
+#     def __init__(self, **data: Any) -> None: 
+#         super().__init__(**data)
 
 
 
@@ -198,7 +267,7 @@ class PaymentItemSchema(BaseModel):
     }
     """
 
-    payment_item_id: Optional[int] # update
+    id: Optional[int] # update
     name: str
     description: str
     sku_id: Optional[str]
@@ -206,12 +275,16 @@ class PaymentItemSchema(BaseModel):
     fiat_i8n_currency: str
     xurl: Optional[str]
     images: list[ImageSchema]
+    verb: Optional[str]
+    in_shop: Optional[bool]
+    is_xurl_item: Optional[bool]
+    is_stocked_item: Optional[bool]
+    in_stock_count: Optional[int]
+    on_backorder_count: Optional[int]
 
     def to_dict(self):
         return self.dict()
     
-
-
 
 class TrustlineConversion(BaseModel):
     token_currency: str

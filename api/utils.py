@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from api.schema import SubjectType, VerbType, Xurl, XurlVersion
+from api.schema import XurlSubjectType, XurlVerbType, Xurl, XurlVersion
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def parse_xurl(xurl: str)->Xurl:
     return Xurl(
         base_url=base_url,
         version=XurlVersion(api_version),
-        subject_type=SubjectType(subject_type), 
+        subject_type=XurlSubjectType(subject_type), 
         subject_id=subject_id, 
-        verb_type=VerbType(verb_type), 
+        verb_type=XurlVerbType(verb_type), 
         parameters=parameters)

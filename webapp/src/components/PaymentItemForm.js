@@ -6,6 +6,26 @@ import { Alert, Spinner } from './Base'
 
 import { useStore } from '../zstore';
 
+
+export const DropdownComponent = ({onChange, value, name}) => {
+
+  const handleSelectChange = (e) => {
+      console.log("handleSelectChange", e.target.value);
+      onChange(e);
+  }
+
+  return (
+      <div className="relative w-full lg:max-w-sm">
+          <select name={name} onChange={handleSelectChange} value={value}
+                className="w-full p-2.5 text-gray-500 bg-white border rounded-md shadow-sm outline-none appearance-none focus:border-indigo-600">
+              <option value="noop">Nothing</option>
+              <option value="carry">Carry On Sign</option>
+              <option value="ship1">Basic Customer Shipping</option>
+          </select>
+      </div>
+  );
+}
+
 const PaymentItemForm = ({ paymentItem, formType }) => {
 
   const userCurrency = useStore(state => state.userCurrency);
@@ -20,13 +40,24 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
   const [wallet] = useState(null);
   const [errors, setErrors] = useState([]);
 
+
+  const xformState = (paymentItem) => {
+    const returnedTarget = Object.assign({}, paymentItem.inventory_item);
+    returnedTarget.id = paymentItem.id;
+    returnedTarget.is_xurl_item = paymentItem.is_xurl_item;
+    returnedTarget.fiat_i8n_price = parseFloat(paymentItem.fiat_i8n_price);
+    returnedTarget.fiat_i8n_currency = paymentItem.fiat_i8n_currency.toUpperCase();
+    returnedTarget.verb = paymentItem.verb;
+    return returnedTarget;
+  }
+
   useEffect(() => {
     if(formType==='edit' && paymentItem){
-      const returnedTarget = Object.assign({}, paymentItem);
+      const returnedTarget = xformState(paymentItem);
       console.log("setting form state", returnedTarget);
       setFormState(returnedTarget);
-      if(paymentItem.images && paymentItem.images.length>0){
-        setImages(paymentItem.images);
+      if(returnedTarget.images && returnedTarget.images.length>0){
+        setImages(returnedTarget.images);
       }
     } else {
       setFormState({
@@ -34,6 +65,8 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
         description: "",
         fiat_i8n_price: 0.00,
         fiat_i8n_currency: userCurrency, 
+        is_xurl_item: false,
+        verb: "noop"
       });
       setErrors([]);
       setSavedStatus("start")
@@ -46,7 +79,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
       const target = event.target
       let value = target.value
       const name = target.name
-      console.log(name, value);
+      console.log('handleInputChange', name, value);
 
       if(name === 'price'){
         value = value.replace(/[^\d.-]/g, '');
@@ -57,6 +90,18 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
         [name]: value
       }));  
   };  
+
+  const handleChecked = event => {
+    const target = event.target
+    let value = target.checked
+    const name = target.name
+    console.log('handleChecked', name, value);
+
+    setFormState((formState) => ({
+      ...formState,
+      [name]: value
+    }));  
+};  
 
   const onImagesChange = (imageList, addUpdateIndex) => {
       // data for submit
@@ -112,6 +157,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
     if(isNumber(saveObject.fiat_i8n_price)){
       saveObject.fiat_i8n_price = parseFloat(saveObject.fiat_i8n_price);
       saveObject.fiat_i8n_currency = userCurrency;
+      saveObject.verb = formState.verb;
       formState.fiat_i8n_price = parseFloat(formState.fiat_i8n_price);
       formState.fiat_i8n_currency = userCurrency;
 
@@ -123,7 +169,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
         allErrors.push(...validate.errors);
         setErrors(allErrors);
       } else {
-        if(saveObject.payment_item_id){
+        if(saveObject.id){
           console.log("updating payment item", saveObject);
       
           PaymentItemService.updatePaymentItem(saveObject).then(r=>{
@@ -190,6 +236,29 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
               rounded outline-none  focus:border-pink-400"
             placeholder="A few sentences about the item"
           ></textarea>
+        </div>
+
+        <div className='flex flex-row flex-wrap w-full justify-start'>
+          <div className='items-center flex flex-row justify-start m-2'>
+            {formState.is_xurl_item ? 
+              <input checked
+              name="is_xurl_item"
+              onChange={handleChecked}
+              id="default-checkbox" type="checkbox" value={formState.is_xurl_item} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/> :
+              <input
+              name="is_xurl_item"
+              onChange={handleChecked}
+              id="default-checkbox" type="checkbox" value={formState.is_xurl_item} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"/>}
+
+            <label className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Published to xurl</label>
+          </div>
+
+          <div className='items-center flex flex-row m-2 w-fit '>
+            <label className="ml-4 text-sm font-medium text-gray-900 dark:text-gray-300 w-[160]">Action On Sign</label>
+            <DropdownComponent onChange={handleInputChange} value={formState.verb} name="verb"/>
+          </div>
+
+          
         </div>
 
         <div className="w-full flex flex-row justify-between">

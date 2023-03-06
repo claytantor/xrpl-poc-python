@@ -9,7 +9,7 @@ import { useStore } from "../zstore"
 
 const UserShop = ({ xummState}) => {
 
-  const { address } = useParams();
+  const { shopid } = useParams();
 
   const navigate = useNavigate();
 
@@ -27,13 +27,13 @@ const UserShop = ({ xummState}) => {
               <div className="flex flex-row justify-center rounded-full bg-pink-100 w-48 h-48 items-center">
                 <BsShop className="text-8xl text-pink-700"/>
               </div>  
-              <h2 className="text-2xl text-center">{address}'s Shop</h2>
+              <h2 className="text-2xl text-center">{shopid}'s Shop</h2>
             </div>
-            <div className="mb-3">
+            {/* <div className="mb-3">
               <HelpAlert 
-                helpLink='/docs/#/UserShop'>Payment items are your "Scan to pay" items that can be used to automatically receive payment with no activity required for the receiver. You can also use UserShop to collect "ad hoc" payments using the cart.</HelpAlert>
-            </div>
-            <div><ShopPaymentItemList address={address}/></div>
+                helpLink='/docs/#/UserShop'>Payment items are "Scan to pay" items that can be used to automatically receive payment with no activity required for the receiver. <strong>Just scan to pay!</strong> Our backend will convert the fiat amount to XRP and send a Payment Tx to your wallet. If you want to use a cart and allow fulfillment via shipping you will need to build a cart.</HelpAlert>
+            </div> */}
+            <div><ShopPaymentItemList shop_id={shopid}/></div>
         </div>
       </div>
 

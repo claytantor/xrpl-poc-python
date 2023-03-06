@@ -1,6 +1,8 @@
 import functools
 from http.client import HTTPException
 from http import HTTPStatus
+from typing import Tuple
+from uuid import uuid4
 from fastapi.responses import JSONResponse
 
 import logging
@@ -84,88 +86,66 @@ def verify_user_jwt_scopes(method_or_name):
     return decorator
 
 
-# def log_decorator(logger, log_enabled=True, log_level=logging.INFO):
-#     def actual_decorator(func):
-#         @functools.wraps(func)
-#         def wrapper(*args, **kwargs):
-#             if log_enabled:
-#                 # print("Calling Function: " + func.__name__))
-#                 logger.log(log_level, f"{request.method} {request.path} {func.__name__}")
-#             try:
-#                 return func(*args, **kwargs)     
-#             except Exception as e:
-#               if log_enabled:
-#                 logger.exception(e)
-                
-#         return wrapper
-#     return actual_decorator
 
-
-# def verify_user_jwt_scopes(method_or_name):
-
-#     def decorator(method):
-#         if callable(method_or_name):
-#             # print("CALL method_or_name",method_or_name)
-#             method.gw_method = method.__name__
-#         else:
-#             # print("method_or_name",method_or_name)
-#             method.gw_method = method_or_name
+def determine_xurl_wallet(method_or_name):
+    def decorator(method):
+        if callable(method_or_name):
+            # print("CALL method_or_name",method_or_name)
+            method.gw_method = method.__name__
+        else:
+            # print("method_or_name",method_or_name)
+            method.gw_method = method_or_name
         
-#         @functools.wraps(method)
-#         async def wrapper(*args, **kwargs):
-#             # method(*args, **kwargs)
+        @functools.wraps(method)
+        async def wrapper(*args, **kwargs):
+        #   print(f"=== verify_user_jwt_scopes 2 {args} {kwargs}")
+        #   print("==== CALL method.gw_method", method.gw_method)          
+          scopes = method.gw_method
 
-#             logger.info("==== CALL method.gw_method", method.gw_method)
-          
-#             scopes = method.gw_method
+          # right now we are not using scopes
+          if 'request' in kwargs:
+            request = kwargs['request']
 
-#             if 'request' in kwargs:
-#               request = kwargs['request']
-#               headers = dict(request.headers)
+            # @TODO we need an HTTPException here if the headers are not present
+            # @TODO we need to check the headers are present and valid
+            ulogger.debug(f"=== request.headers {request.headers}")
+            if 'x-xurl-shopid' not in request.headers:
+                raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="x-xurl-shopid header missing")
 
-#               if request.method == 'OPTIONS':
-#                 return await method(*args, **kwargs)
+            id_header: Tuple[bytes] = "x-request-id".encode(), str(uuid4()).encode()
+            xurl_pay_wallet: Tuple[bytes] = "x-xurl-shopid".encode(), "707d6cb060".encode()
+            request.headers.__dict__["_list"].append(id_header)
+            request.headers.__dict__["_list"].append(xurl_pay_wallet)
 
-#               if 'Authorization' not in headers:
-#                   raise HTTPException(status_code=400, detail="Authorization header invalid missing")
-#               else:
-#                 return await method(*args, **kwargs)
-
-#               # user_id = get_token_sub(dict(request.headers)["Authorization"].replace("Bearer ", ""))
-
-#               # if user_id is None:
-#               #   return make_response(jsonify({"error": "Authorization is missing"}), 401)
-
-#               # wallet = Wallet.get_wallet_by_classic_address(user_id)
-
-#               # if 'Authorization' in headers \
-#               #   and is_token_valid(headers["Authorization"]) \
-#               #   and has_all_scopes(headers["Authorization"], scopes):
-
-#               #   return method(*args, **kwargs)
-                
-#               # else:
-#               #   return make_response(jsonify({"error": "Invalid token."}), 401)
-
-#         return wrapper
-
-#     if callable(method_or_name):
-#         return decorator(method_or_name)
-
-#     return decorator
+            if inspect.iscoroutinefunction(method):
+                return await method(*args, **kwargs)
+            else:
+                return method(*args, **kwargs)
 
 
-# def verify_user_jwt(f):
-#   @functools.wraps(f)
-#   def decorated_function(*args, **kwargs):
-#     headers = dict(request.headers)
-  
-#     if request.method == 'OPTIONS':
-#       return f(*args, **kwargs)
+            # if 'headers' in request:
+            #     # can expect lower case
+            #     if 'authorization' in request.headers:
+            #         authorization = request.headers['authorization']
+            #         # print(f"=== authorization {authorization}")
+            #         # dont do anything with it yet
+            #         # print(f"=== method type {type(method)} {inspect.iscoroutinefunction(method)}")
+            #         if inspect.iscoroutinefunction(method):
+            #             return await method(*args, **kwargs)
+            #         else:
+            #             return method(*args, **kwargs)
+            #     else:                   
+            #         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "auth headers, invalid or missing"})
+            # else:
+            #     return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "request headers, invalid or missing"})
+          else:
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "request, invalid or missing"})
 
-#     if 'Authorization' in headers and is_token_valid(headers["Authorization"]):
-#       return f(*args, **kwargs)
-#     else:
-#       return make_response(jsonify({"error": "Invalid token"}), 401)    
 
-#   return decorated_function
+
+        return wrapper
+
+    if callable(method_or_name):
+        return decorator(method_or_name)
+
+    return decorator

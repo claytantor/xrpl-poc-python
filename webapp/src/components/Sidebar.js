@@ -22,7 +22,7 @@ const Sidebar = () => {
                         <li>
                             <div onClick={()=>navigate('/ledger')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white  hover:bg-gray-100 dark:hover:bg-gray-700">
                             <BsCardChecklist className="text-2xl"/>
-                            <span className="flex-1 ml-3 whitespace-nowrap">Ledger</span>
+                            <span className="flex-1 ml-3 whitespace-nowrap">Payloads</span>
                             </div> 
                         </li>
                         <li>
@@ -31,6 +31,12 @@ const Sidebar = () => {
                             <span className="flex-1 ml-3 whitespace-nowrap">Receive Payment</span>
                             </div>
                         </li>
+                        {/* <li>
+                            <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <FaShoppingBag className="text-2xl"/>
+                            <span className="flex-1 ml-3 whitespace-nowrap">Inventory Items</span>
+                            </div>
+                        </li> */}
                         <li>
                             <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <FaShoppingBag className="text-2xl"/>

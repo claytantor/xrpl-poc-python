@@ -10,7 +10,7 @@
       @apply m-1 flex rounded-xl justify-center items-center bg-slate-500 text-white hover:bg-white hover:text-slate-800 hover:border-slate-800 hover:border-2 border-0 p-2 font-bold cursor-pointer;
     }
     .link-common {
-      @apply m-1 flex justify-center items-center underline hover:cursor-pointer;
+      @apply m-1 flex items-center underline hover:cursor-pointer;
     }
     .link-align-center {
       @apply text-center justify-center items-center;
