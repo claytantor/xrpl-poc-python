@@ -294,3 +294,17 @@ class TrustlineConversion(BaseModel):
     rate: float
     datetime: str
     txid: Optional[str]
+
+class CustomerSchema(BaseModel):
+    """
+    {
+        "customer_id": 1,
+        "classic_address": "
+        "created_at": "2021-12-22T19:10:25",
+        "updated_at": "2021-12-22T19:10:25"
+    }
+    """
+    id: Optional[int]
+    classic_address: str
+    # created_at: str
+    # updated_at: str

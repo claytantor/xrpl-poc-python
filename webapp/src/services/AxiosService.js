@@ -106,7 +106,7 @@ function del(url, data) {
 }
 
 function setUser(user) {
-    console.log('setUser', user);
+    // console.log('setUser', user);
     cachedUser = user;
 }
 

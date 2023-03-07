@@ -22,11 +22,11 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
-from api.models import InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
+from api.schema import CustomerSchema, MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
+from api.models import CustomerAccount, InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
-from api.dao import InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
+from api.dao import CustomerAccountDao, InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
 from api.utils import parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
 
@@ -514,6 +514,48 @@ def update_payment_item(
 
     payload = PaymentItemDao.update(db=db, payment_item=payment_item)
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload, shop_id=wallet.shop_id).serialize())
+
+
+
+# CUSTOMER =============================================================================================
+
+@router.post("/customer_account")
+@verify_user_jwt_scopes(['wallet_owner'])
+def create_customer(
+    customer: CustomerSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    # customer_wallet = WalletDao.fetch_by_classic_address(db, customer.classic_address)
+
+    # lookup the wallet for the customer
+    customer_wallet = WalletDao.fetch_by_classic_address(db, customer.classic_address)
+    if customer_wallet is None:
+        wallet_c = WalletCreateSchema(classic_address=customer.classic_address)
+        # wallet_c.classic_address = customer.classic_address
+        account_wallet = WalletDao.create(db=db, item=wallet_c)
+    else:
+        account_wallet = customer_wallet
+
+        # see if the customer already exists
+    customer = CustomerAccountDao.fetch_by_account_wallet_id(db, account_wallet.id)
+    if customer is not None:
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "customer already exists"})
+    
+    customer_account = CustomerAccount()
+    customer_account.account_wallet_id = account_wallet.id
+    customer_account.wallet_id = wallet.id
+    customer_account = CustomerAccountDao.create(db=db, customer_account=customer_account)
+    return JSONResponse(status_code=HTTPStatus.OK, content=customer_account.serialize())
+
+
+# XUMM =================================================================================================
 
 @router.post("/xumm/webhook")
 async def xumm_webhook(request: Request, db: Session = Depends(get_db)):

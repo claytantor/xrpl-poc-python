@@ -314,10 +314,12 @@ class CustomerAccount(Base):
     updated_at = Column(DateTime)
     notes = Column(String)
     status = Column(String(32))
-    
+    account_wallet_id = Column(Integer, ForeignKey('wallet.id'))
+    account_wallet = relationship('Wallet', backref='account_wallet', foreign_keys=[account_wallet_id], cascade="all, delete")
+
     # # address as a foreign key to the address table
     shipping_address_id = Column(Integer, ForeignKey('address.id'))
-    shipping_address = relationship('Address', backref='address', cascade="all, delete")
+    shipping_address = relationship('Address', backref='shipping_address', cascade="all, delete")
     # billing_address_id = Column(Integer, ForeignKey('address.id'))
     # billing_address = relationship('Address', backref='address', cascade="all, delete")
   
@@ -325,6 +327,28 @@ class CustomerAccount(Base):
     sales_rep_email = Column(String(128))
     sales_rep_phone = Column(String(64))
     sales_rep_notes = Column(String)
+
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'wallet_id': self.wallet_id,
+            'company_name': self.company_name,
+            'contact_name': self.contact_name,
+            'company_email': self.company_email,
+            'contact_email': self.contact_email,
+            'phone': self.phone,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'notes': self.notes,
+            'status': self.status,
+            'account_wallet_id': self.account_wallet_id,
+            'shipping_address_id': self.shipping_address_id,
+            'sales_rep_name': self.sales_rep_name,
+            'sales_rep_email': self.sales_rep_email,
+            'sales_rep_phone': self.sales_rep_phone,
+            'sales_rep_notes': self.sales_rep_notes
+        }
 
 
 class PaymentItem(Base):

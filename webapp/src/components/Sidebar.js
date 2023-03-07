@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {FaWallet, FaShoppingBag} from "react-icons/fa";
+import {FaWallet, FaShoppingBag, FaUserTie} from "react-icons/fa";
 import {BsCardChecklist} from "react-icons/bs";
 import {BsCashCoin} from "react-icons/bs";
 const Sidebar = () => {
@@ -31,16 +31,16 @@ const Sidebar = () => {
                             <span className="flex-1 ml-3 whitespace-nowrap">Receive Payment</span>
                             </div>
                         </li>
-                        {/* <li>
-                            <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
-                            <FaShoppingBag className="text-2xl"/>
-                            <span className="flex-1 ml-3 whitespace-nowrap">Inventory Items</span>
-                            </div>
-                        </li> */}
                         <li>
                             <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
                             <FaShoppingBag className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Payment Items</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div onClick={()=>navigate('/customers')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <FaUserTie className="text-2xl"/>
+                            <span className="flex-1 ml-3 whitespace-nowrap">Customers</span>
                             </div>
                         </li>
                     </ul>

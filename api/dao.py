@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 
-from api.models import Base, InventoryItem, PaymentItem, Wallet, XummPayload
+from api.models import Base, CustomerAccount, InventoryItem, PaymentItem, Wallet, XummPayload
 
 import logging
 
@@ -132,6 +132,24 @@ class InventoryItemDao:
         db.refresh(inventory_item)
         return inventory_item
 
+
+class CustomerAccountDao:
+
+    @staticmethod
+    def create(db: Session, customer_account: CustomerAccount):
+        db.add(customer_account)
+        db.commit()
+        db.refresh(customer_account)
+        return customer_account
+
+
+    @staticmethod
+    def fetch_by_id(db:Session, customer_account_id:int):
+        return db.query(CustomerAccount).filter(CustomerAccount.id == customer_account_id).first()
+
+    @staticmethod
+    def fetch_by_account_wallet_id(db:Session, account_wallet_id:int):
+        return db.query(CustomerAccount).filter(CustomerAccount.account_wallet_id == account_wallet_id).first()
 
 class PaymentItemDao:
     @staticmethod

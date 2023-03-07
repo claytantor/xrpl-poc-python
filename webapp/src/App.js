@@ -11,6 +11,8 @@ import PaymentItems from "./pages/PaymentItems";
 import PaymentItemViewer from "./pages/PaymentItemViewer";
 import ShopItemViewer from "./pages/ShopItemViewer";
 import PaymentItemEditor from "./pages/PaymentItemEditor";
+import Customers from "./pages/Customers";
+import CustomerAccountEditor from "./pages/CustomerAccountEditor";
 
 import { AxiosService } from "./services/AxiosService";
 import { AuthenticationService } from "./services/AuthenticationService";
@@ -67,7 +69,7 @@ const PrivateRoute = ({xummState}) => {
   };
   
 
-  console.log("PrivateRoute", xummPkceJwt, xummSdkJwt);
+  // console.log("PrivateRoute", xummPkceJwt, xummSdkJwt);
   if (xummSdkJwt.jwt) {
     xummSignInHandler(xummSdkJwt.jwt, null);
     return <Outlet />;
@@ -234,6 +236,24 @@ const App = () => {
                 xummState={xummState}/>}
             />
           </Route> 
+          <Route exact path="/customers" element={<PrivateRoute xummState={xummState}/>}>
+            <Route
+              exact
+              path="/customers"
+              element={<Customers
+                xummState={xummState}/>}
+            />
+          </Route>
+
+
+          <Route exact path="/customer/create" element={<PrivateRoute xummState={xummState}/>}>
+            <Route exact 
+              path="/customer/create" 
+              element={<CustomerAccountEditor 
+                xummState={xummState}/>} />
+          </Route>
+
+          {/* public routes */}
           <Route path="/shop/:shopid" element={<UserShop xummState={xummState} xAppLoginError={xAppLoginError}/>} />
           <Route path="/shop/details/:shopid/:id" element={<ShopItemViewer xummState={xummState} xAppLoginError={xAppLoginError}/>} />
 

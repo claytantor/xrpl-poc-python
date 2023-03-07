@@ -18,7 +18,7 @@ const Header = ({
     let navigate = useNavigate();
 
     useEffect(() => {
-        console.log(`Header useEffect`, xummState);
+        // console.log(`Header useEffect`, xummState);
         if (xummState && xummState.me) {
             setIsAuthenticated(true);
         } else {
