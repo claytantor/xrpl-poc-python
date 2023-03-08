@@ -16,7 +16,7 @@ export const ShopPaymentItemSummary = ({paymentItem, shop_id}) => {
         <div className="m-1" id={paymentItem.id}>
             
             <div className="p-1 max-w-sm rounded overflow-hidden shadow-md hover:border-pink-300 hover:border-2 hover:cursor-pointer"
-                 onClick={()=>navigate(`/shop/details/${shop_id}/${paymentItem.id}`)}>
+                 onClick={()=>navigate(`/shop/details/${shop_id}/paymentitem/${paymentItem.id}`)}>
                 {/* <div className='flex justify-end'>
                     <button className="text-xs flex underline hover:text-pink-500 bg-orange rounded-lg m-1 p-1" onClick={()=>addPaymentItemToCart(paymentItem)}>
                             <div className='mt-1 align-bottom'>Add to Cart</div></button>

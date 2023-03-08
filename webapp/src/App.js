@@ -255,7 +255,7 @@ const App = () => {
 
           {/* public routes */}
           <Route path="/shop/:shopid" element={<UserShop xummState={xummState} xAppLoginError={xAppLoginError}/>} />
-          <Route path="/shop/details/:shopid/:id" element={<ShopItemViewer xummState={xummState} xAppLoginError={xAppLoginError}/>} />
+          <Route path="/shop/details/:shopid/:subject/:id" element={<ShopItemViewer xummState={xummState} xAppLoginError={xAppLoginError}/>} />
 
           <Route path="/xapp" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} />         
           <Route path="/" element={<Home xummState={xummState}/>} />

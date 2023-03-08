@@ -56,10 +56,13 @@ class XurlInventoryItemSerializer():
         return self.data
 
 class XurlPaymentItemSerializer():
-    def __init__(self, payment_item):
+    def __init__(self, payment_item, shop_id):
+
+        uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", shop_id)}'
 
         xurl=f'xurl://subject/{XurlSubjectType.payment_item}/{payment_item.id}/{payment_item.verb}'
         payload=f'xurl://payload/subject/{XurlSubjectType.payment_item}/{payment_item.id}/{payment_item.verb}'
+        xumm_url=f'{config["XUMM_APP_DEEPLINK"]}?uri_base={uri_base}&uri=xurl://payload/{XurlSubjectType.payment_item}/{payment_item.id}/{payment_item.verb}'
 
         self.data = {
             'id': payment_item.id,
@@ -70,15 +73,16 @@ class XurlPaymentItemSerializer():
             'updated_at': str(payment_item.updated_at),
             'verb': payment_item.verb,
             'uri': xurl,
-            'payload': payload
+            'payload': payload,
+            'xumm_url': xumm_url
         }
 
     def serialize(self):
         return self.data
 
 class XurlPaymentItemsSerializer():
-    def __init__(self, payment_item_list, verb=XurlVerbType.no_op):
-        self.data = [XurlPaymentItemSerializer(payment_item=payment_item).serialize() for payment_item in payment_item_list]
+    def __init__(self, payment_item_list, shop_id, verb=XurlVerbType.no_op):
+        self.data = [XurlPaymentItemSerializer(payment_item=payment_item, shop_id=shop_id).serialize() for payment_item in payment_item_list]
 
     def serialize(self):
         return self.data

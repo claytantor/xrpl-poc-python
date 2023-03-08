@@ -5,16 +5,16 @@ import {IoMdQrScanner} from "react-icons/io";
 
 import Page from "../components/Page";
 import XummQrCode from "../components/XummQrCode";
-import { PaymentItemService } from "../services/PaymentItemService";
+import XurlService from "../services/XurlService";
 import { WalletService } from "../services/WalletService";
 
 import xummLogo from "../assets/img/xumm_logo.png"
 
-import { xummConfig } from "../env";
+import { xummConfig, xurlBaseUrl } from "../env";
 
 const ShopItemViewer = ({xummState}) => {
 
-  const { shopid, id } = useParams();
+  const { shopid, subject, id } = useParams();
 
 
   const [paymentItem, setPaymentItem] = useState();
@@ -29,7 +29,7 @@ const ShopItemViewer = ({xummState}) => {
 
   useEffect(() => {
     console.log("useEffect", id)
-    PaymentItemService.getById(id).then(r => {
+    XurlService.getSubjectItem(xurlBaseUrl(shopid), subject, id).then(r => {
       let p_i = r.data;
       console.log("ShopItemViewer", p_i);
       setPaymentItem(p_i);

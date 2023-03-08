@@ -143,6 +143,9 @@ class Wallet(Base):
             "created_at": str(self.created_at),
             "updated_at": str(self.updated_at)
         }
+    
+    def serialize(self):
+        return self.to_dict()
 
 class PaymentItemTx(Base):
     __tablename__ = "payment_item_tx"
@@ -343,6 +346,7 @@ class CustomerAccount(Base):
             'notes': self.notes,
             'status': self.status,
             'account_wallet_id': self.account_wallet_id,
+            'account_wallet': self.account_wallet.serialize(),
             'shipping_address_id': self.shipping_address_id,
             'sales_rep_name': self.sales_rep_name,
             'sales_rep_email': self.sales_rep_email,

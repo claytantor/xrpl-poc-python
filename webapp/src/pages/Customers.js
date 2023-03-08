@@ -1,5 +1,6 @@
 import React, {useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
+import CustomerAccountList from "../components/CustomerAccountList";
 
 import Page from "../components/Page"
 
@@ -15,6 +16,7 @@ const Customers = ({xummState}) => {
                     <h2 className="text-2xl">Customers </h2>
                     <div onClick={()=>navigate('/customer/create')} className="btn-common">Add Customer</div>
                 </div>
+                <CustomerAccountList />
             </div>
         </Page> 
         </>

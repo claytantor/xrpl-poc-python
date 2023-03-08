@@ -22,16 +22,16 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlSubject, XurlSubjectType, XurlVerb, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
+from api.schema import MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlInfoSchema, XurlSubject, XurlSubjectType, XurlVerb, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
 from api.models import InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import determine_xurl_wallet, verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
-from api.dao import InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
+from api.dao import CustomerAccountDao, InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
 from api.serializers import XurlInventoryItemSerializer, XurlPaymentItemSerializer, XurlPaymentItemsSerializer
 from api.utils import parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
 
-from api.routes.base import make_payment_item_payload
+from api.routes.base import make_create_account_payload, make_payment_item_payload
 
 import logging
 ulogger = logging.getLogger("uvicorn.error")
@@ -45,20 +45,35 @@ config = {
 
 router = APIRouter()
 
-@router.get("/xurl/info", response_model=ApiInfoSchema)
+@router.get("/xurl/info", response_model=XurlInfoSchema)
 @determine_xurl_wallet
-def xurl_info(request: Request):
+def xurl_info(request: Request,
+    db: Session = Depends(get_db)):
     ulogger.info(f"==== xurl info: {request.url.scheme} {request.url.hostname} {request.url.port} {request.url.path} {request.url.query}")
-    ulogger.info(f"==== headers: {request.headers}")
+    ulogger.info(f"==== headers: {request.headers} {'x-xurl-user' in request.headers}")
 
     #endpoint_url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}{request.url.path.replace('//','/').replace('/info', '')}"
 
-    return ApiInfoSchema(
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+
+        # try to lookup the user wallet
+        try:
+            customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
+            ulogger.debug(f"=== customer_account {customer_account}")
+        except Exception as e:
+            ulogger.error(f"=== x-xurl-user error {e}")
+        
+
+    return XurlInfoSchema(
         version="v1",
         commit_sha=config['API_GIT_SHA'],
         api_branch=config['API_GIT_BRANCH'],
-        endpoint=config['XURL_BASEURL'],
+        endpoint=config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid']),
         shop_id=request.headers['x-xurl-shopid'],
+        xurl_user=request.headers['x-xurl-user'] if customer_account else None,
     )
 
 
@@ -89,6 +104,21 @@ def _make_xurl_payload(version:XurlVersion,
             qty = int(request.query_params['qty'])
         
         return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
+    elif subject == XurlSubjectType.customer_account and verb == XurlVerbType.create_account:
+
+        # get the wallet for this 
+        shop_wallet = db.query(Wallet).filter_by(shop_id=request.headers['x-xurl-shopid']).first()
+        if shop_wallet is None:
+            return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "shop wallet not found"})
+
+        ulogger.info(f"==== xurl customer_account: {subjectid}")
+
+        new_customer_account = request.headers['x-xurl-user']
+        if new_customer_account is None:
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="x-xurl-user header required to create account")
+
+        return make_create_account_payload(wallet=shop_wallet, verb=verb)
+
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
@@ -111,23 +141,56 @@ def xurl_post_key(
 
 #            /xurl/payload/paymentitem/10/noop
 @router.get("/xurl/payload/{subject}/{subjectid}/{verb}")
+@determine_xurl_wallet
 def xurl_gen_payload(
     subject:XurlSubjectType,
     subjectid:str,
     verb:XurlVerbType,
     request: Request,
     db: Session = Depends(get_db)):
-    
-    """
-    will return a xrp native payload suitable for signing this can also be injected 
-    into a xumm payload via the txjson field
-    """
-    xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
-    ulogger.info(f"==== xurl_p: {xurl_p}")
 
-    return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+
+        # try to lookup the user wallet
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
+
+
+    if verb == XurlVerbType.no_op and customer_account is None:
+        """
+        will return a xrp native payload suitable for signing this can also be injected 
+        into a xumm payload via the txjson field
+        """
+        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+        ulogger.info(f"==== xurl_p: {xurl_p}")
+
+        return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
+    elif verb == XurlVerbType.carry_on_sign and customer_account is not None:
+        """
+        will return a xrp native payload suitable for signing this can also be injected 
+        into a xumm payload via the txjson field
+        """
+        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+        ulogger.info(f"==== xurl_p: {xurl_p}")
+
+        return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
+    
+    elif verb == XurlVerbType.create_account and customer_account is None:
+        """
+        will return a xrp native payload suitable for signing this can also be injected 
+        into a xumm payload via the txjson field
+        """
+        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+        ulogger.info(f"==== xurl_p: {xurl_p}")
+
+        return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
+    else:
+        raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="cannot create payload due to verb rules, customer account not found or invalid")
 
 @router.get("/xurl/subject", response_model=list[XurlSubject])
+@determine_xurl_wallet
 def xurl_get_subjects(
     request: Request,
     db: Session = Depends(get_db)):
@@ -135,28 +198,60 @@ def xurl_get_subjects(
     """
     get a list of all subjects supported by this xurl api and the endpoints
     """
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+
+        # try to lookup the user wallet
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
 
     supported_subjects = []
     supported_subjects.append(XurlSubject(type=XurlSubjectType.payment_item, uri=f"xurl://subject/{XurlSubjectType.payment_item}"))
-    supported_subjects.append(XurlSubject(type=XurlSubjectType.order_invoice, uri=f"xurl://subject/{XurlSubjectType.order_invoice}"))
+    if customer_account is not None:
+        supported_subjects.append(XurlSubject(type=XurlSubjectType.order_invoice, uri=f"xurl://subject/{XurlSubjectType.order_invoice}"))
+    else:
+        supported_subjects.append(XurlSubject(type=XurlSubjectType.customer_account, uri=f"xurl://subject/{XurlSubjectType.customer_account}"))
 
 
     return supported_subjects
 
-@router.get("/xurl/verb", response_model=list[XurlVerbType])
+# @router.get("/xurl/verb/{subject}", response_model=list[XurlVerbType])
+@router.get("/xurl/verb/{subject}", response_model=list[XurlVerb])
+@determine_xurl_wallet
 def xurl_get_verbs(
+    subject:XurlSubjectType,
     request: Request,
     db: Session = Depends(get_db)):
 
     """
     get a list of all verbs supported by this xurl api and the endpoints
     """
+
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+
+        # try to lookup the user wallet
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
+
     supported_verbs = []
-    supported_verbs.append(XurlVerb(type=XurlVerbType.carry_on_sign, endpoint=f"/verb/{XurlVerbType.carry_on_sign}"))
-    supported_verbs.append(XurlVerb(type=XurlVerbType.no_op, endpoint=f"/verb/{XurlVerbType.no_op}"))
+    supported_verbs.append(XurlVerb(type=XurlVerbType.no_op, uri=f"/verb/{XurlVerbType.no_op}"))
+    
+    if customer_account is not None and subject == XurlSubjectType.payment_item:
+        supported_verbs.append(
+            XurlVerb(type=XurlVerbType.carry_on_sign, 
+                     description="carry on sign",
+                     uri=f"/verb/{XurlVerbType.carry_on_sign}"))
+
+    if customer_account is None and subject == XurlSubjectType.customer_account:
+        supported_verbs.append(
+            XurlVerb(type=XurlVerbType.create_account, 
+                    description="create a customer account",
+                    uri=f"/verb/{XurlVerbType.create_account}"))
 
     return supported_verbs
-
 
 
 @router.get("/xurl/subject/{subject}")
@@ -180,10 +275,40 @@ def xurl_get_subject_entities(
     if shop_wallet is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "shop wallet not found"})
 
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+
+        # try to lookup the user wallet
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])   
+
     if subject == XurlSubjectType.payment_item:
         ulogger.info(f"==== xurl payment_item: {subject}")
-        payment_items = PaymentItemDao.fetch_xurls_by_wallet_id(db, wallet_id=shop_wallet.id)
-        return XurlPaymentItemsSerializer(payment_items).serialize()
+
+        customer_verbs = [XurlVerbType.no_op, XurlVerbType.carry_on_sign]
+        no_customer_verbs = [XurlVerbType.no_op]
+
+        if customer_account is not None:
+            ulogger.info(f"==== xurl payment_item: {subject} customer_verbs {customer_verbs}")
+            payment_items = PaymentItemDao.fetch_xurl_by_wallet_and_verbs(db, wallet_id=shop_wallet.id, verbs=customer_verbs)
+        else:
+            ulogger.info(f"==== xurl payment_item: {subject} no_customer_verbs {no_customer_verbs}")
+            payment_items = PaymentItemDao.fetch_xurl_by_wallet_and_verbs(db, wallet_id=shop_wallet.id, verbs=no_customer_verbs)
+
+
+        # payment_items = PaymentItemDao.fetch_xurls_by_wallet_id(db, wallet_id=shop_wallet.id)
+        return XurlPaymentItemsSerializer(payment_items, shop_wallet.shop_id).serialize()
+    
+    elif subject == XurlSubjectType.customer_account:
+        if customer_account is not None:
+            c_dict = [customer_account.serialize()]
+            return c_dict
+        else:
+            return []
+        
+    else:
+        raise HTTPException(status_code=HTTPStatus.NOT_IMPLEMENTED, detail="subject not supported")
 
 
 @router.get("/xurl/subject/{subject}/{subjectid}")
@@ -203,54 +328,105 @@ def xurl_get_subject_entities(
     with a noop (no operation) verb
     """
 
+    ulogger.info(f"==== xurl subject: {subject} subjectid: {subjectid}")
+
     # get the wallet for this 
     shop_wallet = db.query(Wallet).filter_by(shop_id=request.headers['x-xurl-shopid']).first()
     if shop_wallet is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "shop wallet not found"})
+
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])   
+
+
 
     if subject == XurlSubjectType.payment_item:
         ulogger.info(f"==== xurl payment_item: {subjectid}")
         # payment_item = db.query(PaymentItem).filter_by(id=int(subjectid)).first()
 
         # needs to be an item for this shop and is a xurl item
-        payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_id(db, id=subjectid, wallet_id=shop_wallet.id)
+        # payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_id_verbs(db, id=subjectid, wallet_id=shop_wallet.id)
+        customer_verbs = [XurlVerbType.no_op, XurlVerbType.carry_on_sign]
+        no_customer_verbs = [XurlVerbType.no_op]
+
+        if customer_account is not None:
+            payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_and_verbs(db, id=int(subjectid), wallet_id=shop_wallet.id, verbs=customer_verbs)
+        else:
+            payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_and_verbs(db, id=int(subjectid), wallet_id=shop_wallet.id, verbs=no_customer_verbs)
         
         if payment_item is None:
             return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
         
-        return XurlPaymentItemSerializer(payment_item).serialize()
+        return XurlPaymentItemSerializer(payment_item, shop_id=shop_wallet.shop_id).serialize()
+    elif subject == XurlSubjectType.customer_account:
+        ulogger.info(f"==== xurl customer_account: {subjectid}")
+        if customer_account is not None and customer_account.id == subjectid:
+            return customer_account.serialize()
+        else:
+            # raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail="account not found")
+            return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "account not found"})
+    else:
+        # raise HTTPException(status_code=HTTPStatus.NOT_IMPLEMENTED, detail="subject not supported")
+        return JSONResponse(status_code=HTTPStatus.NOT_IMPLEMENTED, content={"message": "subject not supported"})
 
 @router.get("/xurl/verb/{subject}/{subjectid}")
+@determine_xurl_wallet
 def xurl_get_subject_entities(
     subject:XurlSubjectType,
     subjectid:str,
     request: Request,
     db: Session = Depends(get_db)):
 
-    pass
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])       
+
     """
     will return a list of verbs supported by the given subject
     """
     if subject == XurlSubjectType.payment_item:
         supported_verbs = []
-        supported_verbs.append(XurlVerb(type=XurlVerbType.carry_on_sign, uri=f"xurl://verb/{XurlVerbType.carry_on_sign}"))
         supported_verbs.append(XurlVerb(type=XurlVerbType.no_op, uri=f"xurl://verb/{XurlVerbType.no_op}"))
 
+        if customer_account is not None:
+            supported_verbs.append(XurlVerb(type=XurlVerbType.carry_on_sign, uri=f"xurl://verb/{XurlVerbType.carry_on_sign}"))
+
         return supported_verbs
+    elif subject == XurlSubjectType.customer_account:
+        supported_verbs = []
+        supported_verbs.append(XurlVerb(type=XurlVerbType.no_op, uri=f"xurl://verb/{XurlVerbType.no_op}"))
+        if customer_account is None:
+            supported_verbs.append(XurlVerb(type=XurlVerbType.create_account, uri=f"xurl://verb/{XurlVerbType.create_account}"))
+            
+        return supported_verbs
+
+    else:
+        return JSONResponse(status_code=HTTPStatus.NOT_IMPLEMENTED, content={"message": "invalid subject"})
     
-    return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "invalid subject"})
+    
 
 @router.get("/xurl/verb/{verb}")
+@determine_xurl_wallet
 def xurl_get_subject_entities(
     verb:XurlVerbType,
     request: Request,
     db: Session = Depends(get_db)):
 
-    pass
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+        customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])       
+
     """
     will return a list of verbs supported by the given subject
     """
-    if verb == XurlVerbType.carry_on_sign:
+    if verb == XurlVerbType.carry_on_sign and customer_account is not None:
         return XurlVerb(
             type=XurlVerbType.carry_on_sign, 
             description="buyer to carry merchandise on signing",
@@ -260,11 +436,17 @@ def xurl_get_subject_entities(
             type=XurlVerbType.no_op, 
             description="no operation required by seller",
             uri=f"xurl://verb/{XurlVerbType.no_op}")
+    elif verb == XurlVerbType.create_account:
+        return XurlVerb(
+            type=XurlVerbType.create_account, 
+            description="create a new customer account for this shop",
+            uri=f"xurl://verb/{XurlVerbType.create_account}")
     else:
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "invalid subject"})
 
 
 @router.get("/xurl/inventory/{id}")
+@determine_xurl_wallet
 def xurl_get_inventory(
     id: int,
     request: Request,

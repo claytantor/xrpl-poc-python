@@ -118,14 +118,9 @@ async def get_wallet(request: Request, db: Session = Depends(get_db), token: str
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": str(e)})
 
 @router.get("/xrp/price/{fiat_i8n_currency}", tags=["XRP"], response_model=XrpCurrencyRateSchema, status_code=200)
-@verify_user_jwt_scopes(scopes['wallet_owner'])
-def xrp_price_from_currency(fiat_i8n_currency:str, request: Request, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+# @verify_user_jwt_scopes(scopes['wallet_owner'])
+def xrp_price_from_currency(fiat_i8n_currency:str, request: Request, db: Session = Depends(get_db)):
 
-    jwt_body = get_token_body(token)
-
-    # wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
-    # if wallet is None:
-    #     return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
     ulogger.info(f"get_xrp_price {fiat_i8n_currency}")
     rates = sdk.get_rates(fiat_i8n_currency).to_dict()
@@ -364,6 +359,22 @@ def get_payment_item_by_id(id:int,
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize())
 
 
+def make_create_account_payload(wallet:Wallet, verb:str):
+    return {
+        'txjson': {
+            "Account": wallet.classic_address,
+            "TransactionType": "TrustSet",
+            "Flags": 262144,
+            "SigningPubKey": "",
+            "LimitAmount": "1000000"
+        },
+        "custom_meta": {
+            "identifier": f"create_account:{shortuuid.uuid()[:12]}",
+            "blob": json.dumps({'shopid': wallet.shop_id, 'verb': verb}),
+            "instruction": f"Sign to create a customer trustline with shop {wallet.shop_id}"
+        }
+    }
+
 
 def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str, qty:int=1):
 
@@ -554,6 +565,22 @@ def create_customer(
     customer_account = CustomerAccountDao.create(db=db, customer_account=customer_account)
     return JSONResponse(status_code=HTTPStatus.OK, content=customer_account.serialize())
 
+
+# get customer accounts for a wallet
+@router.get("/customer_account")
+@verify_user_jwt_scopes(['wallet_owner'])
+def get_customer_accounts(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    customer_accounts = CustomerAccountDao.fetch_by_wallet_id(db, wallet.id)
+    return JSONResponse(status_code=HTTPStatus.OK, content=[customer_account.serialize() for customer_account in customer_accounts])
 
 # XUMM =================================================================================================
 

@@ -150,6 +150,21 @@ class CustomerAccountDao:
     @staticmethod
     def fetch_by_account_wallet_id(db:Session, account_wallet_id:int):
         return db.query(CustomerAccount).filter(CustomerAccount.account_wallet_id == account_wallet_id).first()
+    
+    @staticmethod
+    def fetch_by_wallet_id(db:Session, wallet_id:int):
+        return db.query(CustomerAccount).filter(CustomerAccount.account_wallet_id == wallet_id).first()
+    
+    @staticmethod
+    def fetch_by_classic_address(db:Session, classic_address:str):
+        wallet = WalletDao.fetch_by_classic_address(db, classic_address)      
+        if wallet:
+            account = CustomerAccountDao.fetch_by_wallet_id(db, wallet.id)
+            return account
+        else:
+            return None
+    
+
 
 class PaymentItemDao:
     @staticmethod
@@ -176,6 +191,22 @@ class PaymentItemDao:
         return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
             PaymentItem.id == id, 
             PaymentItem.is_xurl_item == 1)).first()
+
+    @staticmethod
+    def fetch_xurl_by_wallet_and_verbs(db:Session, wallet_id:int, verbs:list[str]):
+        verbs = [verb.lower() for verb in verbs]
+        print("++++++++++++++ VERBS ",verbs)
+        return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
+            PaymentItem.verb.in_(verbs),
+            PaymentItem.is_xurl_item == 1)).all()
+
+    @staticmethod
+    def fetch_xurl_by_id_and_wallet_and_verbs(db:Session, id:int, wallet_id:int, verbs:list[str]):
+        return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
+            PaymentItem.id == id, 
+            PaymentItem.verb.in_(verbs),
+            PaymentItem.is_xurl_item == 1)).first()
+    
    
 
     @staticmethod

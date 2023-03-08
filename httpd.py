@@ -46,10 +46,14 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
                 body = self.rfile.read(content_len)
             logger.debug('body: %s', body)
 
-            # set new headers
-            new_headers = {'x-xurl-shopid':host_w[0]}
-            for item in self.headers.items():
-                new_headers[item[0]] = item[1]
+            new_headers = {'x-xurl-shopid': host_w[0]}
+            for name, value in self.headers.items():
+                new_headers[name] = value
+
+            # for item in self.headers.items():
+            #     new_headers[item[0]] = item[1]
+
+
             new_headers['host'] = hostname
             try:
                 del new_headers['accept-encoding']
@@ -66,6 +70,12 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             logger.debug('do_GET: %s', self.path)
             http.server.SimpleHTTPRequestHandler.do_GET(self)
 
+
+    def _set_headers(self, code=200):
+        self.send_response(code)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+
     def __do_request(self, url, body, headers):
         req = Request(url, body, headers)
 
@@ -77,17 +87,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             with urlopen(req) as response:
                 data = response.read()
 
-                # add cors headers
-                # headers_cors = {}
-                # headers_cors["Access-Control-Allow-Origin"] = "*"
-                # headers_cors["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-                # headers_cors["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-                # headers_cors["Access-Control-Max-Age"] = "86400"
-                # headers_cors["Access-Control-Allow-Credentials"] = "true"
-                # headers_cors["Access-Control-Expose-Headers"] = "Content-Length, Content-Range"
-
-
-
+                # set new headers
                 self.send_response(response.status)
                 self.send_header('Content-Type', response.getheader('Content-Type'))
                 self.send_header('Content-Length', len(data))
@@ -100,7 +100,15 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(data)
         except HTTPError as e:
-            self.send_error(e.code, e.reason)   
+            self._set_headers(e.code)
+            error_message = e.read()
+            logger.debug('response error: %s', error_message)
+            e_m = json.loads(error_message.decode('utf-8'))
+            j_body = {'error': e.reason, "data": e_m}
+            # if data is not None:
+            #     j_body['data'] = json.loads(data)
+            self.wfile.write(json.dumps(j_body).encode('utf-8'))
+            # self.send_error(e.code, e.reason)   
 
     def do_GET(self):
         response = self.__do_proxy()

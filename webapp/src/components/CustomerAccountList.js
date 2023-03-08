@@ -1,42 +1,44 @@
 import React , { useState, useEffect }from 'react'
-import PaymentItemSummary, {ShopPaymentItemSummary} from "./PaymentItemSummary";
-import { PaymentItemService } from '../services/PaymentItemService';
+// import CustomerAccountSummary, {ShopCustomerAccountSummary} from "./CustomerAccountSummary";
+import { CustomerAccountService } from '../services/CustomerAccountService';
 import XurlService from '../services/XurlService';
 import { useNavigate } from 'react-router-dom';
 import ConfirmModal from "./ConfirmModal";
+import { Spinner } from './Base';
+import {FaWallet, FaShoppingBag, FaUserTie} from "react-icons/fa";
 
 // import { Row, Col, Spinner } from 'react-bootstrap';
 
 import {xummConfig, currencyLang, xurlBaseUrl} from "../env"
 
-const Spinner = ({animation}) => {
-    return (
-        <div className={`spinner-border ${animation ? 'spinner-border-sm' : ''}`} role="status">
-            <span className="sr-only">Loading...</span>
-        </div>
-    )
-};
+// const Spinner = ({animation}) => {
+//     return (
+//         <div className={`spinner-border ${animation ? 'spinner-border-sm' : ''}`} role="status">
+//             <span className="sr-only">Loading...</span>
+//         </div>
+//     )
+// };
 
 
-const PaymentItemList = () => {
+const CustomerAccountList = () => {
 
     let navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
-    const [paymentItems, setPaymentItems] = useState([]);
+    const [customerAccounts, setCustomerAccounts] = useState([]);
     const [currentPage, setCurrentPage] = useState({page:1, page_size:5});
 
     const [showModal, setShowModal] = useState(false);
     const [deleteId, setDeleteId] = useState();
 
     useEffect(() => {
-        fetchPaymentItems(currentPage);
+        fetchCustomerAccounts(currentPage);
     },[currentPage]);
     
-    let fetchPaymentItems = (pageInfo) => {
+    let fetchCustomerAccounts = (pageInfo) => {
         setLoading(true);
-        PaymentItemService.getPaymentItems().then(res => {
-            setPaymentItems(res.data);
+        CustomerAccountService.getCustomerAccounts().then(res => {
+            setCustomerAccounts(res.data);
             setLoading(false);
         }).catch(err => {      
             console.error(err);
@@ -44,16 +46,16 @@ const PaymentItemList = () => {
     };
 
 
-    let deletePaymentItem = (id) => {
-        console.log("set deletePaymentItem", id);
+    let deleteCustomerAccount = (id) => {
+        console.log("set deleteCustomerAccount", id);
         setDeleteId(id);
         setShowModal(true);
     }
 
     let handleConfirmDelete = () => {
-        PaymentItemService.deletePaymentItem(deleteId)
+        CustomerAccountService.deleteCustomerAccount(deleteId)
         .then(res => {
-            fetchPaymentItems(currentPage);
+            fetchCustomerAccounts(currentPage);
             navigate('/items');
         })
         .catch(err => {
@@ -63,11 +65,9 @@ const PaymentItemList = () => {
     }
     
 
-    const listItems = paymentItems.map((paymentItem) => (
-        <div className="w-64 p-2 m-1 rounded" key={paymentItem.payment_item_id}>  
-            <PaymentItemSummary
-                handleDeleteCallback={deletePaymentItem}
-                paymentItem={paymentItem}/>       
+    const listItems = customerAccounts.map((customerAccount) => (
+        <div className="w-full p-2 m-1 rounded-lg bg-slate-100 flex flex-row items-center" key={customerAccount.id}>  
+            <FaUserTie className='mr-2'/> {customerAccount.account_wallet.classic_address} 
         </div>    
     ));
 
@@ -76,10 +76,10 @@ const PaymentItemList = () => {
         <div>
             {loading && <Spinner animation='border' />}
             
-            {paymentItems.length>0 ? 
+            {customerAccounts.length>0 ? 
                 // <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
                 <div className='flex'>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>{listItems}</div>
+                    <div className='flex flex-row'>{listItems}</div>
                     <div>
                         <ConfirmModal showModal={showModal} setShowModal={setShowModal} actionName={'Delete Payment Item'} 
                         actionDescription={'delete this product'} actionCallback={handleConfirmDelete}/>
@@ -92,32 +92,33 @@ const PaymentItemList = () => {
     </>);
 };
 
-export const ShopPaymentItemList = ({shop_id}) => {
+export const ShopCustomerAccountList = ({shop_id}) => {
 
     const [loading, setLoading] = useState(true);
-    const [paymentItems, setPaymentItems] = useState([]);
+    const [customerAccounts, setCustomerAccounts] = useState([]);
     const [currentPage, setCurrentPage] = useState({page:1, page_size:5});
 
 
     useEffect(() => {
-        fetchPaymentItems(shop_id, currentPage);
+        fetchCustomerAccounts(shop_id, currentPage);
     },[currentPage]);
     
-    let fetchPaymentItems = (shop_id, pageInfo) => {
+    let fetchCustomerAccounts = (shop_id, pageInfo) => {
         setLoading(true);
         XurlService.getSubjectItems(xurlBaseUrl(shop_id),'paymentitem')
         .then(res => {
             console.log("getSubject", res.data);
-            setPaymentItems(res.data);
+            setCustomerAccounts(res.data);
             setLoading(false);
         });
     };
     
-    const listItems = paymentItems.map((paymentItem) => (
-        <div className="w-64 p-2 m-1 rounded" key={paymentItem.id}>  
-            <ShopPaymentItemSummary
-                paymentItem={paymentItem}
-                shop_id={shop_id}/>       
+    const listItems = customerAccounts.map((customerAccount) => (
+        <div className="w-64 p-2 m-1 rounded" key={customerAccount.id}>  
+            {/* <ShopCustomerAccountSummary
+                customerAccount={customerAccount}
+                shop_id={shop_id}/>        */}
+            {customerAccount.id}
         </div>    
     ));
 
@@ -125,9 +126,9 @@ export const ShopPaymentItemList = ({shop_id}) => {
 
         <div>
             {loading && <Spinner animation='border' />}
-            {/* <div onClick={()=>window.open(`${xurlBaseUrl(shop_id)}/info`,'_blank')} className="link-common">{xurlBaseUrl(shop_id)}/info</div>
-            {xurlBaseUrl(shop_id) && <div className='text-xs'>xurlBaseUrl: {xurlBaseUrl(shop_id)}</div>} */}
-            {paymentItems.length>0 ? 
+            <div onClick={()=>window.open(`${xurlBaseUrl(shop_id)}/info`,'_blank')} className="link-common">{xurlBaseUrl(shop_id)}/info</div>
+            {xurlBaseUrl(shop_id) && <div className='text-xs'>xurlBaseUrl: {xurlBaseUrl(shop_id)}</div>}
+            {customerAccounts.length>0 ? 
                 // <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
                 <div className='flex flex-row justify-center'>
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>{listItems}</div>
@@ -141,5 +142,5 @@ export const ShopPaymentItemList = ({shop_id}) => {
 
 
 
-export default PaymentItemList;
+export default CustomerAccountList;
 

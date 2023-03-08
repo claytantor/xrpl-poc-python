@@ -17,6 +17,7 @@ class NameValue(BaseModel):
 class XurlSubjectType(str, Enum):
     payment_item = 'paymentitem'
     order_invoice = 'orderinvoice'
+    customer_account = 'customeraccount'
 
 class XurlSubject(BaseModel):
     type: XurlSubjectType
@@ -29,6 +30,7 @@ class XurlVerbType(str, Enum):
     no_op = 'noop'
     notify = 'notify'
     carry_on_sign = 'carry'
+    create_account = 'createaccount'
 
 class XurlVerb(BaseModel):
     type: XurlVerbType
@@ -59,6 +61,19 @@ class XurlClient(BaseModel):
     account_id: Optional[str]
 
 
+class XurlInfoSchema(BaseModel):
+    version: str
+    commit_sha: str
+    api_branch: str
+    endpoint: Optional[str]
+    shop_id: Optional[str]
+    shop_name: Optional[str]
+    shop_description: Optional[str]
+    shop_logo: Optional[str]
+    shop_url: Optional[str]
+    shop_email: Optional[str]
+    xurl_user: Optional[str]
+
 
 # ===== base schemas
 class MessageSchema(BaseModel):
@@ -70,6 +85,12 @@ class ApiInfoSchema(BaseModel):
     api_branch: str
     endpoint: Optional[str]
     shop_id: Optional[str]
+    shop_name: Optional[str]
+    shop_description: Optional[str]
+    shop_logo: Optional[str]
+    shop_url: Optional[str]
+    shop_email: Optional[str]
+    customer_account_id: Optional[str]
 
 class OAuth2AuthSchema(BaseModel):
     grant_type: str
