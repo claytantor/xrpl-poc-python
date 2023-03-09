@@ -359,21 +359,21 @@ def get_payment_item_by_id(id:int,
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize())
 
 
-def make_create_account_payload(wallet:Wallet, verb:str):
+def make_create_account_payload(shop_wallet:Wallet, verb:str):
+
     return {
         'txjson': {
-            "Account": wallet.classic_address,
-            "TransactionType": "TrustSet",
-            "Flags": 262144,
-            "SigningPubKey": "",
-            "LimitAmount": "1000000"
+            'TransactionType' : 'Payment',
+            'Destination' : shop_wallet.classic_address,
+            'Amount': str(xrp_to_drops(0.1)),
         },
         "custom_meta": {
             "identifier": f"create_account:{shortuuid.uuid()[:12]}",
-            "blob": json.dumps({'shopid': wallet.shop_id, 'verb': verb}),
-            "instruction": f"Sign to create a customer trustline with shop {wallet.shop_id}"
+            "blob": json.dumps({'shopid': shop_wallet.shop_id, 'verb': verb}),
+            "instruction": f"Sign payment of 0.1 XRP to create a customer account with shop {shop_wallet.shop_id}"
         }
     }
+    
 
 
 def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str, qty:int=1):

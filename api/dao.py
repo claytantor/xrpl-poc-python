@@ -198,7 +198,6 @@ class PaymentItemDao:
     @staticmethod
     def fetch_xurl_by_wallet_and_verbs(db:Session, wallet_id:int, verbs:list[str]):
         verbs = [verb.lower() for verb in verbs]
-        print("++++++++++++++ VERBS ",verbs)
         return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
             PaymentItem.verb.in_(verbs),
             PaymentItem.is_xurl_item == 1)).all()
