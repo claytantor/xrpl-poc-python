@@ -403,7 +403,7 @@ class PaymentItem(Base):
         self.updated_at = dt.now()
 
     def __repr__(self):
-        return f"<PaymentItem(payment_item_id={self.id})>"
+        return f"<PaymentItem(id={self.id})>"
 
     def to_dict(self):
         return self.serialize()

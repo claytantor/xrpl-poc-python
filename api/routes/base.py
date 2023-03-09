@@ -330,7 +330,7 @@ def delete_payment_item_by_id(id:int,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, payment_item_id=id, wallet_id=wallet.id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, id=id, wallet_id=wallet.id)
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
 
@@ -350,8 +350,8 @@ def get_payment_item_by_id(id:int,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.id, payment_item_id=id)
-    # payment_item = PaymentItemDao.fetch_by_id(db, payment_item_id=id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.id, id=id)
+
     
     if payment_item is None:
         return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "payment item not found"})
@@ -386,7 +386,7 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
     
     payment_request_dict = {
         'type': 'payment_item',
-        'payment_item_id': payment_item.id,       
+        'id': payment_item.id,       
         'xrp_quote': xrp_price,
         'fiat_i8n_currency': payment_item.fiat_i8n_currency,
         'fiat_i8n_price': payment_item.fiat_i8n_price,
@@ -663,7 +663,7 @@ def _make_xurl_payload(version:XurlVersion,
 
     if subject == XurlSubjectType.payment_item:
         ulogger.info(f"==== xurl payment_item: {subjectid}")
-        payment_item = db.query(PaymentItem).filter_by(payment_item_id=int(subjectid)).first()
+        payment_item = db.query(PaymentItem).filter_by(id=int(subjectid)).first()
         # # get the wallet for this payment item
         wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
         if wallet is None:

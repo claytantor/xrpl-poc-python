@@ -278,7 +278,7 @@ class PaymentItemSchema(BaseModel):
             "id": 3,
             "data_url": "https://s3.us-west-2.amazonaws.com/dev.xurlpay.org/uploaded_images/65c74114-c2c9-444b-9c6f-a579123fa77e.png"
         }],
-        "payment_item_id": 3,
+        "id": 3,
         "name": "Tootsie Roll Chocolate Midgees",
         "description": "Tootsie Roll Chocolatey Twist Midgees Resealable Standup Bag, Peanut Free, Gluten Free original, Allergy Friendly, Mini Midgees",
         "sku_id": "bd209ac51b",
