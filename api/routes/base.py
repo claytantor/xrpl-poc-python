@@ -416,7 +416,7 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
 def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:XurlVerbType, db: Session):
 
     # # get the wallet for this payment item
-    wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
+    wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
 
@@ -665,7 +665,7 @@ def _make_xurl_payload(version:XurlVersion,
         ulogger.info(f"==== xurl payment_item: {subjectid}")
         payment_item = db.query(PaymentItem).filter_by(id=int(subjectid)).first()
         # # get the wallet for this payment item
-        wallet = db.query(Wallet).filter_by(wallet_id=payment_item.wallet_id).first()
+        wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
         if wallet is None:
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
         
