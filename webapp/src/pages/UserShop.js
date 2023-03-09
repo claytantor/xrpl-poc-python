@@ -25,6 +25,7 @@ const CreateCustomerAccountModal = ({ xummState, showModal, setShowModal, shop_i
             <div className="flex flex-row justify-center bg-white w-96 p-3 rounded-b-lg">
                 <XummQrCode url={xumm_url} />
             </div>
+            <div className="p-1 break-words">{xumm_url}</div>
             <div onClick={()=>setShowModal(false)} className="btn-common">Cancel</div>
           </div>
         </div>

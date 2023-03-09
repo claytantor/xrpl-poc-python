@@ -674,6 +674,17 @@ def _make_xurl_payload(version:XurlVersion,
             qty = int(request.query_params['qty'])
         
         return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
+    elif subject == XurlSubjectType.customer_account:
+        ulogger.info(f"==== xurl customer_account: {subjectid}")
+        customer_account = db.query(CustomerAccount).filter_by(id=int(subjectid)).first()
+        # # get the wallet for this payment item
+        wallet = db.query(Wallet).filter_by(id=customer_account.wallet_id).first()
+        if wallet is None:
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "customer account wallet not found"})        
+
+        
+        #wallet:Wallet, verb:str
+        return make_create_account_payload(wallet=wallet, verb=verb)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
