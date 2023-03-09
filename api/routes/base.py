@@ -708,12 +708,12 @@ def xumm_xapp(xAppStyle:str,
     ulogger.info(f"==== xAppNavigateData:\n{xAppNavigateData}")
 
     # now get the xurl
-    if xAppNavigateData['xurl'] is None:
+    if xAppNavigateData['uri'] is None:
         # not an xurlpay transaction
         return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
     
-    ulogger.info(f"==== xurl:{xAppNavigateData['xurl']}")
-    xurl = parse_xurl(xAppNavigateData['xurl'])
+    ulogger.info(f"==== xurl: {xAppNavigateData['uri']}")
+    xurl = parse_xurl(xAppNavigateData['uri'])
     xumm_payload = _make_xurl_payload(
         version=xurl.version, 
         subject=xurl.subject_type, 
