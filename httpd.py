@@ -34,9 +34,9 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
 
             body = None
             logger.debug('headers: %s', self.headers)
-            logger.debug('hostname: %s', self.headers['host'])
+            logger.debug('hostname: %s', self.headers['shophost'])
 
-            host_name = self.headers['host']
+            host_name = self.headers['shophost']
             host_parts = host_name.split(':')
             host_w = host_parts[0].split('.')
             
