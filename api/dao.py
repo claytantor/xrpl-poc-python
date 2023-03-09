@@ -52,6 +52,7 @@ class WalletDao:
         logger.info("WalletDao.create: %s", d_v)
         db_item = Wallet(classic_address=d_v['classic_address'])
         db_item.shop_id = str(uuid.uuid4()).replace('-', '')[:8]
+        db_item.shop_description = d_v['classic_address']
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
