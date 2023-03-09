@@ -1,4 +1,5 @@
 import os
+import uuid
 from http.client import HTTPException
 from fastapi import FastAPI
 from sqlalchemy import create_engine, desc, and_, or_, select
@@ -50,6 +51,7 @@ class WalletDao:
         d_v = item.dict()
         logger.info("WalletDao.create: %s", d_v)
         db_item = Wallet(classic_address=d_v['classic_address'])
+        db_item.shop_id = str(uuid.uuid4()).replace('-', '')[:8]
         db.add(db_item)
         db.commit()
         db.refresh(db_item)
