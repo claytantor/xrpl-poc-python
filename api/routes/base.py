@@ -359,7 +359,7 @@ def get_payment_item_by_id(id:int,
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payment_item, shop_id=wallet.shop_id).serialize())
 
 
-def make_create_account_payload(shop_wallet:Wallet, verb:str):
+def make_create_account_payload(xurl:Xurl, shop_wallet:Wallet, verb:str):
 
     return {
         'txjson': {
@@ -369,14 +369,20 @@ def make_create_account_payload(shop_wallet:Wallet, verb:str):
         },
         "custom_meta": {
             "identifier": f"create_account:{shortuuid.uuid()[:12]}",
-            "blob": json.dumps({'shopid': shop_wallet.shop_id, 'verb': verb}),
+            "blob": json.dumps({'shopid': shop_wallet.shop_id, 'xurl': xurl.to_xurl()}),
             "instruction": f"Sign payment of 0.1 XRP to create a customer account with shop {shop_wallet.shop_id}"
         }
     }
     
 
 
-def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str, qty:int=1):
+def make_payment_item_payload(
+        xurl:Xurl, 
+        payment_item:PaymentItem, 
+        wallet:Wallet):
+
+    ## @TODO: support qty
+    qty = 1
 
     ulogger.info(f"get_xrp_price {payment_item.fiat_i8n_currency} {payment_item.fiat_i8n_price}")
     rates = sdk.get_rates(payment_item.fiat_i8n_currency).to_dict()
@@ -393,7 +399,7 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
         'request_hash': shortuuid.uuid(),
         'network_endpoint': config['XRP_NETWORK_ENDPOINT'],
         'network_type': config['XRP_NETWORK_TYPE'], 
-        'verb': verb     
+        'xurl': xurl.to_xurl()     
     }
 
     if qty > 1:
@@ -413,25 +419,27 @@ def make_payment_item_payload(payment_item:PaymentItem, wallet:Wallet, verb:str,
     }
 
 
-def make_xumm_payment_item_payload_response(payment_item:PaymentItem, verb:XurlVerbType, db: Session):
+# def make_xumm_payment_item_payload_response(xurl:Xurl, payment_item:PaymentItem, db: Session):
 
-    # # get the wallet for this payment item
-    wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
-    if wallet is None:
-        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
+#     # # get the wallet for this payment item
+#     wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
+#     if wallet is None:
+#         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
 
-    created = sdk.payload.create(make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb))
-    xumm_payload = created.to_dict()
-    p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                            wallet_id=wallet.id,
-                            payload_uuidv4=xumm_payload['uuid'])
+#     created = sdk.payload.create(
+#         make_payment_item_payload(
+#         xurl=xurl, payment_item=payment_item, wallet=wallet))
+#     xumm_payload = created.to_dict()
+#     p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+#                             wallet_id=wallet.id,
+#                             payload_uuidv4=xumm_payload['uuid'])
 
-    db.add(p_xumm_payload)
-    db.commit()
+#     db.add(p_xumm_payload)
+#     db.commit()
 
-    # return xumm_payload
-    ulogger.info(f"xumm_payload:{xumm_payload}")
-    return RedirectResponse(xumm_payload['next']['always'])
+#     # return xumm_payload
+#     ulogger.info(f"xumm_payload:{xumm_payload}")
+#     return RedirectResponse(xumm_payload['next']['always'])
 
 
 @router.post('/payment_item')
@@ -675,11 +683,13 @@ def _make_xurl_payload(
         if wallet is None:
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "payment item wallet not found"})
         
-        qty=1
-        if 'qty' in request.query_params:
-            qty = int(request.query_params['qty'])
+        # qty=1
+        # if 'qty' in request.query_params:
+        #     qty = int(request.query_params['qty'])
         
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=xurl.verb_type, qty=qty)
+        return make_payment_item_payload(
+            xurl=xurl, payment_item=payment_item, wallet=wallet)
+    
     elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
 
         # get the shop id from the xurl

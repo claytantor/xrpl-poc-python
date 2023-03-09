@@ -1,5 +1,5 @@
 # content of test_sample.py
-from api.schema import XurlSubjectType, XurlVerbType, XurlVersion
+from api.schema import XurlSubjectType, XurlType, XurlVerbType, XurlVersion
 from api.utils import parse_xurl, parse_shop_url
 import logging
 
@@ -24,6 +24,7 @@ def test_parse_xurl(caplog):
     shop_id = parse_shop_url(shop_url=base_url)
 
     assert xurl_p.base_url == "https://391a919a.shops.xurlpay.org/v1/xurl"
+    assert xurl_p.xurl_type == XurlType.payload
     assert xurl_p.version == XurlVersion("v1")
     assert xurl_p.subject_type == XurlSubjectType.payment_item
     assert xurl_p.subject_id == "1"
@@ -31,3 +32,4 @@ def test_parse_xurl(caplog):
     assert xurl_p.parameters[0].name == "qty"
     assert xurl_p.parameters[0].value == "3"
     assert shop_id == "391a919a"
+    assert xurl_p.to_xurl() == "xurl://payload/paymentitem/1/noop?qty=3"

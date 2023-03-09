@@ -40,9 +40,13 @@ class XurlVerb(BaseModel):
     def __init__(self, **data: Any) -> None: 
         super().__init__(**data)
 
-
+class XurlType(str, Enum):
+    payload = 'payload'
+    verb = 'verb'
+    subject = 'subject'
 
 class Xurl(BaseModel):
+    xurl_type: XurlType
     base_url: str
     version: XurlVersion
     subject_type: XurlSubjectType
@@ -52,6 +56,21 @@ class Xurl(BaseModel):
 
     def __init__(self, **data: Any) -> None: 
         super().__init__(**data)
+
+    def to_xurl(self)->str:
+        if self.xurl_type == XurlType.payload:
+            xurl = f"xurl://{self.xurl_type}/{self.subject_type}/{self.subject_id}/{self.verb_type}"
+            r_parameters = [f"{p.name}={p.value}" for p in self.parameters]
+            r_parameters = "&".join(r_parameters)
+            if self.parameters:
+                xurl = f"{xurl}?{r_parameters}"
+            return xurl
+        elif self.xurl_type == XurlType.verb:
+            return f"xurl://{self.xurl_type}/{self.verb_type}"
+        elif self.xurl_type == XurlType.subject:
+            return f"xurl://{self.xurl_type}/{self.subject_type}/{self.subject_id}"
+        else:
+            raise Exception(f"Unknown xurl type: {self.xurl_type}")
 
 class XurlClient(BaseModel):
     # https://rapaygo.com/.well-known/xurl.json?name=b9bcd

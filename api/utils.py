@@ -58,6 +58,7 @@ def parse_xurl(base_url:str, xurl: str)->Xurl:
     logger.info(f"parameters: {parameters}")
 
     return Xurl(
+        xurl_type=prefix,
         base_url=base_url,
         version=XurlVersion.v1,
         subject_type=XurlSubjectType(subject_type), 

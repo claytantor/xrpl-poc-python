@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
 
-from api.schema import XurlInfoSchema, XurlSubject, XurlSubjectType, XurlVerb, XurlVerbType, XurlVersion
+from api.schema import Xurl, XurlInfoSchema, XurlSubject, XurlSubjectType, XurlType, XurlVerb, XurlVerbType, XurlVersion
 from api.models import InventoryItem, PaymentItem, Wallet
 from api.decorators import determine_xurl_wallet
 from api.dao import CustomerAccountDao, PaymentItemDao, get_db
@@ -59,10 +59,8 @@ def xurl_info(request: Request,
     )
 
 
-def _make_xurl_payload(version:XurlVersion,
-    subject:XurlSubjectType,
-    subjectid:int,
-    verb:XurlVerbType,
+def _make_xurl_payload(
+    xurl: Xurl,
     request: Request,
     db: Session = Depends(get_db)):
 
@@ -73,9 +71,9 @@ def _make_xurl_payload(version:XurlVersion,
 
     ulogger.info(f"==== query params: {request.query_params}")
 
-    if subject == XurlSubjectType.payment_item:
-        ulogger.info(f"==== xurl payment_item: {subjectid}")
-        payment_item = db.query(PaymentItem).filter_by(id=int(subjectid)).first()
+    if xurl.subject_type == XurlSubjectType.payment_item:
+        ulogger.info(f"==== xurl payment_item: {xurl.subject_id} {xurl.verb_type}")
+        payment_item = db.query(PaymentItem).filter_by(id=int(xurl.subject_id)).first()
         # # get the wallet for this payment item
         wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
         if wallet is None:
@@ -85,15 +83,16 @@ def _make_xurl_payload(version:XurlVersion,
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
         
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
-    elif subject == XurlSubjectType.customer_account and verb == XurlVerbType.create_account:
+        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=xurl.verb_type, qty=qty)
+    
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
 
         # get the wallet for this 
         shop_wallet = db.query(Wallet).filter_by(shop_id=request.headers['x-xurl-shopid']).first()
         if shop_wallet is None:
             return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "shop wallet not found"})
 
-        ulogger.info(f"==== xurl customer_account: {subjectid}")
+        ulogger.info(f"==== xurl customer_account: {xurl.subject_type}")
 
         new_customer_account = request.headers['x-xurl-user']
         if new_customer_account is None:
@@ -130,6 +129,18 @@ def xurl_gen_payload(
     verb:XurlVerbType,
     request: Request,
     db: Session = Depends(get_db)):
+
+    xurl_base_url = f"{config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid'])}"
+
+    xurl = Xurl(
+        xurl_type=XurlType.payload,
+        base_url=xurl_base_url, 
+        version=XurlVersion.v1,
+        subject_type=subject,
+        subject_id=subjectid,
+        verb_type=verb,
+        query_params=[])
+
 
     # get the user from request header
     customer_account = None

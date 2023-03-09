@@ -73,6 +73,33 @@ const PaymentItemPayload = ({payload}) => {
   ) 
 };
 
+const CreateAccountPayload = ({payload}) => {
+  return (
+    <div key={payload.payload_uuidv4} className="rounded border-0 bg-slate-100 mb-2">
+        <div className="flex flex-row mb-2 justify-between w-full bg-slate-200 rounded-t">
+                   
+            <div className="flex items-center p-1">
+              <div className="bg-pink-200 rounded-md p-1 m-1 text-slate-600 font-bold">Customer Account Creation</div>
+              <span className="ml-2">{payload.txid}</span>
+              <div className="flex flex-row justify-center">
+                {!payload.is_signed && <div className="m-1 mr-3 h-6 rounded bg-gray-400 p-1 text-xs font-bold text-white text-center">
+                PENDING</div>}
+                {payload.is_signed &&  <div className="m-1 mr-3 h-6 rounded bg-green-600 p-1 text-xs font-bold text-white text-center">
+                  SIGNED</div>} 
+              </div>
+              {payload.is_signed && payload.txid && <div className="flex flex-row justify-center text-2xl">
+              <GoLinkExternal className="hover:text-pink-600" 
+                onClick={() => {window.location.href = `${xummConfig.xrp_endpoint_explorer}/transactions/${payload.txid}`}}/>
+            </div>}
+          </div>
+        </div>
+        <div className="font-mono text-xs break-all p-1">
+          {JSON.stringify(payload)}
+        </div>
+    </div>
+  ) 
+};
+
 const PaymentRequestPayload = ({payload}) => {
 
   let payloadCustomMeta = JSON.parse(payload.webhook_body.custom_meta.blob.replaceAll("\\",""));
@@ -112,13 +139,17 @@ const PayloadItem = ({payload}) => {
     
     if (payload.webhook_body) {
 
-      switch (payload.webhook_body.custom_meta.identifier.split(":")[0]) {
+      const pt = payload.webhook_body.custom_meta.identifier.split(":")[0];
+
+      switch (pt) {
         case "payment_item":
             return <PaymentItemPayload payload={payload} />
         case "payment_request":
             return <PaymentRequestPayload payload={payload} />
+        case "create_account":
+            return <CreateAccountPayload payload={payload} />
         default:
-            return <div>Unknown payload type</div>
+            return <BasePayload payload={payload} />
       }
     } else {
       return <BasePayload payload={payload} />
