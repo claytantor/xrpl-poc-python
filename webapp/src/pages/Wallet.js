@@ -52,6 +52,9 @@ const Wallet = ({xummState}) => {
             WalletService.getXrpPrice(userCurrency).then((xrpPrice) => {
                 setXrpPrice(xrpPrice.data.XRP);
             });
+
+            useStore.setState({shop_id: walletInfo.data.shop_id});
+
         }).catch((error) => {
             console.log("error", error, error.code, error.message, error.response.status);
             if(error.response && error.response.status === 404) {

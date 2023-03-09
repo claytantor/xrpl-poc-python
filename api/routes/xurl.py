@@ -57,7 +57,7 @@ def xurl_info(request: Request,
     # get the user from request header
     customer_account = None
     if 'x-xurl-user' in request.headers:
-        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']}")
+        ulogger.debug(f"=== x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']}")
 
         # try to lookup the user wallet
         try:

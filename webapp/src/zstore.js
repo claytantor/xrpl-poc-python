@@ -15,7 +15,12 @@ export const useStore = create(
       setUserCurrency: (userCurrency) => set({
         userCurrency: userCurrency
       }),
-
+      //========== shop_id ====================================
+      shop_id: null,
+      getShopId: () => get({ shop_id }),
+      setShopId: (shop_id) => set({
+        shop_id: shop_id
+      }),
       //========== ITEM CART ====================================
       paymentItemCart: [],
       emptyCart: () => set({ paymentItemCart: [] }),
@@ -91,10 +96,5 @@ export const useStore = create(
 );
 
 
-const useBearStore = create((set) => ({
-  bears: 0,
-  increasePopulation: () => set((state) => ({ bears: state.bears + 1 })),
-  removeAllBears: () => set({ bears: 0 }),
-}))
 
 

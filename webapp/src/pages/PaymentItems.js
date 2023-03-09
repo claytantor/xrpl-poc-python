@@ -85,7 +85,7 @@ const PaymentItemUploadModal = ({showModal, setShowModal}) => {
 
 };
 
-const PaymentItems = ({ xummState}) => {
+const PaymentItems = ({xummState}) => {
 
   const navigate = useNavigate();
 
@@ -93,6 +93,7 @@ const PaymentItems = ({ xummState}) => {
 
   const paymentItemCart = useStore(state => state.paymentItemCart);
   const getCartSize = useStore(state => state.getCartSize);
+  const shop_id = useStore(state => state.shop_id);
   
   return (
     <Page withSidenav={true} 
@@ -117,7 +118,7 @@ const PaymentItems = ({ xummState}) => {
           <HelpAlert 
             helpLink='/docs/#/paymentItems'>Payment items are your "Scan to pay" items that can be used to automatically receive payment with no activity required for the receiver. You can also use paymentItems to collect "ad hoc" payments using the cart.</HelpAlert>
         </div>
-        <div><PaymentItemList/></div>
+        <div><PaymentItemList shop_id={shop_id}/></div>
       </div>
       <div><PaymentItemUploadModal showModal={showModalLocal} setShowModal={setShowModalLocal}/></div>
 

@@ -18,7 +18,7 @@ const Spinner = ({animation}) => {
 };
 
 
-const PaymentItemList = () => {
+const PaymentItemList = ({shop_id}) => {
 
     let navigate = useNavigate();
 
@@ -66,6 +66,7 @@ const PaymentItemList = () => {
     const listItems = paymentItems.map((paymentItem) => (
         <div className="w-64 p-2 m-1 rounded" key={paymentItem.payment_item_id}>  
             <PaymentItemSummary
+                shop_id={shop_id}
                 handleDeleteCallback={deletePaymentItem}
                 paymentItem={paymentItem}/>       
         </div>    

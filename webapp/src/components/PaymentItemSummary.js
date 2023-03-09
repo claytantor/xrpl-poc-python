@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import {currencyLang} from '../env';
+import {currencyLang, xurlBaseUrl} from '../env';
 
 
 export const ShopPaymentItemSummary = ({paymentItem, shop_id}) => {
@@ -47,6 +47,7 @@ export const ShopPaymentItemSummary = ({paymentItem, shop_id}) => {
 };
 
 const PaymentItemSummary = ({ 
+    shop_id,
     paymentItem,
     handleDeleteCallback
     }) => {
@@ -55,6 +56,9 @@ const PaymentItemSummary = ({
     if (paymentItem.inventory_item.images.length>0) {
         image = paymentItem.inventory_item.images[0]['data_url']
     }
+
+    //`http://8d810387b7.localhost:5005/xurlapi/xurl/subject/paymentitem/${paymentItem.id}`
+    const pi_shop_url = `${xurlBaseUrl(shop_id)}/xurlapi/xurl/subject/paymentitem/${paymentItem.id}`;
 
     let navigate = useNavigate();
     
@@ -93,7 +97,7 @@ const PaymentItemSummary = ({
                         <button className="btn-common-pink text-xs" onClick={()=>handleDelete()}>
                             {/* <Trash className='w-3 mr-1'/> */}Delete</button>   
 
-                        {paymentItem.is_xurl_item && <button className="btn-common-pink text-xs" onClick={()=>window.open(`http://8d810387b7.localhost:5005/xurlapi/xurl/subject/paymentitem/${paymentItem.id}`,'_blank')}>
+                        {paymentItem.is_xurl_item && <button className="btn-common-pink text-xs" onClick={()=>window.open(pi_shop_url,'_blank')}>
                             xurl</button>}                    
 
                     </div>
