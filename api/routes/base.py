@@ -700,7 +700,7 @@ def _make_xurl_payload(
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "shop wallet not found"})       
         
         #wallet:Wallet, verb:str
-        return make_create_account_payload(shop_wallet=shop_wallet, verb=xurl.verb_type)
+        return make_create_account_payload(xurl=xurl, shop_wallet=shop_wallet, verb=xurl.verb_type)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
