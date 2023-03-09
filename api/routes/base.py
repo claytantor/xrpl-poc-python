@@ -680,7 +680,7 @@ def _make_xurl_payload(
             qty = int(request.query_params['qty'])
         
         return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=xurl.verb_type, qty=qty)
-    elif xurl.subject_type == XurlSubjectType.customer_account:
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
 
         # get the shop id from the xurl
         shop_id = parse_shop_url(shop_url=xurl.base_url)
@@ -690,7 +690,7 @@ def _make_xurl_payload(
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "shop wallet not found"})       
         
         #wallet:Wallet, verb:str
-        return make_create_account_payload(wallet=wallet, verb=verb)
+        return make_create_account_payload(wallet=wallet, verb=xurl.verb_type)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
@@ -731,11 +731,7 @@ def xumm_xapp(xAppStyle:str,
     
     ulogger.info(f"==== xurl: {xAppNavigateData['uri']}")
     xurl = parse_xurl(xAppNavigateData['uri_base'], xAppNavigateData['uri'])
-    xumm_payload = _make_xurl_payload(
-        version=xurl.version, 
-        subject=xurl.subject_type, 
-        subjectid=xurl.subject_id, 
-        verb=xurl.verb_type, 
+    xumm_payload = _make_xurl_payload(xurl=xurl,
         request=request, 
         db=db)
     
