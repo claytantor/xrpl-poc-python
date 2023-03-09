@@ -684,13 +684,13 @@ def _make_xurl_payload(
 
         # get the shop id from the xurl
         shop_id = parse_shop_url(shop_url=xurl.base_url)
-        wallet = db.query(Wallet).filter_by(shop_id=shop_id).first()
+        shop_wallet = db.query(Wallet).filter_by(shop_id=shop_id).first()
 
-        if wallet is None:
+        if shop_wallet is None:
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "shop wallet not found"})       
         
         #wallet:Wallet, verb:str
-        return make_create_account_payload(wallet=wallet, verb=xurl.verb_type)
+        return make_create_account_payload(shop_wallet=shop_wallet, verb=xurl.verb_type)
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")
 
