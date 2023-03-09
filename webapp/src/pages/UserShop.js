@@ -11,7 +11,7 @@ import { xurlBaseUrl } from "../env";
 
 const CreateCustomerAccountModal = ({ xummState, showModal, setShowModal, shop_id}) => {
 
-  const xumm_url = `https://xumm.app/detect/xapp:sandbox.32849dc99872?uri_base=http://${shop_id}.localhost:5005/xurlapi/xurl&uri=xurl://payload/customeraccount/0/createaccount`;
+  const xumm_url = `https://xumm.app/detect/xapp:sandbox.32849dc99872?uri_base=${xurlBaseUrl(shop_id)}/xurlapi/xurl&uri=xurl://payload/customeraccount/0/createaccount`;
 
   return (<>
    {showModal && 

@@ -713,7 +713,7 @@ def xumm_xapp(xAppStyle:str,
         return RedirectResponse(f'https://dev.xurlpay.org/xapp?xAppToken={xAppToken}')
     
     ulogger.info(f"==== xurl: {xAppNavigateData['uri']}")
-    xurl = parse_xurl(xAppNavigateData['uri'])
+    xurl = parse_xurl(xAppNavigateData['uri_base'], xAppNavigateData['uri'])
     xumm_payload = _make_xurl_payload(
         version=xurl.version, 
         subject=xurl.subject_type, 

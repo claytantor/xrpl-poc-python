@@ -15,14 +15,15 @@ def test_answer():
 
 def test_parse_xurl(caplog):
     caplog.set_level(logging.DEBUG)
-    xurl="xurl://devapi.xurlpay.org/v1/xurl/v1/paymentitem/3/buynow?qty=3"
+    base_url = "https://391a919a.shops.xurlpay.org/v1/xurl"
+    xurl="xurl://payload/paymentitem/1/noop?qty=3"
     logger.info(f"XURL: {xurl}")
-    xurl_p = parse_xurl(xurl=xurl)
+    xurl_p = parse_xurl(base_url=base_url,xurl=xurl)
     logger.info(f"XURL parsed: {xurl_p}")
-    assert xurl_p.base_url == "devapi.xurlpay.org/v1/xurl"
+    assert xurl_p.base_url == "https://391a919a.shops.xurlpay.org/v1/xurl"
     assert xurl_p.version == XurlVersion("v1")
     assert xurl_p.subject_type == XurlSubjectType.payment_item
-    assert xurl_p.subject_id == "3"
-    assert xurl_p.verb_type == XurlVerbType.buy_now
+    assert xurl_p.subject_id == "1"
+    assert xurl_p.verb_type == XurlVerbType.no_op
     assert xurl_p.parameters[0].name == "qty"
     assert xurl_p.parameters[0].value == "3"

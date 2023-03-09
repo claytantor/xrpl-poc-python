@@ -1,0 +1,1 @@
+APP_CONFIG=env/local/xrpl-poc-python-app.env pytest -q api/tests/test_*.py -o log_cli=true
