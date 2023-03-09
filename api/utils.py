@@ -23,6 +23,14 @@ def create_rotating_log(path, logger, level=logging.INFO, maxBytes=1000000, back
     #     time.sleep(1.5)
 
 
+def parse_shop_url(shop_url: str)->str:
+    logger.info(f"PARSING SHOP URL: {shop_url}")
+    shop_url = shop_url.split("/")
+    shop_host = shop_url[2]
+    shop_id = shop_host.split(".")[0]
+    logger.info(f"shop_id: {shop_id}")
+    return shop_id
+
 def parse_xurl(base_url:str, xurl: str)->Xurl:
 
     logger.info(f"PARSING XURL: {xurl}")

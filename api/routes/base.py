@@ -22,12 +22,12 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import CustomerSchema, MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
+from api.schema import CustomerSchema, MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, Xurl, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
 from api.models import CustomerAccount, InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
 from api.dao import CustomerAccountDao, InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
-from api.utils import parse_xurl
+from api.utils import parse_shop_url, parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
 
 import logging
@@ -647,10 +647,16 @@ def _process_payload_verb(payload: XummPayload,
         ulogger.info(f"==== no_op verb, ignoring")
 
 
-def _make_xurl_payload(version:XurlVersion,
-    subject:XurlSubjectType,
-    subjectid:int,
-    verb:XurlVerbType,
+# def _make_xurl_payload(
+#     version:XurlVersion,
+#     subject:XurlSubjectType,
+#     subjectid:int,
+#     verb:XurlVerbType,
+#     request: Request,
+#     db: Session = Depends(get_db)):
+
+def _make_xurl_payload(
+    xurl:Xurl,
     request: Request,
     db: Session = Depends(get_db)):
 
@@ -661,9 +667,9 @@ def _make_xurl_payload(version:XurlVersion,
 
     ulogger.info(f"==== query params: {request.query_params}")
 
-    if subject == XurlSubjectType.payment_item:
-        ulogger.info(f"==== xurl payment_item: {subjectid}")
-        payment_item = db.query(PaymentItem).filter_by(id=int(subjectid)).first()
+    if xurl.subject_type == XurlSubjectType.payment_item:
+        ulogger.info(f"==== xurl payment_item: {xurl.subject_id}")
+        payment_item = db.query(PaymentItem).filter_by(id=int(xurl.subject_id)).first()
         # # get the wallet for this payment item
         wallet = db.query(Wallet).filter_by(id=payment_item.wallet_id).first()
         if wallet is None:
@@ -673,15 +679,15 @@ def _make_xurl_payload(version:XurlVersion,
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
         
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=verb, qty=qty)
-    elif subject == XurlSubjectType.customer_account:
-        ulogger.info(f"==== xurl customer_account: {subjectid}")
-        customer_account = db.query(CustomerAccount).filter_by(id=int(subjectid)).first()
-        # # get the wallet for this payment item
-        wallet = db.query(Wallet).filter_by(id=customer_account.wallet_id).first()
-        if wallet is None:
-            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "customer account wallet not found"})        
+        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=xurl.verb_type, qty=qty)
+    elif xurl.subject_type == XurlSubjectType.customer_account:
 
+        # get the shop id from the xurl
+        shop_id = parse_shop_url(shop_url=xurl.base_url)
+        wallet = db.query(Wallet).filter_by(shop_id=shop_id).first()
+
+        if wallet is None:
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "shop wallet not found"})       
         
         #wallet:Wallet, verb:str
         return make_create_account_payload(wallet=wallet, verb=verb)
@@ -730,7 +736,8 @@ def xumm_xapp(xAppStyle:str,
         subject=xurl.subject_type, 
         subjectid=xurl.subject_id, 
         verb=xurl.verb_type, 
-        request=request, db=db)
+        request=request, 
+        db=db)
     
     # look up the wallet based on the destination address
     wallet = db.query(Wallet).filter_by(classic_address=xumm_payload['txjson']['Destination']).first()
