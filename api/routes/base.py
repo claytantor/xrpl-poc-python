@@ -734,20 +734,38 @@ def xumm_xapp(xAppStyle:str,
     xumm_payload = _make_xurl_payload(xurl=xurl,
         request=request, 
         db=db)
+    ulogger.info(f"==== xumm_payload: {xumm_payload}")
     
-    # look up the wallet based on the destination address
-    wallet = db.query(Wallet).filter_by(classic_address=xumm_payload['txjson']['Destination']).first()
-    if wallet is None:
-        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "wallet not found"})
-    
-    created = sdk.payload.create(xumm_payload)
-    xumm_payload = created.to_dict()
-    p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                            wallet_id=wallet.id,
-                            payload_uuidv4=xumm_payload['uuid'])
+    # look up the wallet based on the destination address if the verb is a payment
+    if xurl.subject_type == XurlSubjectType.payment_item:
+        wallet = db.query(Wallet).filter_by(classic_address=xumm_payload['txjson']['Destination']).first()
+        if wallet is None:
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "wallet not found"})
+        
+        created = sdk.payload.create(xumm_payload)
+        xumm_payload = created.to_dict()
+        p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                                wallet_id=wallet.id,
+                                payload_uuidv4=xumm_payload['uuid'])
 
-    db.add(p_xumm_payload)
-    db.commit()
+        db.add(p_xumm_payload)
+        db.commit()
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
+        # get the shop id from the xurl
+        shop_id = parse_shop_url(shop_url=xurl.base_url)
+        wallet = db.query(Wallet).filter_by(shop_id=shop_id).first()
+
+        if wallet is None:
+            return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "wallet not found"})
+        
+        created = sdk.payload.create(xumm_payload)
+        xumm_payload = created.to_dict()
+        p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
+                                wallet_id=wallet.id,
+                                payload_uuidv4=xumm_payload['uuid'])
+
+        db.add(p_xumm_payload)
+        db.commit()
 
     # return xumm_payload
     ulogger.info(f"xumm_payload:{xumm_payload}")
