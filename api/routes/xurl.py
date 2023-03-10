@@ -27,6 +27,25 @@ config = {
 
 router = APIRouter()
 
+@router.get("/xurl", response_model=XurlInfoSchema)
+@determine_xurl_wallet
+def xurl_base(request: Request, db: Session = Depends(get_db)):
+    return {
+        "version": "v1",
+        "uris": {
+            "xurl://info": "Information about this xurl server",
+            "xurl://verb": "A list of verbs supported by this xurl server",
+            "xurl://verb/{verb}": "Information about a specific verb",
+            "xurl://verb/subject/{subject}": "A list of verbs supported by a specific subject type",
+            "xurl://verb/subject/{subject}/{subjectid}": "A list of verbs supported by a specific subject instance",
+            "xurl://subject": "A list of subject types supported by this xurl server",
+            "xurl://subject/{subject}": "A list all entities of a specific subject type",
+            "xurl://subject/{subject}/{subjectid}": "Detailed information about a specific subject instance",
+            "xurl://payload/{subject}/{subjectid}/{verb}": "Generate a payload for the given subject, subjectid, and verb",
+        }
+    }
+
+
 @router.get("/xurl/info", response_model=XurlInfoSchema)
 @determine_xurl_wallet
 def xurl_info(request: Request,
