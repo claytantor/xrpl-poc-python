@@ -64,6 +64,8 @@ class WalletDao:
     def fetch_by_classic_address(db: Session, classic_address: str):
         return db.query(Wallet).filter(Wallet.classic_address == classic_address).first()
     
+
+    
 #  def fetch_by_name(db: Session,name):
 #      return db.query(Item).filter(Item.name == name).first()
  

@@ -83,7 +83,9 @@ def _make_xurl_payload(
         if 'qty' in request.query_params:
             qty = int(request.query_params['qty'])
         
-        return make_payment_item_payload(payment_item=payment_item, wallet=wallet, verb=xurl.verb_type, qty=qty)
+        return make_payment_item_payload(xurl=xurl, 
+                                         payment_item=payment_item, 
+                                         wallet=wallet)
     
     elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
 
@@ -98,7 +100,7 @@ def _make_xurl_payload(
         if new_customer_account is None:
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="x-xurl-user header required to create account")
 
-        return make_create_account_payload(wallet=shop_wallet, verb=verb)
+        return make_create_account_payload(xurl=xurl, wallet=shop_wallet)
 
         
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail="invalid xurl")

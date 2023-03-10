@@ -9,11 +9,14 @@ import requests
 import json
 import shortuuid 
 import json
+import xrpl
 import base64
 from datetime import datetime as dt, timedelta
 import xumm
 import asyncio
 from PIL import Image
+
+from xrpl.models.requests import Ledger, Tx
 
 from fastapi import APIRouter
 from fastapi import Depends, FastAPI, HTTPException, Request, Form
@@ -30,11 +33,13 @@ from api.dao import CustomerAccountDao, InventoryItemDao, PaymentItemDao, XummPa
 from api.utils import parse_shop_url, parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
 
+
+
+
 import logging
 ulogger = logging.getLogger("uvicorn.error")
 
 router = APIRouter()
-
 
 from api.xqr import generate_qr_code
 from api.serializers import PaymentItemDetailsSerializer
@@ -46,6 +51,10 @@ config = {
     **dotenv_values(os.getenv("APP_CONFIG")),
     **os.environ,  # override loaded values with environment variables
 }
+
+
+xrpl_url = config['XRP_NETWORK_ENDPOINT']
+client = xrpl.clients.JsonRpcClient(xrpl_url)
 
 sdk = xumm.XummSdk(config['XUMM_API_KEY'], config['XUMM_API_SECRET'])
 
@@ -369,7 +378,7 @@ def make_create_account_payload(xurl:Xurl, shop_wallet:Wallet, verb:str):
         },
         "custom_meta": {
             "identifier": f"create_account:{shortuuid.uuid()[:12]}",
-            "blob": json.dumps({'shopid': shop_wallet.shop_id, 'xurl': xurl.to_xurl()}),
+            "blob": json.dumps({'shop_id': shop_wallet.shop_id, 'xurl': xurl.to_xurl()}),
             "instruction": f"Sign payment of 0.1 XRP to create a customer account with shop {shop_wallet.shop_id}"
         }
     }
@@ -551,9 +560,6 @@ def create_customer(
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
-    # customer_wallet = WalletDao.fetch_by_classic_address(db, customer.classic_address)
-
-    # lookup the wallet for the customer
     customer_wallet = WalletDao.fetch_by_classic_address(db, customer.classic_address)
     if customer_wallet is None:
         wallet_c = WalletCreateSchema(classic_address=customer.classic_address)
@@ -647,21 +653,49 @@ def _process_payload_verb(payload: XummPayload,
 
     # determine the verb type from the payload custom_meta
     custom_meta = json.loads(payload_body['custom_meta']['blob'])
-    verb = XurlVerbType(custom_meta['verb'])
-    # ignore no_op verbs
-    if(verb != XurlVerbType.no_op):
-        ulogger.info(f"==== do something with the verb: {verb}")
-    else:
+    tx_id = payload_body['payloadResponse']['txid']
+
+
+    # get the xurl
+    xurl = custom_meta['xurl']
+    shop_id = custom_meta['shop_id']
+    uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", shop_id)}'
+    xurl_p = parse_xurl(base_url=uri_base,xurl=xurl)
+    
+    if xurl_p.verb_type == XurlVerbType.no_op:
         ulogger.info(f"==== no_op verb, ignoring")
+        return
+    elif xurl_p.verb_type == XurlVerbType.create_account:
+        ulogger.info(f"==== create_account verb, processing")
+        # _process_create_account_verb(payload=payload, xurl=xurl_p, db=db)
 
+        # get the tx from the blockchain
+        onchain_tx = client.request(Tx(
+            transaction=tx_id
+        ))
 
-# def _make_xurl_payload(
-#     version:XurlVersion,
-#     subject:XurlSubjectType,
-#     subjectid:int,
-#     verb:XurlVerbType,
-#     request: Request,
-#     db: Session = Depends(get_db)):
+        ulogger.info(f"==== onchain_tx: {onchain_tx}")
+
+        # get the destination address
+        customer_account_address = onchain_tx['Destination']
+        shop_wallet = WalletDao.fetch_by_classic_address(db=db, classic_address=onchain_tx['Account'])
+        if shop_wallet is not None:
+            pass
+            customer_wallet = WalletDao.fetch_by_classic_address(db, customer_account_address)
+            if customer_wallet is None:
+                wallet_c = WalletCreateSchema(classic_address=customer_account_address)
+                account_wallet = WalletDao.create(db=db, item=wallet_c)
+            else:
+                account_wallet = customer_wallet
+
+            # see if the customer already exists
+            customer = CustomerAccountDao.fetch_by_account_wallet_id(db, account_wallet.id)
+            if customer is None:          
+                customer_account = CustomerAccount()
+                customer_account.account_wallet_id = account_wallet.id
+                customer_account.wallet_id = shop_wallet.id
+                customer_account = CustomerAccountDao.create(db=db, customer_account=customer_account)
+
 
 def _make_xurl_payload(
     xurl:Xurl,
