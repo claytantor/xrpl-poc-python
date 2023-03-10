@@ -680,9 +680,9 @@ async def _process_payload_verb(payload: XummPayload,
         ulogger.info(f"==== onchain_tx: {onchain_tx}")
 
         # get the destination address
-        customer_account_address = onchain_tx['Destination']
-        shop_wallet = WalletDao.fetch_by_classic_address(db=db, classic_address=onchain_tx['Account'])
-        if shop_wallet is not None:
+        customer_account_address = onchain_tx['result']['Destination']
+        shop_wallet = WalletDao.fetch_by_classic_address(db=db, classic_address=onchain_tx['result']['Account'])
+        if onchain_tx['status'] == 'success' and shop_wallet is not None:
             pass
             customer_wallet = WalletDao.fetch_by_classic_address(db, customer_account_address)
             if customer_wallet is None:
