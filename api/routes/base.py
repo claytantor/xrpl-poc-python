@@ -643,7 +643,7 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 #     except Exception as e:
 #         app.log_exception(f"==== slack webhook error: {e}")
 
-def _process_payload_verb(payload: XummPayload,
+async def _process_payload_verb(payload: XummPayload,
     db: Session = Depends(get_db)):
 
     ulogger.info(f"==== _process_payload_verb from payload.")
@@ -670,7 +670,7 @@ def _process_payload_verb(payload: XummPayload,
         # _process_create_account_verb(payload=payload, xurl=xurl_p, db=db)
 
         # get the tx from the blockchain
-        onchain_tx = client.request_impl(Tx(
+        onchain_tx = await client.request_impl(Tx(
             transaction=tx_id
         ))
 
