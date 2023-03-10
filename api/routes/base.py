@@ -625,7 +625,7 @@ async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
 
             # now take the payload and process it
             ulogger.info("==== xumm webhook payload is signed, processing")
-            _process_payload_verb(payload=payload, db=db)
+            await _process_payload_verb(payload=payload, db=db)
     
     return JSONResponse(status_code=HTTPStatus.OK, content={"message": "ok"})
 
