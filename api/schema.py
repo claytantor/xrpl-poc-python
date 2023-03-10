@@ -60,9 +60,9 @@ class Xurl(BaseModel):
     def to_xurl(self)->str:
         if self.xurl_type == XurlType.payload:
             xurl = f"xurl://{self.xurl_type}/{self.subject_type}/{self.subject_id}/{self.verb_type}"
-            r_parameters = [f"{p.name}={p.value}" for p in self.parameters]
-            r_parameters = "&".join(r_parameters)
             if self.parameters:
+                r_parameters = [f"{p.name}={p.value}" for p in self.parameters]
+                r_parameters = "&".join(r_parameters)
                 xurl = f"{xurl}?{r_parameters}"
             return xurl
         elif self.xurl_type == XurlType.verb:
