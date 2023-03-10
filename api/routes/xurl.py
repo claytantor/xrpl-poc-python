@@ -177,7 +177,8 @@ def xurl_gen_payload(
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
         """
-        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+
+        xurl_p = _make_xurl_payload(xurl=xurl, request=request, db=db)
         ulogger.info(f"==== xurl_p: {xurl_p}")
 
         return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
@@ -186,7 +187,7 @@ def xurl_gen_payload(
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
         """
-        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+        xurl_p = _make_xurl_payload(xurl=xurl, request=request, db=db)
         ulogger.info(f"==== xurl_p: {xurl_p}")
 
         return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
@@ -196,7 +197,7 @@ def xurl_gen_payload(
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
         """
-        xurl_p = _make_xurl_payload(version=XurlVersion.v1, subject=subject, subjectid=subjectid, verb=verb, request=request, db=db)
+        xurl_p = _make_xurl_payload(xurl=xurl, request=request, db=db)
         ulogger.info(f"==== xurl_p: {xurl_p}")
 
         return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
