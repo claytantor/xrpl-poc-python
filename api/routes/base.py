@@ -670,7 +670,7 @@ def _process_payload_verb(payload: XummPayload,
         # _process_create_account_verb(payload=payload, xurl=xurl_p, db=db)
 
         # get the tx from the blockchain
-        onchain_tx = client.request(Tx(
+        onchain_tx = client.request_impl(Tx(
             transaction=tx_id
         ))
 
