@@ -27,7 +27,7 @@ config = {
 
 router = APIRouter()
 
-@router.get("/xurl", response_model=XurlInfoSchema)
+@router.get("/xurl")
 @determine_xurl_wallet
 def xurl_base(request: Request, db: Session = Depends(get_db)):
     return {
