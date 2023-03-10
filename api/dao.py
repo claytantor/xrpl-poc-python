@@ -158,7 +158,7 @@ class CustomerAccountDao:
     
     @staticmethod
     def fetch_by_wallet_id(db:Session, wallet_id:int):
-        return db.query(CustomerAccount).filter(CustomerAccount.account_wallet_id == wallet_id).first()
+        return db.query(CustomerAccount).filter(CustomerAccount.wallet_id == wallet_id).all()
     
     @staticmethod
     def fetch_by_classic_address(db:Session, classic_address:str):

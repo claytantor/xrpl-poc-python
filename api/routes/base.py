@@ -593,7 +593,7 @@ def get_customer_accounts(
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
-    customer_accounts = CustomerAccountDao.fetch_by_wallet_id(db, wallet.id)
+    customer_accounts = CustomerAccountDao.fetch_by_wallet_id(db, wallet_id=wallet.id)
     if customer_accounts is None:
         customer_accounts = []
     return JSONResponse(status_code=HTTPStatus.OK, content=[customer_account.serialize() for customer_account in customer_accounts])
