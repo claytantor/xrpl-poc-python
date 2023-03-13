@@ -56,23 +56,23 @@ def xurl_info(request: Request,
     #endpoint_url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}{request.url.path.replace('//','/').replace('/info', '')}"
 
     # get the user from request header
-    customer_account = None
-    if 'x-xurl-user' in request.headers:
-        ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']}")
+    # customer_account = None
+    # if 'x-xurl-user' in request.headers:
+    #     ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']}")
 
-        # try to lookup the user wallet
-        try:
-            # customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
-            # ulogger.debug(f"=== customer_account {customer_account}")
-            pass
-        except Exception as e:
-            ulogger.error(f"=== x-xurl-user error {e}")
-        finally:
-            ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']} finally") 
-    else:
-        ulogger.debug(f"=== XURLUSER no x-xurl-user")
+    #     # try to lookup the user wallet
+    #     try:
+    #         # customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
+    #         # ulogger.debug(f"=== customer_account {customer_account}")
+    #         pass
+    #     except Exception as e:
+    #         ulogger.error(f"=== x-xurl-user error {e}")
+    #     finally:
+    #         ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']} finally") 
+    # else:
+    #     ulogger.debug(f"=== XURLUSER no x-xurl-user")
         
-    ulogger.debug(f"=== XURLUSER HEY {request.headers['x-xurl-shopid']}")
+    ulogger.debug(f"=== XURLUSER HEY 3 {request.headers}")
 
     return XurlInfoSchema(
         version="v1",
@@ -80,7 +80,7 @@ def xurl_info(request: Request,
         api_branch=config['API_GIT_BRANCH'],
         endpoint=config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid']),
         shop_id=request.headers['x-xurl-shopid'],
-        xurl_user=request.headers['x-xurl-user'] if customer_account else None,
+        # xurl_user=request.headers['x-xurl-user'] if customer_account else None,
     )
 
 
