@@ -107,7 +107,7 @@ async def CorsSupportMiddleware(request: Request, call_next):
     headers_cors = {}
     headers_cors["Access-Control-Allow-Origin"] = "*"
     headers_cors["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    headers_cors["Access-Control-Allow-Headers"] = "*"
+    headers_cors["Access-Control-Allow-Headers"] = "Content-Type, Authorization, x-xurl-user, x-xurl-shopid"
     headers_cors["Access-Control-Max-Age"] = "86400"
     headers_cors["Access-Control-Allow-Credentials"] = "true"
     headers_cors["Access-Control-Expose-Headers"] = "Content-Length, Content-Range"

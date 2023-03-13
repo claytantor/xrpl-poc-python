@@ -359,7 +359,7 @@ def get_payment_item_by_id(id:int,
     if wallet is None:
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
 
-    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.id, id=id)
+    payment_item = PaymentItemDao.fetch_single_by_wallet_id(db, wallet_id=wallet.id, payment_item_id=id)
 
     
     if payment_item is None:
