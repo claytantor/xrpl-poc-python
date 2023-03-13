@@ -169,7 +169,14 @@ class CustomerAccountDao:
         else:
             return None
     
-
+    @staticmethod
+    def fetch_by_customer_classic_address(db:Session, classic_address:str):
+        wallet = WalletDao.fetch_by_classic_address(db, classic_address)      
+        if wallet:
+            account = CustomerAccountDao.fetch_by_account_wallet_id(db=db, account_wallet_id=wallet.id)
+            return account
+        else:
+            return None
 
 class PaymentItemDao:
     @staticmethod

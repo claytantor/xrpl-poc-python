@@ -62,8 +62,8 @@ def xurl_info(request: Request,
 
         # try to lookup the user wallet
         try:
-            customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
-            ulogger.info(f"=== customer_account {customer_account}")
+            customer_account = CustomerAccountDao.fetch_by_customer_classic_address(db, request.headers['x-xurl-user'])
+            ulogger.info(f"=== customer_account {customer_account} {request.headers['x-xurl-user']}")
             pass
         except Exception as e:
             ulogger.error(f"=== x-xurl-user error {e}")
