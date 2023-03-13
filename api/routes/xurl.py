@@ -66,6 +66,8 @@ def xurl_info(request: Request,
             ulogger.debug(f"=== customer_account {customer_account}")
         except Exception as e:
             ulogger.error(f"=== x-xurl-user error {e}")
+    else:
+        ulogger.debug(f"=== no x-xurl-user")
         
 
     return XurlInfoSchema(

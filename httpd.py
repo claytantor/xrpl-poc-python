@@ -50,10 +50,6 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
             for name, value in self.headers.items():
                 new_headers[name] = value
 
-            # for item in self.headers.items():
-            #     new_headers[item[0]] = item[1]
-
-
             new_headers['host'] = hostname
             try:
                 del new_headers['accept-encoding']

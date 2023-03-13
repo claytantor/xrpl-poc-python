@@ -819,7 +819,6 @@ def xumm_xapp(xAppStyle:str,
     return RedirectResponse(xumm_payload['next']['always'])
 
 
-
 @router.get('/xumm/qr')
 def serve_qr_img(url: str):
     # lookup the wallet by the classic address in the jwt
