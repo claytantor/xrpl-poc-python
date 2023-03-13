@@ -80,7 +80,7 @@ def xurl_info(request: Request,
         api_branch=config['API_GIT_BRANCH'],
         endpoint=config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid']),
         shop_id=request.headers['x-xurl-shopid'],
-        # xurl_user=request.headers['x-xurl-user'] if customer_account else None,
+        xurl_user=request.headers['x-xurl-user'] if customer_account else None,
     )
 
 
