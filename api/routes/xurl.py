@@ -46,12 +46,13 @@ def xurl_base(request: Request, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/xurl/info", response_model=XurlInfoSchema)
+# @router.get("/xurl/info", response_model=XurlInfoSchema)
+@router.get("/xurl/info")
 @determine_xurl_wallet
 def xurl_info(request: Request,
     db: Session = Depends(get_db)):
     ulogger.info(f"==== xurl info: {request.url.scheme} {request.url.hostname} {request.url.port} {request.url.path} {request.url.query}")
-    ulogger.info(f"==== HEY headers: {request.headers} {'x-xurl-user' in request.headers}")
+    ulogger.info(f"==== HEY 2 headers: {request.headers} {'x-xurl-user' in request.headers}")
 
     #endpoint_url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}{request.url.path.replace('//','/').replace('/info', '')}"
 
@@ -74,14 +75,16 @@ def xurl_info(request: Request,
         
     ulogger.debug(f"=== XURLUSER HEY 3 {request.headers}")
 
-    return XurlInfoSchema(
-        version="v1",
-        commit_sha=config['API_GIT_SHA'],
-        api_branch=config['API_GIT_BRANCH'],
-        endpoint=config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid']),
-        shop_id=request.headers['x-xurl-shopid'],
-        # xurl_user=request.headers['x-xurl-user'] if customer_account else None,
-    )
+    # return XurlInfoSchema(
+    #     version="v1",
+    #     commit_sha=config['API_GIT_SHA'],
+    #     api_branch=config['API_GIT_BRANCH'],
+    #     endpoint=config['XURL_BASEURL'].replace('{shop_id}', request.headers['x-xurl-shopid']),
+    #     shop_id=request.headers['x-xurl-shopid'],
+    #     # xurl_user=request.headers['x-xurl-user'] if customer_account else None,
+    # )
+
+    return {}
 
 
 def _make_xurl_payload(
