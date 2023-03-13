@@ -1,6 +1,9 @@
 import Axios from 'axios';
 
 const XurlService = {
+    setXrpUserAddress(classicAddress){
+        Axios.defaults.headers.common['x-xurl-user'] = classicAddress;
+    },
     get(url){
         return Axios.get(url);     
     },
@@ -17,5 +20,6 @@ const XurlService = {
         return Axios.get(url);     
     }
 }
+
 
 export default XurlService;

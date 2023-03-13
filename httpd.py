@@ -89,7 +89,7 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
                 self.send_header('Content-Length', len(data))
                 self.send_header('Access-Control-Allow-Origin', "*")
                 self.send_header('Access-Control-Allow-Methods', "GET, POST, PUT, DELETE, OPTIONS")
-                self.send_header('Access-Control-Allow-Headers', "Content-Type, Authorization")
+                self.send_header('Access-Control-Allow-Headers', "Content-Type, Authorization, x-xurl-user, x-xurl-shopid")
                 self.send_header('Access-Control-Max-Age', "86400")
                 self.send_header('Access-Control-Allow-Credentials', "true")
                 self.send_header('Access-Control-Expose-Headers', "Content-Length, Content-Range")

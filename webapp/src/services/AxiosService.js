@@ -2,6 +2,7 @@ import Axios from "axios";
 import moment from 'moment';
 import { AuthenticationService } from "../services/AuthenticationService";
 import { backendBaseUrl } from '../env';
+import jwtdecode from 'jwt-decode';
 
 Axios.defaults.withCredentials = false; 
 
@@ -61,7 +62,7 @@ axiosInstance.interceptors.request.use((config) => {
         return config;
     }
 
-    // let storage = JSON.parse(window.localStorage.getItem('xurlpay-storage'));
+    // let storage = JSON.parse(window.localStorage.getItem('XummPkceJwt'));
     // console.log('xummState', storage.state.xummState);
     // let cachedUser = storage.state.xummState;
 
@@ -76,6 +77,12 @@ axiosInstance.interceptors.request.use((config) => {
         }
     }
     config.headers.authorization = `Bearer ${cachedUser.jwt}`;
+    // const decoded_payload = jwtdecode(cachedUser.jwt);
+    // if (decoded_payload.sub) {
+    //     console.log('decoded_payload.sub', decoded_payload.sub);
+    //     config.headers['x-xurl-user'] = decoded_payload.sub;
+    // }
+    
     return config;
 
     

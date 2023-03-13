@@ -45,6 +45,7 @@ const UserShopCustomer = ({ xummState, shop_id}) => {
   useEffect(() => {
     if (xummState && xummState.me) {
       console.log(`UserShopCustomer useEffect`, xummState.me);
+      XurlService.setXrpUserAddress(xummState.me.sub);
       XurlService.getInfo(xurlBaseUrl(shop_id)).then((response) => {
         console.log(`UserShopCustomer getInfo`, response.data);
         setShopInfo(response.data);
