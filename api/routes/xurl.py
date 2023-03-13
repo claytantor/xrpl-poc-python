@@ -55,22 +55,22 @@ def xurl_info(request: Request,
 
     #endpoint_url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}{request.url.path.replace('//','/').replace('/info', '')}"
 
-    # # get the user from request header
-    # customer_account = None
-    # if 'x-xurl-user' in request.headers:
-    #     ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']}")
+    # get the user from request header
+    customer_account = None
+    if 'x-xurl-user' in request.headers:
+        ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']}")
 
-    #     # try to lookup the user wallet
-    #     try:
-    #         # customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
-    #         # ulogger.debug(f"=== customer_account {customer_account}")
-    #         pass
-    #     except Exception as e:
-    #         ulogger.error(f"=== x-xurl-user error {e}")
-    #     finally:
-    #         ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']} finally")
-    # else:
-    #     ulogger.debug(f"=== XURLUSER no x-xurl-user")
+        # try to lookup the user wallet
+        try:
+            # customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
+            # ulogger.debug(f"=== customer_account {customer_account}")
+            pass
+        except Exception as e:
+            ulogger.error(f"=== x-xurl-user error {e}")
+        finally:
+            ulogger.debug(f"=== XURLUSER  x-xurl-user {request.headers['x-xurl-user']} shopid: {request.headers['x-xurl-shopid']} finally")
+    else:
+        ulogger.debug(f"=== XURLUSER no x-xurl-user")
         
     ulogger.debug(f"=== XURLUSER HEY {request.headers['x-xurl-shopid']}")
 
