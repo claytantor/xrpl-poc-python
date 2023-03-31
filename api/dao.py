@@ -1,18 +1,15 @@
 import os
 import uuid
-from http.client import HTTPException
-from fastapi import FastAPI
 from sqlalchemy import create_engine, desc, and_, or_, select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Column, ForeignKey, Integer, String, Float
-from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
+
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
+
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 
@@ -31,9 +28,7 @@ config = {
 }
 
 logger.info("Connecting to database: %s %s", config['DATABASE_URL'], os.path.dirname(__file__))
-
 engine = create_engine(config['DATABASE_URL'],  echo=True)
-
 Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

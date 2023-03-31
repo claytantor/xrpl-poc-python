@@ -107,7 +107,7 @@ export const ShopCustomerAccountList = ({shop_id}) => {
         setLoading(true);
         XurlService.getSubjectItems(xurlBaseUrl(shop_id),'paymentitem')
         .then(res => {
-            console.log("getSubject", res.data);
+            console.log("B getSubject", res.data);
             setCustomerAccounts(res.data);
             setLoading(false);
         });

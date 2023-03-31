@@ -81,7 +81,7 @@ const UserShopCustomer = ({ xummState, shop_id}) => {
 
 };
 
-const UserShop = ({ xummState}) => {
+const UserShop = ({xummState}) => {
 
   const { shopid } = useParams();
 
@@ -110,7 +110,7 @@ const UserShop = ({ xummState}) => {
               <HelpAlert 
                 helpLink='/docs/#/UserShop'>Payment items are "Scan to pay" items that can be used to automatically receive payment with no activity required for the receiver. <strong>Just scan to pay!</strong> Our backend will convert the fiat amount to XRP and send a Payment Tx to your wallet. If you want to use a cart and allow fulfillment via shipping you will need to build a cart.</HelpAlert>
             </div> */}
-            <div><ShopPaymentItemList shop_id={shopid}/></div>
+            <div><ShopPaymentItemList shop_id={shopid} xummState={xummState}/></div>
             <div className="mt-6">
               <div onClick={()=>window.open(`${xurlBaseUrl(shopid)}/info`,'_blank')} className="link-common">{xurlBaseUrl(shopid)}/info</div>
               {xurlBaseUrl(shopid) && <div className='text-xs'>xurlBaseUrl: {xurlBaseUrl(shopid)}</div>}

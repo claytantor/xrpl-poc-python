@@ -28,7 +28,10 @@ const ShopItemViewer = ({xummState}) => {
 
 
   useEffect(() => {
-    console.log("useEffect", id)
+    console.log("useEffect", id);
+    if (xummState && xummState.me && xummState.me?.subject) {
+      XurlService.setXrpUserAddress(xummState.me.subject);
+    }
     XurlService.getSubjectItem(xurlBaseUrl(shopid), subject, id).then(r => {
       let p_i = r.data;
       console.log("ShopItemViewer", p_i);

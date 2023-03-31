@@ -93,7 +93,7 @@ const PaymentItemList = ({shop_id}) => {
     </>);
 };
 
-export const ShopPaymentItemList = ({shop_id}) => {
+export const ShopPaymentItemList = ({shop_id, xummState}) => {
 
     const [loading, setLoading] = useState(true);
     const [paymentItems, setPaymentItems] = useState([]);
@@ -101,14 +101,26 @@ export const ShopPaymentItemList = ({shop_id}) => {
 
 
     useEffect(() => {
+        console.log("useEffect ShopPaymentItemList xummState", xummState);
+        if (xummState && xummState.me && xummState.me?.subject) {
+            XurlService.setXrpUserAddress(xummState.me.subject);
+        }
         fetchPaymentItems(shop_id, currentPage);
-    },[currentPage]);
+    },[currentPage, xummState]);
+
+    // useEffect(() => {
+    //     console.log("useEffect ShopPaymentItemList xummState", xummState);
+    //     if (xummState && xummState.me && xummState.me?.subject) {
+    //         XurlService.setXrpUserAddress(xummState.me.subject);
+    //     }
+    // },[xummState]);
     
     let fetchPaymentItems = (shop_id, pageInfo) => {
         setLoading(true);
+        console.log("*** fetchPaymentItems", shop_id, pageInfo, xummState);
         XurlService.getSubjectItems(xurlBaseUrl(shop_id),'paymentitem')
         .then(res => {
-            console.log("getSubject", res.data);
+            console.log("ShopPaymentItemList getSubject", res.data);
             setPaymentItems(res.data);
             setLoading(false);
         });

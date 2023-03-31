@@ -7,10 +7,8 @@ from alembic import context as alembic_context
 
 
 import os
+
 import logging
-
-
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.info("APP CONFIG PATH: " + os.getenv("APP_CONFIG"))
