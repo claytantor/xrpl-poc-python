@@ -58,7 +58,7 @@ const PaymentItemSummary = ({
     }
 
     //`http://8d810387b7.localhost:5005/xurlapi/xurl/subject/paymentitem/${paymentItem.id}`
-    const pi_shop_url = `${xurlBaseUrl(shop_id)}/xurlapi/xurl/subject/paymentitem/${paymentItem.id}`;
+    const pi_shop_url = `${xurlBaseUrl(shop_id)}/subject/paymentitem/${paymentItem.id}`;
 
     let navigate = useNavigate();
     

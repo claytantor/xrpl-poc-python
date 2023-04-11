@@ -8,6 +8,9 @@ from urllib.parse import urlparse, urljoin
 from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 from urllib.request import Request
+
+from socketserver import ForkingMixIn
+
 import json
 
 logging.basicConfig(level=logging.DEBUG)
@@ -28,19 +31,25 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
                 break
 
         if prefix:
+            logger.debug('do_PROXY: %s', self.path)
             # Strip off the prefix.
             url = urljoin(PROXY_RULES[prefix], self.path.partition(prefix)[2])
             hostname = urlparse(PROXY_RULES[prefix]).netloc
+            print(f"URL: {url} HOSTNAME: {hostname}")
+            if 'localhost' in self.headers['host']:
+               hostname = self.headers['host']
 
             body = None
-            logger.debug('headers: %s', self.headers)
-            logger.debug('hostname: %s', self.headers['shophost'])
-
             host_name = self.headers['shophost']
+            if self.headers['shophost'] is None:
+                host_name = self.headers['host']
+
+            logger.debug('headers: %s', self.headers)
+            logger.debug('hostname: %s', host_name)
+         
             host_parts = host_name.split(':')
             host_w = host_parts[0].split('.')
-            
-            
+                       
             if self.headers['content-length'] is not None:
                 content_len = int(self.headers.getheader('content-length'))
                 body = self.rfile.read(content_len)
@@ -114,11 +123,29 @@ class Proxy(http.server.SimpleHTTPRequestHandler):
     def do_POST(self):
         return self.__do_proxy()
 
-class CustomHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        logger.debug('do_GET: %s', self.path)
-        self.path = f'./htdocs/{self.path}'
-        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+    def do_OPTIONS(self):
+        return self.__do_proxy()
+    
+# class CustomHttpRequestHandler(http.server.SimpleHTTPRequestHandler):
+#     def do_GET(self):
+#         logger.debug('do_GET: %s', self.path)
+#         self.path = f'./htdocs/{self.path}'
+#         return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+class ForkingHTTPServer(ForkingMixIn, http.server.HTTPServer):
+    def finish_request(self, request, client_address):
+        request.settimeout(30)
+        # "super" can not be used because BaseServer is not created from object
+        http.server.HTTPServer.finish_request(self, request, client_address)
+
+def httpd(handler_class=Proxy, server_address=('0.0.0.0', int(os.getenv('HTTPD_PROXY_PORT', 5003)))):
+    try:
+        print("Server started")
+        srvr = ForkingHTTPServer(server_address, handler_class)
+        srvr.serve_forever()  # serve_forever
+    except KeyboardInterrupt:
+        srvr.socket.close()
+
 
 def run(server_class=http.server.HTTPServer, handler_class=Proxy):
     server_address = ('0.0.0.0', int(os.getenv('HTTPD_PROXY_PORT', 5003)))
@@ -127,4 +154,5 @@ def run(server_class=http.server.HTTPServer, handler_class=Proxy):
 
 
 if __name__ == "__main__":
-    run()
+    # run()
+    httpd()

@@ -26,3 +26,4 @@ webapp/dist/*
 webapp/src/env.js
 pgdata/
 pgdata/*
+.hypothesis/

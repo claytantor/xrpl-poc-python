@@ -22,6 +22,17 @@ const CreateCustomerAccountModal = ({ xummState, showModal, setShowModal, shop_i
             <div className="flex items-start justify-between p-5 border-b border-solid border-gray-300 rounded-t ">
               <h3 className="text-2xl font=semibold">Create Customer Account for Shop {shop_id}</h3>
             </div>
+            <div className="p-2">
+
+              <div className="rounded bg-cyan-200 text-cyan-600">
+                  <div className="flex flex-row justify-center">
+                      <div className="flex flex-col justify-center p-2">
+                      By creating a customer account you will be able to purchase items from this shop that do not require your shipping address. Only your XRP account id will be stored in the shop database.
+                      </div>
+                  </div>
+              </div>
+            </div>
+
             <div className="flex flex-row justify-center bg-white w-96 p-3 rounded-b-lg">
                 <XummQrCode url={xumm_url} />
             </div>
