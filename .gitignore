@@ -27,3 +27,4 @@ webapp/src/env.js
 pgdata/
 pgdata/*
 .hypothesis/
+data/xurl.db
