@@ -466,7 +466,7 @@ class PaymentItem(Base):
         # self.sku_id = sku_id
         self.wallet_id = wallet_id
         self.in_shop = 0
-        self.verb = XurlVerbType.NOOP
+        self.verb = XurlVerbType.NOOP.lower()
         self.is_xurl_item = 0
         self.created_at = dt.now()
         self.updated_at = dt.now()

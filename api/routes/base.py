@@ -868,10 +868,10 @@ async def _process_payload_verb(payload: XummPayload,
     uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", shop_id)}'
     xurl_p = parse_xurl(base_url=uri_base,xurl=xurl)
     
-    if xurl_p.verb_type == XurlVerbType.NOOP:
+    if xurl_p.verb_type.lower() == XurlVerbType.NOOP.lower():
         ulogger.info(f"==== no_op verb, ignoring")
         return
-    elif xurl_p.verb_type == XurlVerbType.create_account:
+    elif xurl_p.verb_type.lower() == XurlVerbType.CREATEACCOUNT.lower():
         ulogger.info(f"==== create_account verb, processing")
         # _process_create_account_verb(payload=payload, xurl=xurl_p, db=db)
 
@@ -931,7 +931,7 @@ def _make_xurl_payload(
         return make_payment_item_payload(
             xurl=xurl, payment_item=payment_item, wallet=wallet)
     
-    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.CREATEACCOUNT.lower():
 
         # get the shop id from the xurl
         shop_id = parse_shop_url(shop_url=xurl.base_url)
@@ -1001,7 +1001,7 @@ def xumm_xapp(xAppStyle:str,
 
         db.add(p_xumm_payload)
         db.commit()
-    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type.lower() == XurlVerbType.CREATEACCOUNT.lower():
         # get the shop id from the xurl
         shop_id = parse_shop_url(shop_url=xurl.base_url)
         wallet = db.query(Wallet).filter_by(shop_id=shop_id).first()

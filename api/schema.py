@@ -28,12 +28,12 @@ class XurlSubject(BaseModel):
         super().__init__(**data)
 
 class XurlVerbType(str, Enum):
-    NOOP = 'NOOP'
-    NOTIFY = 'NOTIFY'
-    CARRY = 'CARRY'
-    SHIP = 'SHIP'
-    CREATEACCOUNT = 'CREATEACCOUNT'
-    SHARE = 'SHARE'
+    NOOP = 'NOOP'.lower()
+    NOTIFY = 'NOTIFY'.lower()
+    CARRY = 'CARRY'.lower()
+    SHIP = 'SHIP'.lower()
+    CREATEACCOUNT = 'CREATEACCOUNT'.lower()
+    SHARE = 'SHARE'.lower()
 
 class XurlVerb(BaseModel):
     type: XurlVerbType

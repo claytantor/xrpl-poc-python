@@ -28,7 +28,7 @@ def test_parse_xurl(caplog):
     assert xurl_p.version == XurlVersion("v1")
     assert xurl_p.subject_type == XurlSubjectType.payment_item
     assert xurl_p.subject_id == "1"
-    assert xurl_p.verb_type == XurlVerbType.NOOP
+    assert xurl_p.verb_type == XurlVerbType.NOOP.lower()
     assert xurl_p.parameters[0].name == "qty"
     assert xurl_p.parameters[0].value == "3"
     assert shop_id == "391a919a"

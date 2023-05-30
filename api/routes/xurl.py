@@ -68,13 +68,13 @@ def xurl_info(request: Request,
 
             verbs = []
             v_noop = XurlVerb(
-                type=XurlVerbType.NOOP,
+                type=XurlVerbType.NOOP.lower(),
                 description="No operation"
             )
             verbs.append(v_noop)
 
             v_carry = XurlVerb(
-                type=XurlVerbType.CARRY,
+                type=XurlVerbType.CARRY.lower(),
                 description="Carry a payload"
             )
             verbs.append(v_carry)
@@ -164,7 +164,7 @@ def _make_xurl_payload(
                                          payment_item=payment_item, 
                                          wallet=wallet)
     
-    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type == XurlVerbType.create_account:
+    elif xurl.subject_type == XurlSubjectType.customer_account and xurl.verb_type.lower() == XurlVerbType.CREATEACCOUNT.lower():
 
         # get the wallet for this 
         shop_wallet = db.query(Wallet).filter_by(shop_id=request.headers['x-xurl-shopid']).first()
@@ -230,7 +230,7 @@ def xurl_gen_payload(
         customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
 
 
-    if verb == XurlVerbType.NOOP and customer_account is None:
+    if verb.lower() == XurlVerbType.NOOP.lower() and customer_account is None:
         """
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
@@ -240,7 +240,7 @@ def xurl_gen_payload(
         ulogger.info(f"==== xurl_p: {xurl_p}")
 
         return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
-    elif verb == XurlVerbType.CARRY and customer_account is not None:
+    elif verb.lower() == XurlVerbType.CARRY.lower() and customer_account is not None:
         """
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
@@ -250,7 +250,7 @@ def xurl_gen_payload(
 
         return JSONResponse(status_code=HTTPStatus.OK, content=xurl_p)
     
-    elif verb == XurlVerbType.create_account and customer_account is None:
+    elif verb.lower() == XurlVerbType.CREATEACCOUNT.lower() and customer_account is None:
         """
         will return a xrp native payload suitable for signing this can also be injected 
         into a xumm payload via the txjson field
@@ -317,19 +317,19 @@ def xurl_get_verbs(
         customer_account = CustomerAccountDao.fetch_by_classic_address(db, request.headers['x-xurl-user'])
 
     supported_verbs = []
-    supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP, uri=f"/verb/{XurlVerbType.NOOP}"))
+    supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP.lower(), uri=f"/verb/{XurlVerbType.NOOP.lower()}"))
     
     if customer_account is not None and subject == XurlSubjectType.payment_item:
         supported_verbs.append(
-            XurlVerb(type=XurlVerbType.CARRY, 
+            XurlVerb(type=XurlVerbType.CARRY.lower(), 
                      description="carry on sign",
-                     uri=f"/verb/{XurlVerbType.CARRY}"))
+                     uri=f"/verb/{XurlVerbType.CARRY.lower()}"))
 
     if customer_account is None and subject == XurlSubjectType.customer_account:
         supported_verbs.append(
-            XurlVerb(type=XurlVerbType.create_account, 
+            XurlVerb(type=XurlVerbType.CREATEACCOUNT.lower(), 
                     description="create a customer account",
-                    uri=f"/verb/{XurlVerbType.create_account}"))
+                    uri=f"/verb/{XurlVerbType.CREATEACCOUNT.lower()}"))
 
     return supported_verbs
 
@@ -366,8 +366,8 @@ def xurl_get_subject_entities(
     if subject == XurlSubjectType.payment_item:
         ulogger.info(f"==== xurl payment_item: {subject}")
 
-        customer_verbs = [XurlVerbType.NOOP, XurlVerbType.CARRY]
-        no_customer_verbs = [XurlVerbType.CARRY]
+        customer_verbs = [XurlVerbType.NOOP.lower(), XurlVerbType.CARRY.lower()]
+        no_customer_verbs = [XurlVerbType.CARRY.lower()]
 
         if customer_account is not None:
             ulogger.info(f"==== xurl payment_item: {subject} customer_verbs {customer_verbs}")
@@ -442,8 +442,8 @@ def xurl_get_subject_entities(
 
         # needs to be an item for this shop and is a xurl item
         # payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_id_verbs(db, id=subjectid, wallet_id=shop_wallet.id)
-        customer_verbs = [XurlVerbType.NOOP, XurlVerbType.CARRY]
-        no_customer_verbs = [XurlVerbType.NOOP]
+        customer_verbs = [XurlVerbType.NOOP.lower(), XurlVerbType.CARRY.lower()]
+        no_customer_verbs = [XurlVerbType.NOOP.lower()]
 
         if customer_account is not None:
             payment_item = PaymentItemDao.fetch_xurl_by_id_and_wallet_and_verbs(db, id=int(subjectid), wallet_id=shop_wallet.id, verbs=customer_verbs)
@@ -484,17 +484,17 @@ def xurl_get_subject_entities(
     """
     if subject == XurlSubjectType.payment_item:
         supported_verbs = []
-        supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP, uri=f"xurl://verb/{XurlVerbType.NOOP}"))
+        supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP.lower(), uri=f"xurl://verb/{XurlVerbType.NOOP.lower()}"))
 
         if customer_account is not None:
-            supported_verbs.append(XurlVerb(type=XurlVerbType.CARRY, uri=f"xurl://verb/{XurlVerbType.CARRY}"))
+            supported_verbs.append(XurlVerb(type=XurlVerbType.CARRY.lower(), uri=f"xurl://verb/{XurlVerbType.CARRY.lower()}"))
 
         return supported_verbs
     elif subject == XurlSubjectType.customer_account:
         supported_verbs = []
-        supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP, uri=f"xurl://verb/{XurlVerbType.NOOP}"))
+        supported_verbs.append(XurlVerb(type=XurlVerbType.NOOP.lower(), uri=f"xurl://verb/{XurlVerbType.NOOP.lower()}"))
         if customer_account is None:
-            supported_verbs.append(XurlVerb(type=XurlVerbType.create_account, uri=f"xurl://verb/{XurlVerbType.create_account}"))
+            supported_verbs.append(XurlVerb(type=XurlVerbType.CREATEACCOUNT.lower(), uri=f"xurl://verb/{XurlVerbType.CREATEACCOUNT.lower()}"))
             
         return supported_verbs
 
@@ -519,21 +519,21 @@ def xurl_get_subject_entities(
     """
     will return a list of verbs supported by the given subject
     """
-    if verb == XurlVerbType.CARRY and customer_account is not None:
+    if verb.lower() == XurlVerbType.CARRY.lower() and customer_account is not None:
         return XurlVerb(
-            type=XurlVerbType.CARRY, 
+            type=XurlVerbType.CARRY.lower(), 
             description="buyer to carry merchandise on signing",
-            uri=f"xurl://verb/{XurlVerbType.CARRY}")
-    elif verb == XurlVerbType.NOOP:
+            uri=f"xurl://verb/{XurlVerbType.CARRY.lower()}")
+    elif verb.lower() == XurlVerbType.NOOP.lower():
         return XurlVerb(
-            type=XurlVerbType.NOOP, 
+            type=XurlVerbType.NOOP.lower(), 
             description="no operation required by seller",
-            uri=f"xurl://verb/{XurlVerbType.NOOP}")
-    elif verb == XurlVerbType.create_account:
+            uri=f"xurl://verb/{XurlVerbType.NOOP.lower()}")
+    elif verb.lower() == XurlVerbType.CREATEACCOUNT.lower():
         return XurlVerb(
-            type=XurlVerbType.create_account, 
+            type=XurlVerbType.CREATEACCOUNT.lower(), 
             description="create a new customer account for this shop",
-            uri=f"xurl://verb/{XurlVerbType.create_account}")
+            uri=f"xurl://verb/{XurlVerbType.CREATEACCOUNT.lower()}")
     else:
         return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "invalid subject"})
 
