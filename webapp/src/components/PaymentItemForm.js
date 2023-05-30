@@ -66,7 +66,7 @@ const PaymentItemForm = ({ paymentItem, formType }) => {
         fiat_i8n_price: 0.00,
         fiat_i8n_currency: userCurrency, 
         is_xurl_item: false,
-        verb: "noop"
+        verb: "NOOP"
       });
       setErrors([]);
       setSavedStatus("start")

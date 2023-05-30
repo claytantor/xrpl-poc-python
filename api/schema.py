@@ -32,7 +32,7 @@ class XurlVerbType(str, Enum):
     NOTIFY = 'NOTIFY'
     CARRY = 'CARRY'
     SHIP = 'SHIP'
-    CREATE_ACCOUNT = 'CREATE_ACCOUNT'
+    CREATEACCOUNT = 'CREATEACCOUNT'
     SHARE = 'SHARE'
 
 class XurlVerb(BaseModel):
@@ -253,10 +253,6 @@ class WalletCreateSchema(BaseModel):
 #         super().__init__(**data)
 
 
-# class XurlVerbType(str, Enum):
-#     no_op = 'noop'
-#     notify = 'notify'
-#     carry_on_sign = 'carry'
 
 # class Xurl(BaseModel):
 #     base_url: str

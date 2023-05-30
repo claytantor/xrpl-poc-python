@@ -63,5 +63,5 @@ def parse_xurl(base_url:str, xurl: str)->Xurl:
         version=XurlVersion.v1,
         subject_type=XurlSubjectType(subject_type), 
         subject_id=subject_id, 
-        verb_type=XurlVerbType(verb_type), 
+        verb_type=XurlVerbType(verb_type.upper()), 
         parameters=parameters)
