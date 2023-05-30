@@ -1,11 +1,10 @@
 import React, {useEffect, useState } from "react"
-// import QRCode from "react-qr-code";
+
 
 import { SiXrp } from "react-icons/si"
 
 import xummLogo from "../assets/img/xumm_logo.png"
 
-import React, { Component } from 'react';
 import { w3cwebsocket as W3CWebSocket } from "websocket";
 
 import {BiCheckCircle} from "react-icons/bi"
@@ -32,7 +31,6 @@ const PaymentRequest = ({xummState, paymentRequest, setPaymentRequest}) => {
         console.log(`WebSocket Client Connected ${paymentRequest.refs.websocket_status}`);
       };
       wsclient.onmessage = (message) => {
-        // console.log("GOT MESSAGE", message);
         count += 1;
         const m_payload = JSON.parse(message.data);
         console.log("GOT MESSAGE", m_payload, count, isConnected);

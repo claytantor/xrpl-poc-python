@@ -45,3 +45,20 @@ export const Spinner = ({ variant, children }) => {
     );
 };
 
+export const Spinner2 = ({animation}) => {
+  return (
+      <div className={`spinner-border ${animation ? 'spinner-border-sm' : ''}`} role="status">
+          <span className="sr-only">Loading...</span>
+      </div>
+  )
+};
+
+export const SimpleLink = ({url, text=null}) => {
+  return (
+      <div onClick={()=>window.open(url,'_blank')} className="link-common">
+          {text ? text : url}
+      </div>
+  )
+};
+
+

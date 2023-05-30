@@ -13,6 +13,11 @@ import ShopItemViewer from "./pages/ShopItemViewer";
 import PaymentItemEditor from "./pages/PaymentItemEditor";
 import Customers from "./pages/Customers";
 import CustomerAccountEditor from "./pages/CustomerAccountEditor";
+import UserSettings from "./pages/UserSettings";
+import UserShop from "./pages/UserShop";
+import CustomerShops from "./pages/CustomerShops";
+import Addresses from "./pages/Addresses";
+import Address from "./pages/Address";
 
 import { AxiosService } from "./services/AxiosService";
 import { AuthenticationService } from "./services/AuthenticationService";
@@ -27,8 +32,7 @@ import "./App.css";
 var sBrowser, sUsrAg = navigator.userAgent;
 
 import { XummPkce } from 'xumm-oauth2-pkce';
-import UserSettings from "./pages/UserSettings";
-import UserShop from "./pages/UserShop";
+
 const xummPkce = new XummPkce(xummConfig["api-key"]);
 
 const { XummSdkJwt } = require('xumm-sdk')
@@ -188,6 +192,24 @@ const App = () => {
             />
           </Route>
 
+          <Route exact path="/addresses" element={<PrivateRoute xummState={xummState}/>}>
+            <Route
+              exact
+              path="/addresses"
+              element={<Addresses 
+                xummState={xummState}/>}
+            />
+          </Route>
+
+          <Route exact path="/address/:id" element={<PrivateRoute xummState={xummState}/>}>
+            <Route
+              exact
+              path="/address/:id"
+              element={<Address 
+                xummState={xummState}/>}
+            />
+          </Route>
+
           <Route exact path="/items" element={<PrivateRoute xummState={xummState}/>}>
             <Route
               exact
@@ -250,6 +272,13 @@ const App = () => {
             <Route exact 
               path="/customer/create" 
               element={<CustomerAccountEditor 
+                xummState={xummState}/>} />
+          </Route>
+
+          <Route exact path="/customer/shops" element={<PrivateRoute xummState={xummState}/>}>
+            <Route exact 
+              path="/customer/shops" 
+              element={<CustomerShops 
                 xummState={xummState}/>} />
           </Route>
 

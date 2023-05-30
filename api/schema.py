@@ -18,6 +18,7 @@ class XurlSubjectType(str, Enum):
     payment_item = 'paymentitem'
     order_invoice = 'orderinvoice'
     customer_account = 'customeraccount'
+    postal_address = 'postaladdress'
 
 class XurlSubject(BaseModel):
     type: XurlSubjectType
@@ -27,14 +28,16 @@ class XurlSubject(BaseModel):
         super().__init__(**data)
 
 class XurlVerbType(str, Enum):
-    no_op = 'noop'
-    notify = 'notify'
-    carry_on_sign = 'carry'
-    create_account = 'createaccount'
+    NOOP = 'NOOP'
+    NOTIFY = 'NOTIFY'
+    CARRY = 'CARRY'
+    SHIP = 'SHIP'
+    CREATE_ACCOUNT = 'CREATE_ACCOUNT'
+    SHARE = 'SHARE'
 
 class XurlVerb(BaseModel):
     type: XurlVerbType
-    uri: str
+    uri: Optional[str]
     description: Optional[str]
 
     def __init__(self, **data: Any) -> None: 
@@ -79,12 +82,19 @@ class XurlClient(BaseModel):
     description: Optional[str]
     account_id: Optional[str]
 
+class XurlCustomer(BaseModel):
+    customer_id: int
+    classic_address: str
+    name: Optional[str]
+    description: Optional[str]
+    supported_verbs: Optional[list[XurlVerb]]
 
 class XurlInfoSchema(BaseModel):
     version: str
     commit_sha: str
     api_branch: str
     endpoint: Optional[str]
+    well_known_domain: Optional[str]
     shop_id: Optional[str]
     shop_name: Optional[str]
     shop_description: Optional[str]
@@ -92,6 +102,7 @@ class XurlInfoSchema(BaseModel):
     shop_url: Optional[str]
     shop_email: Optional[str]
     xurl_user: Optional[str]
+    xurl_customer: Optional[XurlCustomer]
 
 
 # ===== base schemas
@@ -346,5 +357,47 @@ class CustomerSchema(BaseModel):
     """
     id: Optional[int]
     classic_address: str
+    shop_id: Optional[str]
     # created_at: str
     # updated_at: str
+
+# 'id': self.id,
+# 'name': self.name,
+# 'first_name': self.first_name,
+# 'last_name': self.last_name,
+# 'street_address': self.street_address,
+# 'street_address_2': self.street_address_2,
+# 'zip_code': self.zip_code,
+# 'city': self.city,
+# 'state': self.state,
+# 'country': self.country,
+# 'phone_number': self.phone_number,
+# 'postal_code': self.postal_code,
+# 'created_at': str(self.created_at),
+# 'updated_at': str(self.updated_at)
+class AddressSchema(BaseModel):
+    id: Optional[int]
+    name: Optional[str]
+    first_name: str
+    last_name: str
+    street_address: str
+    street_address_2: Optional[str]
+    city: str
+    state: str
+    postal_code: str
+    country: str
+    phone_number: str
+
+# id = Column(Integer, primary_key=True)
+#     wallet_id = Column(Integer, ForeignKey('wallet.id'))
+#     address_id = Column(Integer, ForeignKey('address.id'))
+#     shop_id = Column(String)
+#     well_known_uri = Column(String)
+class PostalAddressSchema(BaseModel):
+    id: Optional[int]
+    wallet_id: Optional[int]
+    address_id: Optional[int]
+    shop_id: Optional[str]
+    well_known_uri: Optional[str]
+
+    

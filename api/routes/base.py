@@ -25,15 +25,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 
-from api.schema import CustomerSchema, MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, Xurl, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
-from api.models import CustomerAccount, InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, Wallet, XrpCurrencyRate, XummPayload
+from api.schema import AddressSchema, CustomerSchema, MessageSchema, ApiInfoSchema, OAuth2AuthSchema, OAuth2TokenSchema, PaymentItemSchema, PaymentRequestSchema, PostalAddressSchema, Xurl, XurlSubjectType, XurlVerbType, WalletCreateSchema, WalletSchema, XrpCurrencyRateSchema, XummPayloadSchema, XurlVersion
+from api.models import Address, CustomerAccount, InventoryItem, InventoryItemImage, Message, ApiInfo, PaymentItem, PostalAddress, Wallet, XrpCurrencyRate, XummPayload
 from api.decorators import verify_user_jwt_scopes
 from api.jwtauth import make_signed_token, get_token_body
-from api.dao import CustomerAccountDao, InventoryItemDao, PaymentItemDao, XummPayloadDao, get_db, WalletDao
+from api.dao import AddressDao, CustomerAccountDao, InventoryItemDao, PaymentItemDao, PostalAddressDao, XummPayloadDao, get_db, WalletDao
 from api.utils import parse_shop_url, parse_xurl
 from api.xrpcli import get_account_info, get_rpc_network_from_wss, get_rpc_network_type, get_xrp_network_from_jwt, xrp_to_drops, get_xapp_tokeninfo, get_wss_network_type, get_rpc_network_from_jwt
-
-
 
 
 import logging
@@ -42,7 +40,7 @@ ulogger = logging.getLogger("uvicorn.error")
 router = APIRouter()
 
 from api.xqr import generate_qr_code
-from api.serializers import PaymentItemDetailsSerializer
+from api.serializers import PaymentItemDetailsSerializer, PostalAddressSerializer
 from api.s3utils import save_image
 
 from dotenv import dotenv_values
@@ -69,6 +67,25 @@ scopes = {
 }
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=config['API_TOKEN_PATH'])
+
+@router.get("/xurl-shop-jwks.json")
+def get_api_info():
+    # ulogger.info(f"get_api_info {ApiInfo().to_dict()}")
+    # return ApiInfo().to_dict()
+
+    key = {
+        "alg": "RS256",
+        "kty": "RSA",
+        "use": "sig",
+        "x5c": [
+        "MIIC+DCCAeCgAwIBAgIJBIGjYW6hFpn2MA0GCSqGSIb3DQEBBQUAMCMxITAfBgNVBAMTGGN1c3RvbWVyLWRlbW9zLmF1dGgwLmNvbTAeFw0xNjExMjIyMjIyMDVaFw0zMDA4MDEyMjIyMDVaMCMxITAfBgNVBAMTGGN1c3RvbWVyLWRlbW9zLmF1dGgwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnjZc5bm/eGIHq09N9HKHahM7Y31P0ul+A2wwP4lSpIwFrWHzxw88/7Dwk9QMc+orGXX95R6av4GF+Es/nG3uK45ooMVMa/hYCh0Mtx3gnSuoTavQEkLzCvSwTqVwzZ+5noukWVqJuMKNwjL77GNcPLY7Xy2/skMCT5bR8UoWaufooQvYq6SyPcRAU4BtdquZRiBT4U5f+4pwNTxSvey7ki50yc1tG49Per/0zA4O6Tlpv8x7Red6m1bCNHt7+Z5nSl3RX/QYyAEUX1a28VcYmR41Osy+o2OUCXYdUAphDaHo4/8rbKTJhlu8jEcc1KoMXAKjgaVZtG/v5ltx6AXY0CAwEAAaMvMC0wDAYDVR0TBAUwAwEB/zAdBgNVHQ4EFgQUQxFG602h1cG+pnyvJoy9pGJJoCswDQYJKoZIhvcNAQEFBQADggEBAGvtCbzGNBUJPLICth3mLsX0Z4z8T8iu4tyoiuAshP/Ry/ZBnFnXmhD8vwgMZ2lTgUWwlrvlgN+fAtYKnwFO2G3BOCFw96Nm8So9sjTda9CCZ3dhoH57F/hVMBB0K6xhklAc0b5ZxUpCIN92v/w+xZoz1XQBHe8ZbRHaP1HpRM4M7DJk2G5cgUCyu3UBvYS41sHvzrxQ3z7vIePRA4WF4bEkfX12gvny0RsPkrbVMXX1Rj9t6V7QXrbPYBAO+43JvDGYawxYVvLhz+BJ45x50GFQmHszfY3BR9TPK8xmMmQwtIvLu1PMttNCs7niCYkSiUv2sc2mlq1i3IashGkkgmo="
+        ],
+        "n": "yeNlzlub94YgerT030codqEztjfU_S6X4DbDA_iVKkjAWtYfPHDzz_sPCT1Axz6isZdf3lHpq_gYX4Sz-cbe4rjmigxUxr-FgKHQy3HeCdK6hNq9ASQvMK9LBOpXDNn7mei6RZWom4wo3CMvvsY1w8tjtfLb-yQwJPltHxShZq5-ihC9irpLI9xEBTgG12q5lGIFPhTl_7inA1PFK97LuSLnTJzW0bj096v_TMDg7pOWm_zHtF53qbVsI0e3v5nmdKXdFf9BjIARRfVrbxVxiZHjU6zL6jY5QJdh1QCmENoejj_ytspMmGW7yMRxzUqgxcAqOBpVm0b-_mW3HoBdjQ",
+        "e": "AQAB",
+        "kid": "NjVBRjY5MDlCMUIwNzU4RTA2QzZFMDQ4QzQ2MDAyQjVDNjk1RTM2Qg",
+        "x5t": "NjVBRjY5MDlCMUIwNzU4RTA2QzZFMDQ4QzQ2MDAyQjVDNjk1RTM2Qg"
+    }
+    return JSONResponse(key)
 
 @router.get("/info",tags=["ApiInfo"], response_model=ApiInfoSchema,status_code=200)
 def get_api_info():
@@ -543,9 +560,166 @@ def update_payment_item(
     payload = PaymentItemDao.update(db=db, payment_item=payment_item)
     return JSONResponse(status_code=HTTPStatus.OK, content=PaymentItemDetailsSerializer(payload, shop_id=wallet.shop_id).serialize())
 
+# ADDRESS
+@router.post('/address')
+@verify_user_jwt_scopes(['wallet_owner']) 
+def create_address(addressInfo: AddressSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+    
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    address = Address(
+        wallet_id=wallet.id, 
+        name=addressInfo.name,
+        first_name=addressInfo.first_name, 
+        last_name=addressInfo.last_name, 
+        street_address=addressInfo.street_address, 
+        street_address_2=addressInfo.street_address_2, 
+        city=addressInfo.city, 
+        state=addressInfo.state, 
+        country=addressInfo.country, 
+        postal_code=addressInfo.postal_code,
+        phone_number=addressInfo.phone_number)
+
+    payload = AddressDao.create(db=db, address=address)
+
+    return JSONResponse(status_code=HTTPStatus.OK, content=payload.serialize())
+    
+
+@router.get('/address') 
+def get_address( 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    payload = AddressDao.fetch_by_wallet_id(db=db, wallet_id=wallet.id)
+
+    return JSONResponse(status_code=HTTPStatus.OK, content=[address.serialize() for address in payload])
+
+
+@router.get('/address/{id}') 
+def get_address_by_id(id: int, 
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    payload = AddressDao.fetch_by_id(db=db, address_id=id) 
+    
+    if payload is None:
+        return JSONResponse(status_code=HTTPStatus.NOT_FOUND, content={"message": "address not found"})
+    
+    address_s = payload.serialize()
+    address_s['postal_addresses'] = [PostalAddressSerializer(pa).serialize() for pa in payload.postal_addresses]
+
+    # ulogger.info(f"get_address_by_id {payload.serialize()}")
+    return JSONResponse(status_code=HTTPStatus.OK, 
+                        content=address_s)
+
+
+# PostalAddress =============================================================================================
+
+@router.post('/postal_address')
+@verify_user_jwt_scopes(['wallet_owner'])
+def create_postal_address(postalAddress: PostalAddressSchema,
+    request: Request,
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+
+
+    well_known_uri=f"http://{postalAddress.shop_id}.localhost:5005/.well-known/xurl-shop-jwks.json?shop_id={postalAddress.shop_id}"
+
+    postalAddress = PostalAddress(
+        wallet_id=wallet.id,
+        address_id=postalAddress.address_id, 
+        shop_id=postalAddress.shop_id, 
+        well_known_uri=well_known_uri)
+    
+    payload = PostalAddressDao.create(db=db, postal_address=postalAddress)
+
+    return JSONResponse(status_code=HTTPStatus.OK, content=payload.serialize())
+        
+
+# @router.get('/postal_address')
+# @verify_user_jwt_scopes(['wallet_owner'])
+# def get_postal_addresses(
+#     request: Request,
+#     db: Session = Depends(get_db),
+#     token: str = Depends(oauth2_scheme)):
+
+#     jwt_body = get_token_body(token)
+#     wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+#     if wallet is None:
+#         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+
+
+#     well_known_uri=f"http://{postalAddress.shop_id}.localhost:5005/.well-known/xurl-shop-jwks.json?shop_id={postalAddress.shop_id}"
+
+#     postalAddress = PostalAddress(
+#         wallet_id=wallet.id,
+#         address_id=postalAddress.address_id, 
+#         shop_id=postalAddress.shop_id, 
+#         well_known_uri=well_known_uri)
+    
+#     payload = PostalAddressDao.create(db=db, postal_address=postalAddress)
+
+#     return JSONResponse(status_code=HTTPStatus.OK, content=payload.serialize())
+        
 
 
 # CUSTOMER =============================================================================================
+@router.post("/l/customer_account")
+@verify_user_jwt_scopes(['wallet_owner'])
+def create_customer(
+    customer: CustomerSchema,
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    ulogger.info(f"create_customer: {customer}")
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_shopid(db, shop_id=customer.shop_id)
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    customer_wallet = WalletDao.fetch_by_classic_address(db, customer.classic_address)
+    if customer_wallet is None:
+        wallet_c = WalletCreateSchema(classic_address=customer.classic_address)
+        account_wallet = WalletDao.create(db=db, item=wallet_c)
+    else:
+        account_wallet = customer_wallet
+
+    # see if the customer already exists
+    customer = CustomerAccountDao.fetch_by_account_wallet_id(db, account_wallet.id)
+    if customer is not None:
+        return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "customer already exists"})
+    
+    customer_account = CustomerAccount()
+    customer_account.account_wallet_id = account_wallet.id
+    customer_account.wallet_id = wallet.id
+    customer_account = CustomerAccountDao.create(db=db, customer_account=customer_account)
+    return JSONResponse(status_code=HTTPStatus.OK, content=customer_account.serialize())
+
 
 @router.post("/customer_account")
 @verify_user_jwt_scopes(['wallet_owner'])
@@ -594,11 +768,41 @@ def get_customer_accounts(
         return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
     
     customer_accounts = CustomerAccountDao.fetch_by_wallet_id(db, wallet_id=wallet.id)
+    ulogger.info(f"customer_accounts: {customer_accounts} {wallet.id}")
     if customer_accounts is None:
         customer_accounts = []
     return JSONResponse(status_code=HTTPStatus.OK, content=[customer_account.serialize() for customer_account in customer_accounts])
 
+# get customer accounts for a wallet
+@router.get("/customer_shop")
+@verify_user_jwt_scopes(['wallet_owner'])
+def get_customer_shop(
+    request: Request, 
+    db: Session = Depends(get_db), 
+    token: str = Depends(oauth2_scheme)):
+
+    jwt_body = get_token_body(token)
+    wallet = WalletDao.fetch_by_classic_address(db, jwt_body['sub'])
+    if wallet is None:
+        return JSONResponse(status_code=HTTPStatus.UNAUTHORIZED, content={"message": "wallet not found"})
+    
+    # customer_accounts = CustomerAccountDao.fetch_by_account_wallet_id(db, account_wallet_id=wallet.id)
+    # ulogger.info(f"customer_accounts: {customer_accounts} {wallet.id}")
+    # shop_wallets = []
+    # if customer_accounts is not None:
+    #     for customer_account in customer_accounts:
+    #         ulogger.info(f"customer_account: {customer_account.serialize()}")
+    #         shop_wallet = WalletDao.fetch_by_id(db, _id=customer_account.wallet_id)
+    #         shop_wallets.append(shop_wallet)
+    customer_account = CustomerAccountDao.fetch_by_account_wallet_id(db, account_wallet_id=wallet.id)
+    shop_wallet = WalletDao.fetch_by_id(db, _id=customer_account.wallet_id)
+    
+    return JSONResponse(status_code=HTTPStatus.OK, content=[shop_wallet.serialize()])
+
+
+
 # XUMM =================================================================================================
+
 
 @router.post("/xumm/webhook")
 async def xumm_webhook(request: Request, db: Session = Depends(get_db)):
@@ -664,7 +868,7 @@ async def _process_payload_verb(payload: XummPayload,
     uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", shop_id)}'
     xurl_p = parse_xurl(base_url=uri_base,xurl=xurl)
     
-    if xurl_p.verb_type == XurlVerbType.no_op:
+    if xurl_p.verb_type == XurlVerbType.NOOP:
         ulogger.info(f"==== no_op verb, ignoring")
         return
     elif xurl_p.verb_type == XurlVerbType.create_account:

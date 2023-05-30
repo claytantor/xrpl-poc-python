@@ -1,48 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {FaWallet, FaShoppingBag, FaUserTie} from "react-icons/fa";
-import {BsCardChecklist} from "react-icons/bs";
-import {BsCashCoin} from "react-icons/bs";
+import {BsCardChecklist,BsCashCoin,BsShop, BsCart, BsPostageFill} from "react-icons/bs";
+
+import { useStore } from '../zstore';
+
 const Sidebar = () => {
+
+    const shop_id = useStore(state => state.shop_id);
 
     const navigate = useNavigate();
     return (
-        <div className="p-2 flex flex-col flex-grow bg-pink-100 text-white">
+        <div className="p-2 flex flex-row md:flex-col flex-grow bg-pink-100 text-white">
     
-            <aside className="w-48" aria-label="Sidebar">
-                <div className="overflow-y-auto py-4 px-3 dark:bg-gray-800">
-                    <ul className="space-y-2">
-
+            <aside className="w-full md:w-48" aria-label="Sidebar">
+                <div className="py-3 px-3">
+                    <ul className="flex flex-wrap md:flex-col items-center md:items-start">
                         <li>
-                            <div onClick={()=>navigate('/wallet')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 hover:text-pink-800 dark:hover:bg-gray-700">
+                            <div onClick={()=>navigate('/wallet')} className="btn-sidebar">
                             <FaWallet className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Wallet</span>
                             </div>
                         </li>
                         <li>
-                            <div onClick={()=>navigate('/ledger')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white  hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <div onClick={()=>navigate('/ledger')} className="btn-sidebar">
                             <BsCardChecklist className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Payloads</span>
                             </div> 
                         </li>
                         <li>
-                            <div onClick={()=>navigate('/receive')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <div onClick={()=>navigate('/receive')} className="btn-sidebar">
                             <BsCashCoin className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Receive Payment</span>
                             </div>
                         </li>
                         <li>
-                            <div onClick={()=>navigate('/items')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <div onClick={()=>navigate('/items')} className="btn-sidebar">
                             <FaShoppingBag className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Payment Items</span>
                             </div>
                         </li>
                         <li>
-                            <div onClick={()=>navigate('/customers')} className="flex items-center p-2 text-base font-normal text-gray-900 rounded-lg hover:text-pink-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <div onClick={()=>navigate('/customers')} className="btn-sidebar">
                             <FaUserTie className="text-2xl"/>
                             <span className="flex-1 ml-3 whitespace-nowrap">Customers</span>
                             </div>
                         </li>
+                        <li>
+                            <div onClick={()=>navigate('/addresses')} className="btn-sidebar">
+                            <BsPostageFill className="text-2xl"/>
+                            <span className="flex-1 ml-3 whitespace-nowrap">Addresses</span>
+                            </div>
+                        </li>
+                        <li>
+                            <div onClick={()=>navigate(`/shop/${shop_id}`)} className="btn-sidebar">
+                            <BsCart className="text-2xl"/>
+                            <span className="flex-1 ml-3 whitespace-nowrap">My Shop</span>
+                            </div>
+                        </li>    
+                        <li>
+                            <div onClick={()=>navigate('/customer/shops')} className="btn-sidebar">
+                            <BsShop className="text-2xl"/>
+                            <span className="flex-1 ml-3 whitespace-nowrap">Where I Shop</span>
+                            </div>
+                        </li>                        
                     </ul>
                 </div>
             </aside>

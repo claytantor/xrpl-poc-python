@@ -1,0 +1,43 @@
+@startuml
+
+title Payer Identification NFT Mint, Transfer and Payment
+
+' actor Requestor as Requestor
+actor "Payer Wallet (xumm)" as Payer
+participant "Supplier XURL Shop" as xUrlShop
+participant "xApp Backend\n(xurlpay.com)" as xUrlBackend
+participant "xumm API" as xummAPI
+participant "XRP Ledger" as xrpLedger
+participant "IPFS" as IPFS
+
+' group Shipping Verb Identification NFT Mint
+'     Payer -> xUrlShop: Get Supported Verbs
+'     Payer -> xUrlShop: Get Required Identification\nfor Shipping Verb
+'     Payer -> xUrlBackend: Begin Payer Identification\nNFT Mint Request\n for Shipping Verb
+'     xUrlBackend -> xUrlShop: get jwks public key for singing
+'     xUrlBackend -> xUrlBackend: encrypt Payer\nIdentification Metadata\n for Shipping Verb
+'     xUrlBackend -> IPFS : store encrypted Payer\nIdentification Metadata\n for Shipping Verb
+'     xUrlBackend -> xrpLedger: mint Payer Identification NFT\n for Shipping Verb\nwith Payer as Owner 
+' end
+
+' group Shipping Verb  Identification NFT Transfer
+'     Payer -> xUrlBackend: Generate transfer payload\nfor Payer Identification NFT\nfor Shipping Verb to Shop
+'     xUrlBackend -> xrpLedger: transfer Payer Identification NFT\nfor Shipping Verb to Shop
+'     xUrlShop -> xrpLedger: receive event for Payer Identification NFT\nfor Shipping Verb transfer
+'     xUrlShop -> xUrlShop: decrypt Payer\nIdentification Metadata\n for Shipping Verb
+'     xUrlShop -> xUrlShop: validate Payer\nIdentification Metadata\n for Shipping Verb
+'     xUrlShop -> xUrlShop: enable shipping verb for Payer
+' end
+
+group Payer Uses Shipping Verb
+    Payer -> xUrlShop: Payer is now able to inspect Shipping Verb based Payment Items
+    Payer -> xUrlShop: Calls xurl deep link to pay for Shipping Verb based Payment Item
+    Payer -> xummAPI: Route deepling to payload generation for wallet
+    Payer -> xUrlBackend: Generate Payment Payload
+    Payer -> xrpLedger: sign Payment
+    xummAPI -> xUrlBackend: Notify signed payload
+    xUrlBackend -> xUrlBackend: decrypt Payer\nIdentification Metadata\n for Shipping Verb
+    xUrlBackend -> xUrlBackend: orchestrate fufillment of Shipping Verb based Payment Item
+end
+
+@enduml

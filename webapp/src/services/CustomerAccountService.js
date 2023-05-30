@@ -17,6 +17,12 @@ export const CustomerAccountService = {
             headers: {'Content-Type': 'multipart/form-data'}
         });
     },
+    createCustomerAccountLocal(formData, shop_id) {
+        formData.shop_id = shop_id;
+        return AxiosService.post(`/l/customer_account`, formData, {
+            headers: {'Content-Type': 'multipart/form-data'}
+        });
+    },
     updateCustomerAccount(formData) {
         return AxiosService.put(`/customer_account`, formData, {
             headers: {'Content-Type': 'multipart/form-data'}
@@ -27,6 +33,9 @@ export const CustomerAccountService = {
     },
     getCustomerAccounts (){
         return AxiosService.get(`/customer_account`);
+    },
+    getCustomerShops (){
+        return AxiosService.get(`/customer_shop`);
     },
     getShopItems (account){
         return AxiosService.get(`/customer_account/shop/${account}`);

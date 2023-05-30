@@ -15,7 +15,7 @@ sudo chmod -R guo+wrx pgdata
 docker network create xurlpay
 
 # start the postgres instance
-docker run -it --rm \
+docker run -it --rm -d \
     -p 5432:5432 \
     --network xurlpay \
     --env APP_ENV=local \
@@ -59,6 +59,12 @@ CREATE DATABASE
 postgres=# \q
 ```
 
+`docker exec -it xurlpay-postgres-10 psql -U postgres -d xurlpay `
+
+psql -U postgres -p 5432 -h 172.18.0.2 -d xurlpay 
+ 
+
+
 ### Loading the base data into postgres
 1. Run the api container to load the base schema into the database.
 2. Run the load command to load the base data into the database.
@@ -71,3 +77,8 @@ sudo chmod -R guo+rwx pgdata/
 docker exec -it xurlpay-postgres-10 bash
 psql -U postgres xurlpay < /pgdata/xurlpay_base_data.sql
 ```
+
+`postgresql://postgres:SooperSecret!@localhost:5432/xurlpay`
+
+import psycopg2
+psycopg2.connect("dbname='xurlpay' user='postgres' host='172.18.0.2' password='SooperSecret!'")

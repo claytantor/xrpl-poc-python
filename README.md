@@ -94,3 +94,33 @@ This will start the react app with the local deployment configuration and use th
 `pytest -q tests/test_*.py`
 
 `APP_CONFIG=env/local/xrpl-poc-python-app.env pytest -q api/tests/test_*.py -o log_cli=true`
+
+
+
+
+# running the database
+
+```
+docker run -it --rm -d \
+    -p 5432:5432 \
+    --network xurlpay \
+    --env APP_ENV=local \
+    --env POSTGRES_PASSWORD=SooperSecret! \
+    --env PGDATA=/pgdata \
+    -v $(pwd)/pgdata:/pgdata \
+    --name xurlpay-postgres-10 \
+    postgres:10
+```
+
+# POSTGRES NOTES
+(docker/POSTGRES10.md)[docker/POSTGRES10.md]
+
+# run the api
+`APP_CONFIG=env/local/xrpl-poc-python-app.env python -m api`
+
+or
+
+`bash ./app.sh local`
+
+# runnning the proxy
+`bash ./proxy.sh local`

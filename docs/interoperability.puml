@@ -1,0 +1,29 @@
+@startuml
+
+[Mobile Aggregator App] ..> HTTP : use
+
+node "Supplier" {
+  [Shop c874f411] ..> HTTP : GET\nhttps://foosupply.com/xurl/c874f411
+}
+note left of Supplier
+shops can be hosted
+on any domain and do 
+not need to be on 
+the same domain 
+as the aggregator 
+or related to xurlrpay.org
+end note
+
+node "xurlrpay.org" {
+  [Shop 9035b70e] ..> HTTP : GET\nhttps://9035b70e.xurlrpay.org
+  [Shop 44475cb9] ..> HTTP : GET\nhttps://44475cb9.xurlrpay.org
+}
+
+note right of xurlrpay.org
+automatically will host 
+shops for all account 
+holders 
+end note
+
+
+@enduml

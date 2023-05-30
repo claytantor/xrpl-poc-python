@@ -30,7 +30,11 @@ export const ShopPaymentItemSummary = ({paymentItem, shop_id}) => {
                     <span className="flex justify-end px-1 py-1 text-2xl font-semibold text-gray-700 mr-1 mb-2">
                         {Intl.NumberFormat(currencyLang[paymentItem.fiat_i8n_currency], { style: 'currency', currency: paymentItem.fiat_i8n_currency }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
                     </span>
-                    <div className='w-full text-right'>{paymentItem.verb}</div>
+                    <div className='flex flex-row w-full text-right justify-end'>
+                        <div className='m-1 bg-purple-300 rounded text-purple-900 p-1 w-fit'>
+                            {paymentItem.verb}
+                        </div>
+                    </div>
 
                     {/* <div className='flex justify-end flex-wrap'>
                         <button className="btn-common-pink text-xs" onClick={()=>navigate(`/shop/details/${address}/${paymentItem.id}`)}>
@@ -87,7 +91,9 @@ const PaymentItemSummary = ({
                         </span>
                     </div>
                     <div className='w-full flex flex-row justify-center'>
+                        <div className='m-1 bg-purple-300 rounded text-purple-900 p-1'>
                         {paymentItem.verb}
+                        </div>
                     </div>
                     <div className='flex justify-end flex-wrap'>
                         <button className="btn-common-pink text-xs" onClick={()=>navigate(`/item/details/${paymentItem.id}`)}>

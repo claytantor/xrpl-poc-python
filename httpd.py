@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 FOLLOW_REDIRECT = True
 PROXY_RULES = {
     '/xurlapi/' : 'http://localhost:5000/',
+    '/.well-known/' : 'http://localhost:5000/',
+    
 }
 
 

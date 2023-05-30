@@ -1,0 +1,5 @@
+Generic single-database configuration.
+
+`APP_CONFIG=env/local/xrpl-poc-python-app.env alembic revision --autogenerate -m "address add wallet"`
+
+`APP_CONFIG=env/local/xrpl-poc-python-app.env alembic upgrade head`

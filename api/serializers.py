@@ -17,7 +17,7 @@ class ImageSerializer():
         return self.data
 
 class PaymentItemDetailsSerializer():
-    def __init__(self, payment_item, shop_id, verb=XurlVerbType.no_op):
+    def __init__(self, payment_item, shop_id, verb=XurlVerbType.NOOP):
 
         uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", shop_id)}'
 
@@ -39,7 +39,33 @@ class PaymentItemDetailsSerializer():
 
     def serialize(self):
         return self.data
-    
+
+
+class PostalAddressSerializer():
+    def __init__(self, postal_addess, verb=XurlVerbType.SHARE):
+
+        uri_base = f'{config["XURL_BASEURL"].replace("{shop_id}", postal_addess.shop_id)}'
+
+        xumm_url=f'{config["XUMM_APP_DEEPLINK"]}?uri_base={uri_base}&uri=xurl://payload/{XurlSubjectType.postal_address}/{postal_addess.id}/{verb}'
+
+        self.data = {
+            'id': postal_addess.id,
+            'wallet_id': postal_addess.wallet_id,
+            'address_id': postal_addess.address_id,
+            'shop_id': postal_addess.shop_id,
+            'well_known_uri': postal_addess.well_known_uri,
+            'status': postal_addess.status,
+            'created_at': str(postal_addess.created_at),
+            'updated_at': str(postal_addess.updated_at)
+        }
+        
+        self.data['xumm_url'] = xumm_url
+
+
+    def serialize(self):
+        return self.data
+
+
 
 # =============
 # Path: api/routes/xurl.py
@@ -77,11 +103,13 @@ class XurlPaymentItemSerializer():
             'xumm_url': xumm_url
         }
 
+        print(self.data)
+
     def serialize(self):
         return self.data
 
 class XurlPaymentItemsSerializer():
-    def __init__(self, payment_item_list, shop_id, verb=XurlVerbType.no_op):
+    def __init__(self, payment_item_list, shop_id, verb=XurlVerbType.NOOP):
         self.data = [XurlPaymentItemSerializer(payment_item=payment_item, shop_id=shop_id).serialize() for payment_item in payment_item_list]
 
     def serialize(self):

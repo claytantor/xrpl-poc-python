@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
 
-from api.models import Base, CustomerAccount, InventoryItem, PaymentItem, Wallet, XummPayload
+from api.models import Address, Base, CustomerAccount, InventoryItem, PaymentItem, PostalAddress, Wallet, XummPayload
 
 import logging
 
@@ -58,6 +58,10 @@ class WalletDao:
 
     def fetch_by_classic_address(db: Session, classic_address: str):
         return db.query(Wallet).filter(Wallet.classic_address == classic_address).first()
+    
+    def fetch_by_shopid(db: Session, shop_id: str):
+        return db.query(Wallet).filter(Wallet.shop_id == shop_id).first()
+    
     
 
     
@@ -166,7 +170,7 @@ class CustomerAccountDao:
     
     @staticmethod
     def fetch_by_customer_classic_address(db:Session, classic_address:str):
-        wallet = WalletDao.fetch_by_classic_address(db, classic_address)      
+        wallet = WalletDao.fetch_by_classic_address(db, classic_address)    
         if wallet:
             account = CustomerAccountDao.fetch_by_account_wallet_id(db=db, account_wallet_id=wallet.id)
             return account
@@ -201,7 +205,8 @@ class PaymentItemDao:
 
     @staticmethod
     def fetch_xurl_by_wallet_and_verbs(db:Session, wallet_id:int, verbs:list[str]):
-        verbs = [verb.lower() for verb in verbs]
+        verbs = [verb.upper() for verb in verbs]
+        logger.info(f"verbs:{verbs}")
         return db.query(PaymentItem).filter(and_(PaymentItem.wallet_id == wallet_id,
             PaymentItem.verb.in_(verbs),
             PaymentItem.is_xurl_item == 1)).all()
@@ -234,6 +239,63 @@ class PaymentItemDao:
         db.commit()
         return payment_item
         
+class AddressDao:
+    @staticmethod
+    def fetch_by_id(db:Session, address_id:int):
+        return db.query(Address).filter(Address.id == address_id).first()
+    
+    @staticmethod
+    def fetch_by_wallet_id(db:Session, wallet_id:int):
+        return db.query(Address).filter(Address.wallet_id == wallet_id).all()
+    
+    @staticmethod
+    def create(db: Session, address: Address):
+        db.add(address)
+        db.commit()
+        db.refresh(address)
+        return address
+    
+    @staticmethod
+    def update(db: Session, address: Address):
+        db.merge(address)
+        db.commit()
+        return address
+    
+    @staticmethod
+    def delete(db: Session, address: Address):
+        db.delete(address)
+        db.commit()
+        return address
+
+class PostalAddressDao:
+    @staticmethod
+    def fetch_by_id(db:Session, postal_address_id:int):
+        return db.query(PostalAddressDao).filter(PostalAddress.id == postal_address_id).first()
+    
+    @staticmethod
+    def fetch_by_wallet_id(db:Session, wallet_id:int):
+        return db.query(PostalAddress).filter(PostalAddress.wallet_id == wallet_id).all()
+    
+    @staticmethod
+    def create(db: Session, postal_address: PostalAddress):
+        db.add(postal_address)
+        db.commit()
+        db.refresh(postal_address)
+        return postal_address
+    
+    @staticmethod
+    def update(db: Session, postal_address: PostalAddress):
+        db.merge(postal_address)
+        db.commit()
+        return postal_address
+    
+    @staticmethod
+    def delete(db: Session, postal_address: PostalAddress):
+        db.delete(postal_address)
+        db.commit()
+        return postal_address
+       
+
 
 if __name__ == "__main__":
     logger.info("Attempting database connection")

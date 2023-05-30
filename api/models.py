@@ -95,8 +95,6 @@ class Message():
             'message':self.message
         }
 
-
-
 class Wallet(Base):
     __tablename__ = "wallet"
     id = Column(Integer, primary_key=True)
@@ -255,29 +253,33 @@ class Address(Base):
     country = Column(String(3), nullable=False)
     zip_code = Column(String, nullable=False)
     street_address = Column(String, nullable=False)
-    street_address_2 = Column(String, nullable=False)
+    street_address_2 = Column(String)
     phone_number = Column(String, nullable=True)  # nullable because I have not implemented it
+    postal_code = Column(String, nullable=False) 
 
     wallet_id = Column(Integer, ForeignKey('wallet.id'), nullable=True)
+
+    
 
     created_at = Column(DateTime, nullable=False, default=dt.utcnow)
     updated_at = Column(DateTime, nullable=False, default=dt.utcnow, onupdate=dt.utcnow)
 
     def __init__(self, wallet_id, name, first_name, last_name, city, state, country, 
-        zip_code, street_address, street_address_2, phone_number):
+        street_address, street_address_2, phone_number, postal_code):
         self.created_at = dt.now()
         self.updated_at = dt.now()
         self.wallet_id = wallet_id
         self.name = name
         self.first_name = first_name
         self.last_name = last_name
+        self.zip_code = postal_code
         self.city = city
         self.state = state
         self.country = country
-        self.zip_code = zip_code
         self.street_address = street_address
-        self.street_address_2 = street_address_2
+        self.street_address_2 = street_address_2 if street_address_2 else ""
         self.phone_number = phone_number
+        self.postal_code = postal_code
 
 
     def serialize(self, include_wallet=False):
@@ -287,13 +289,16 @@ class Address(Base):
             'first_name': self.first_name,
             'last_name': self.last_name,
             'street_address': self.street_address,
+            'street_address_2': self.street_address_2,
             'zip_code': self.zip_code,
             'city': self.city,
-            'state': self.state,
+            'state': self.state, 
             'country': self.country,
             'phone_number': self.phone_number,
-            'created_at': self.created_at,
-            'updated_at': self.updated_at
+            'postal_code': self.postal_code,
+            'postal_addresses': [postal_address.serialize() for postal_address in self.postal_addresses],
+            'created_at': str(self.created_at),
+            'updated_at': str(self.updated_at)
         }
 
         # if include_wallet:
@@ -301,6 +306,51 @@ class Address(Base):
 
         return data
     
+class PostalAddress(Base):
+    __tablename__ = 'postal_address'
+
+    id = Column(Integer, primary_key=True)
+    wallet_id = Column(Integer, ForeignKey('wallet.id'))
+
+    address_id = Column(Integer, ForeignKey('address.id'))
+    address = relationship('Address', backref='postal_addresses', cascade="all, delete")
+    
+    shop_id = Column(String)
+    well_known_uri = Column(String)
+    status = Column(String(32))
+    nft_token_id = Column(String(64))
+    nft_token_uri = Column(String(256))
+    nft_token_tx_hash = Column(String(64))
+
+    created_at = Column(DateTime, nullable=False, default=dt.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=dt.utcnow, onupdate=dt.utcnow)
+
+    def __init__(self, wallet_id, address_id, shop_id, well_known_uri):
+        self.created_at = dt.now()
+        self.updated_at = dt.now()
+        self.wallet_id = wallet_id
+        self.address_id = address_id
+        self.shop_id = shop_id
+        self.well_known_uri = well_known_uri
+        self.status = "CREATED"
+
+
+
+    def serialize(self, include_wallet=False):
+        data = {
+            'id': self.id,
+            'wallet_id': self.wallet_id,
+            'address_id': self.address_id,
+            'shop_id': self.shop_id,
+            'well_known_uri': self.well_known_uri,
+            'status': self.status,
+            'xumm_url': f'https://xumm.app/sign/{self.well_known_uri}',
+            'created_at': str(self.created_at),
+            'updated_at': str(self.updated_at)
+        }
+        
+        return data
+
 
 class CustomerAccount(Base):
 
@@ -323,14 +373,11 @@ class CustomerAccount(Base):
     # # address as a foreign key to the address table
     shipping_address_id = Column(Integer, ForeignKey('address.id'))
     shipping_address = relationship('Address', backref='shipping_address', cascade="all, delete")
-    # billing_address_id = Column(Integer, ForeignKey('address.id'))
-    # billing_address = relationship('Address', backref='address', cascade="all, delete")
   
     sales_rep_name = Column(String(128))
     sales_rep_email = Column(String(128))
     sales_rep_phone = Column(String(64))
     sales_rep_notes = Column(String)
-
 
     def serialize(self):
         return {
@@ -348,11 +395,33 @@ class CustomerAccount(Base):
             'account_wallet_id': self.account_wallet_id,
             'account_wallet': self.account_wallet.serialize(),
             'shipping_address_id': self.shipping_address_id,
+            'shipping_address': self.shipping_address.serialize() if self.shipping_address else None,
             'sales_rep_name': self.sales_rep_name,
             'sales_rep_email': self.sales_rep_email,
             'sales_rep_phone': self.sales_rep_phone,
             'sales_rep_notes': self.sales_rep_notes
         }
+
+
+# class AccountAddress(Base):
+
+#     __tablename__ = 'account_address'
+
+#     id = Column(Integer, primary_key=True)
+#     customer_account_id = Column(Integer, ForeignKey('customer_account.id'))
+#     customer_account = relationship('CustomerAccount', backref='customer_account', cascade="all, delete")
+#     address_id = Column(Integer, ForeignKey('address.id'))
+#     address = relationship('Address', backref='address', cascade="all, delete")
+
+#     def serialize(self):
+#         return {
+#             'id': self.id,
+#             'customer_account_id': self.customer_account_id,
+#             'customer_account': self.customer_account.serialize(),
+#             'address_id': self.address_id,
+#             'address': self.address.serialize()
+#         }
+    
 
 
 class PaymentItem(Base):
@@ -397,7 +466,7 @@ class PaymentItem(Base):
         # self.sku_id = sku_id
         self.wallet_id = wallet_id
         self.in_shop = 0
-        self.verb = XurlVerbType.no_op
+        self.verb = XurlVerbType.NOOP
         self.is_xurl_item = 0
         self.created_at = dt.now()
         self.updated_at = dt.now()

@@ -87,13 +87,14 @@ const ShopItemViewer = ({xummState}) => {
                       <span className="flex justify-end text-3xl font-bold font-monospace text-pink-700">
                           {Intl.NumberFormat('en-US', { style: 'currency', currency: paymentItem.fiat_i8n_currency }).format(paymentItem.fiat_i8n_price)} {paymentItem.fiat_i8n_currency}
                       </span>
-                      <div className='w-full flex flex-row justify-center'>{paymentItem.verb}</div>
+                      <div className='w-full flex flex-row justify-center'>
+                        <div className='m-1 bg-purple-300 rounded text-purple-900 p-1'>
+                        {paymentItem.verb}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* <div className="m-1 flex flex-row justify-center bg-white w-96 p-3 rounded-md">
-                    <XummQrCode url={paymentItem.xurl} />
-                  </div> */}
                   <div className="flex flex-col">
                     <div className="font-bold rounded-t-lg bg-black text-white items-center flex flex-row justify-center w-96">
                       <IoMdQrScanner className="font-bold mr-1 text-2xl"/>Scan QR Code

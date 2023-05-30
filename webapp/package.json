@@ -2,9 +2,9 @@
   "name": "my-project",
   "source": "src/index.html",
   "scripts": {
-    "start": "rm -rf .parcel-cache && bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel src/index.html -p 3001",
+    "start": "rm -rf .parcel-cache && bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel serve src/index.html -p 3001 --no-cache",
     "build": "parcel build",
-    "serve-local": "bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel build && parcel serve src/index.html -p 3001",
+    "serve-local": "bash ./scripts/create-deployment-json.sh local && cp ./environment/deployment.json ./src/. && parcel serve src/index.html -p 3001 --no-cache",
     "deploy-dev": "cp src/favicon.ico dist/. && bash ./scripts/create-deployment-json.sh dev && cp ./environment/deployment.json ./src/. && npm run build && bash ./scripts/deploy.sh dev",
     "deploy-prd": "cp src/favicon.ico dist/. && bash ./scripts/create-deployment-json.sh prd && cp ./environment/deployment.json ./src/. && npm run build && bash ./scripts/deploy.sh prd"
   },
@@ -19,6 +19,7 @@
   "dependencies": {
     "autoprefixer": "^10.4.13",
     "axios": "^0.27.2",
+    "browserslist": "^4.21.5",
     "dotenv": "^16.0.1",
     "fs": "^0.0.1-security",
     "http-proxy-middleware": "^2.0.6",

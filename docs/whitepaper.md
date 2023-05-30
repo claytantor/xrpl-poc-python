@@ -32,6 +32,9 @@ Merchants can have a new customer driven payment experience with little to no PO
 ![On Demand Fulfillment](./images/usecase_3.png)
 
 # xURL
+[XURL Spec](./xurlspec.md)
+
+<!-- # xURL
 xURLs are xApp deeplinks that allow for backend automation to create "just in time" payment payloads for xumm. xUrls have some core features. Whatever system is handling the request of an xURL must be aware of the fields in the metadata schema to generate a payload.
 
 ie. 
@@ -99,4 +102,4 @@ xurlpay.org is a cloud based SaaS orchestration platform for creating payment re
 
 
 
-
+ -->

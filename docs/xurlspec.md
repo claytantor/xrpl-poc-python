@@ -32,28 +32,44 @@ The xURL protocol is intended to be used in a variety of contexts. The following
 
 * **Asymmetric Payment Technologies** - A way for merchants to create a payment request in a printed form that can be fulfilled by the buyer at the time of scan, and doesn't require that the seller have a smart device to accept payment. Since the buyer is initiating payment, and that payment can be verified on the buyer's wallet, this can be used when the seller may not have direct access to a mobile device or computer.
 
+* **Secure Data Sharing** - A way for customers to share information securely with third parties in a trustless pattern.
+
 ## 1.4 Sequence of Events in xURL lifecycle
 
 ![xURL Sequence of Events](./images/xUrl_sequence.png)
 
 # 2. xURL Specification
-xUrl is a URI specification to explain to a a backend on how to generate payloads. The intention is that given a URI, a backend can generate a payload that can be signed and submitted to the XRP Ledger. The URI is designed to be extensible and flexible, and to be used in a variety of contexts.
+xUrl is a URI specification to explain to a a backend on how to generate payloads. The intention is that given a URI, a backend can generate a payload that can be signed and submitted to the XRP Ledger. The URI is designed to be extensible and flexible, and to be used in a variety of contexts. It is designed to be used in conjunction with the [XUMM Payload Workflow](https://xumm.readme.io/docs/payload-workflow) to enable a variety of use cases. It has two parts, the URI deeplink and the payload generation format.
 
-## 2.1 URI Format
-The URI format is defined as follows:
+This all gets encoded into a single URI that can be used in a variety of contexts. 
 
-```
-xurl://<endpoint>/<version>/<subject>/<subjectid>?<parameters>&sig=<signature>
-
-ie.
-
-xurl://devapi.xurl.org/xurl/v1/paymentitem/3?qty=5
+1. Deeplink XApp Endpoint - This part tells the xapp backend how to mapp the request to xumm.
+2. Xurl Payload Generation - This part tells the xapp backend how to generate the payload.
 
 
-```
+## 2.1 Deeplink XApp Endpoint
+The Xumm deeplink format is defined as follows:
+
+ https://xumm.app/detect/xapp:sandbox.32849dc99872?xurl=<xurl>
+
 where:
 
-* `https://` or `xurl://` as the protocol (https is for calling the backend directly, xurl is for calling the backend indirectly via a proxy or parsing as a client side URI)
+## 2.2 Xurl Payload Generation
+The xurl format is intended to allow a backend to understand how to create a payload at the time of the transaction. The xurl format is defined as follows:
+
+
+ie. 
+```
+ <xapp>?xurl=xurl://devapi.xurlpay.org/v1/paymentitem/16/noop 
+```
+
+where:
+```
+ xurl://<endpoint>/<version>/<subject>/<subjectid>/<verb>?<parameters>&sig=<signature>
+
+```
+
+* `xurl://` as the protocol (https is for calling the backend directly, xurl is for calling the backend indirectly via a proxy or parsing as a client side URI)
 * `<endpoint>` is the endpoint of the backend that will generate the payload
 * `<version>` is the version of the xURL protocol
 * `<subject>` is the **business concept object** subject of the URI, this concept will drive how the backend determines the type of payload that will be generated based on the domain model of the backend.
@@ -103,7 +119,7 @@ The following subjects are defined in this document:
 * `PaymentItem` - A payment item is a specific item in the inventory to be sold. This is a specific entry in the backend's inventory that can be purchased by the buyer immediately, this is the most common subject used in the xURL protocol.
 * `OrderInvoice` - An order transaction. This is a preexisting order, usually including customer information in the backend, that can be fulfilled by the seller. This schema includes details around a specific order, but can also act like a template for reorders.
 * `CustomerAccount` - A customer account allows a new customer to add themselves to a store as a buyer. Once added verbs can be used to create orders, payment items, etc. This is a one time use per customer account per shop.
-
+* `WalletAddress` - A wallet address is an address tied to a shop which the wallet is a customer of.
 
 
 Proposed subjects:
@@ -130,6 +146,8 @@ The xurl backend looks up the payment item schema:
 class XurlVerbType(str, Enum):
     buy_now = 'buynow'
     noop = 'noop'
+    order = 'order'
+    donate = 'donate'
 
 class InventoryItem(BaseModel):
     id: int
@@ -316,48 +334,55 @@ class CustomerAccount(BaseModel):
 
 ```
 
+# Interoperability
 
-
-<!-- ## 2.3 Trustlines
-
-xURLs can specify alternative trustlines to be used for payment. This is done by specifying the `payer_account` parameter in the URI along with the desired currency to convert to for payment. 
-
-```python
-class Trustline(BaseModel):
-    id: int
-    token_currency: str
-    issuerAccount: str
-    datetime: Optional[str]
-    txid: Optional[str]
-    
-class TrustlineConversion(BaseModel):
-    id: int
-    trustline: Trustline
-    i8n_currency: str
-    rate: float
-    
+## 3.1 Xurl Server
+```json
+{
+    "version": "v1",
+    "uris": {
+        "xurl://info": "Information about this xurl server",
+        "xurl://jwks": "Public keys in the jwks format",
+        "xurl://verb": "A list of verbs supported by this xurl server",
+        "xurl://verb/{verb}": "Information about a specific verb",
+        "xurl://verb/subject/{subject}": "A list of verbs supported by a specific subject type",
+        "xurl://verb/subject/{subject}/{subjectid}": "A list of verbs supported by a subject",
+        "xurl://subject": "A list of subject types supported by this xurl server",
+        "xurl://subject/{subject}": "A list all entities of a specific subject type",
+        "xurl://subject/{subject}/{subjectid}": "Detailed information about a specific subject",
+        "xurl://payload/{subject}/{subjectid}/{verb}": "Generate a payload "
+    }
+}
 ```
-payloads with trustlines have an alternative `Amount` field that specifies the currency and issuer of the trustline.
+
+## 3.2 Xurl Client
+
+## 3.3 Shops 
+
+### 3.3.2 Hosting a Shop Public Key
+
+`https://{yourDomain}/.well-known/xurl-shop-jwks.json?shop_id={shop_id}`
+
+uses the .jwks standard format
 
 ```json
 {
-  "txjson": {
-    "TransactionType": "Payment",
-    "Destination": "rhcEvK2vuWNw5mvm3JQotG6siMw1iGde1Y",
-    "Amount": {
-		"currency": "4942495358000000000000000000000000000000",
-		"value": "5",
-		"issuer": "rrnR8qAP8tczCbgD1gqt4RgcwTZPcSXyn2"
-	},
-    "Memos":[
-        {"content-type":"application/json", "value":{"subject": "PaymentItem", "body": {"id": "3", "qty": "3", "payload_id": "payment_item:Sw67XjAf2kAt"}}},
-        {"content-type":"application/json", "value":{"verb": "BuyNow", "context": {"subject": "PaymentItem"}}}
-    ]
-  },
-  "custom_meta": {
-    "identifier": "payment_item:Sw67XjAf2kAt",
-    "blob": "{\"type\": \"payment_item\", \"payment_item_id\": 3, \"xrp_quote\": 0.377152, \"fiat_i8n_currency\": \"USD\", \"fiat_i8n_price\": 0.21, \"request_hash\": \"HaziBd3faamgNcS8EsjzuX\", \"network_endpoint\": \"https://s.altnet.rippletest.net:51234/\", \"network_type\": \"testnet\", \"qty\": 5}",
-    "instruction": "Pay 0.21 USD each for 5 Tootsie Roll Chocolate Midgees"
-  }
+    "alg": "RS256",
+    "kty": "RSA",
+    "use": "sig",
+    "x5c": [
+      "MIIC+DCCAeCgAwIBAgIJBIGjYW6hFpn2MA0GCSqGSIb3DQEBBQUAMCMxITAfBgNVBAMTGGN1c3RvbWVyLWRlbW9zLmF1dGgwLmNvbTAeFw0xNjExMjIyMjIyMDVaFw0zMDA4MDEyMjIyMDVaMCMxITAfBgNVBAMTGGN1c3RvbWVyLWRlbW9zLmF1dGgwLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnjZc5bm/eGIHq09N9HKHahM7Y31P0ul+A2wwP4lSpIwFrWHzxw88/7Dwk9QMc+orGXX95R6av4GF+Es/nG3uK45ooMVMa/hYCh0Mtx3gnSuoTavQEkLzCvSwTqVwzZ+5noukWVqJuMKNwjL77GNcPLY7Xy2/skMCT5bR8UoWaufooQvYq6SyPcRAU4BtdquZRiBT4U5f+4pwNTxSvey7ki50yc1tG49Per/0zA4O6Tlpv8x7Red6m1bCNHt7+Z5nSl3RX/QYyAEUX1a28VcYmR41Osy+o2OUCXYdUAphDaHo4/8rbKTJhlu8jEcc1KoMXAKjgaVZtG/v5ltx6AXY0CAwEAAaMvMC0wDAYDVR0TBAUwAwEB/zAdBgNVHQ4EFgQUQxFG602h1cG+pnyvJoy9pGJJoCswDQYJKoZIhvcNAQEFBQADggEBAGvtCbzGNBUJPLICth3mLsX0Z4z8T8iu4tyoiuAshP/Ry/ZBnFnXmhD8vwgMZ2lTgUWwlrvlgN+fAtYKnwFO2G3BOCFw96Nm8So9sjTda9CCZ3dhoH57F/hVMBB0K6xhklAc0b5ZxUpCIN92v/w+xZoz1XQBHe8ZbRHaP1HpRM4M7DJk2G5cgUCyu3UBvYS41sHvzrxQ3z7vIePRA4WF4bEkfX12gvny0RsPkrbVMXX1Rj9t6V7QXrbPYBAO+43JvDGYawxYVvLhz+BJ45x50GFQmHszfY3BR9TPK8xmMmQwtIvLu1PMttNCs7niCYkSiUv2sc2mlq1i3IashGkkgmo="
+    ],
+    "n": "yeNlzlub94YgerT030codqEztjfU_S6X4DbDA_iVKkjAWtYfPHDzz_sPCT1Axz6isZdf3lHpq_gYX4Sz-cbe4rjmigxUxr-FgKHQy3HeCdK6hNq9ASQvMK9LBOpXDNn7mei6RZWom4wo3CMvvsY1w8tjtfLb-yQwJPltHxShZq5-ihC9irpLI9xEBTgG12q5lGIFPhTl_7inA1PFK97LuSLnTJzW0bj096v_TMDg7pOWm_zHtF53qbVsI0e3v5nmdKXdFf9BjIARRfVrbxVxiZHjU6zL6jY5QJdh1QCmENoejj_ytspMmGW7yMRxzUqgxcAqOBpVm0b-_mW3HoBdjQ",
+    "e": "AQAB",
+    "kid": "NjVBRjY5MDlCMUIwNzU4RTA2QzZFMDQ4QzQ2MDAyQjVDNjk1RTM2Qg",
+    "x5t": "NjVBRjY5MDlCMUIwNzU4RTA2QzZFMDQ4QzQ2MDAyQjVDNjk1RTM2Qg"
 }
-``` -->
+```
+
+
+```
+
+
+
+## 3.4 Marketplaces

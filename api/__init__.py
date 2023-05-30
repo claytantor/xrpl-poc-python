@@ -1,38 +1,17 @@
 import os
 import uvicorn
 
-# from http.client import HTTPException
 from fastapi import FastAPI
-# from sqlalchemy import create_engine
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy.orm import sessionmaker
-# from sqlalchemy import Column, ForeignKey, Integer, String, Float
-# from sqlalchemy.orm import relationship
-# from sqlalchemy.orm import Session
-# from typing import List, Optional
-
-from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
-# from fastapi.logger import logger as fastapi_logger
-# from fastapi.middleware.cors import CORSMiddleware
-# from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import PlainTextResponse
 
-# import functools
-# import re
-# import typing
-
-from starlette.datastructures import Headers, MutableHeaders
-from starlette.responses import PlainTextResponse, Response
-from starlette.types import ASGIApp, Message, Receive, Scope, Send
 import logging
-
-
 
 from sqlalchemy.orm import Session
 import uvicorn
 from typing import List,Optional
-from fastapi.encoders import jsonable_encoder
+
 
 import logging
 
@@ -54,15 +33,7 @@ config = {
 }
 
 
-# formatter = logging.Formatter('%(levelname)s\t%(asctime)s - %(name)s - %(message)s')
-# stream = logging.StreamHandler()
-# stream.setFormatter(formatter)
-# logger.addHandler(stream)
-
-# logging.warning('Watch out!')  # will print a message to the console
-# logging.info('I told you so')  # will not print anything
-
-class MyMiddleware:
+class ApiMiddleware:
     def __init__(
             self,
             some_attribute: str,
@@ -72,7 +43,7 @@ class MyMiddleware:
     async def __call__(self, request: Request, call_next):
         # do something with the request object
         content_type = request.headers.get('Content-Type')
-        ulogger.info(f'MyMiddleware {content_type}')
+        ulogger.info(f'ApiMiddleware {content_type}')
         
         # process the request and get the response    
         response = await call_next(request)
@@ -91,9 +62,6 @@ def create_app():
 app = create_app()
 app.include_router(base.router)
 app.include_router(xurl.router)
-
-# my_middleware = MyMiddleware(some_attribute="some_attribute_here_if_needed")
-# app.add_middleware(BaseHTTPMiddleware, dispatch=my_middleware)
 
 @app.exception_handler(Exception)
 def validation_exception_handler(request, err):

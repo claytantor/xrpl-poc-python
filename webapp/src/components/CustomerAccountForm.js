@@ -18,8 +18,8 @@ export const DropdownComponent = ({onChange, value, name}) => {
       <div className="relative w-full lg:max-w-sm">
           <select name={name} onChange={handleSelectChange} value={value}
                 className="w-full p-2.5 text-gray-500 bg-white border rounded-md shadow-sm outline-none appearance-none focus:border-indigo-600">
-              <option value="noop">Nothing</option>
-              <option value="carry">Carry On Sign</option>
+              <option value="NOOP">Nothing</option>
+              <option value="CARRY">Carry On Sign</option>
               <option value="ship1">Basic Customer Shipping</option>
           </select>
       </div>
