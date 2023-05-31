@@ -446,7 +446,7 @@ def make_share_postal_address_payload(xurl: Xurl, shop_wallet: Wallet, customer_
         account=customer_wallet.classic_address,
         uri=xrpl.utils.str_to_hex(nft_uri),
         flags=[NFTokenMintFlag.TF_BURNABLE, NFTokenMintFlag.TF_TRANSFERABLE],
-        # transfer_fee=1000,
+        transfer_fee=1000,
         nftoken_taxon=0,
         memos=tx_memos
     )
@@ -455,7 +455,7 @@ def make_share_postal_address_payload(xurl: Xurl, shop_wallet: Wallet, customer_
         'uuid': uuid.uuid4().hex,
         'txjson': nft_mint_tx.to_xrpl(),
         'custom_meta': {
-            'identifier': f'mintPostalAddressNft_{uuid.uuid4().hex[:8]}',
+            'identifier': f'xmpaNft_{uuid.uuid4().hex[:8]}',
             'instruction':'Please sign this transaction to mint and share the postal address NFT.'
         }
     }
