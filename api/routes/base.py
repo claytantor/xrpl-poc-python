@@ -1014,8 +1014,10 @@ def _make_xurl_payload(
 
     elif xurl.subject_type == XurlSubjectType.postal_address and xurl.verb_type == XurlVerbType.SHARE.lower():
         # get the postal address
+        ulogger.info(f"==== xurl postal_address id: {xurl.subject_id}")
         postal_address = PostalAddressDao.fetch_by_id(
-            db=db, address_id=xurl.subject_id)
+            db=db, postal_address_id=xurl.subject_id)
+        
         if postal_address is None:
             return JSONResponse(status_code=HTTPStatus.BAD_REQUEST, content={"message": "postal address not found"})
         
@@ -1075,13 +1077,6 @@ def _make_xurl_payload(
             raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
                         detail="could nopt load shop jwks")
         
-        # encrypt the postal address
-
-        # pin the nft data to IPFS
-        # nft_data = {
-
-        # wallet:Wallet, verb:str
-        return make_share_postal_address_payload(xurl=xurl, postal_address=postal_address, shop_wallet=shop_wallet, customer_wallet=customer_wallet, verb=xurl.verb_type)
 
     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
                         detail="invalid xurl")
@@ -1162,7 +1157,7 @@ def xumm_xapp(xAppStyle: str,
         db.add(p_xumm_payload)
         db.commit()
     elif xurl.subject_type == XurlSubjectType.postal_address and xurl.verb_type.lower() == XurlVerbType.SHARE.lower():
-        
+
         # get the shop id from the xurl
         created = sdk.payload.create(xumm_payload)
         xumm_payload = created.to_dict()
