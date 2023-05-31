@@ -1070,7 +1070,8 @@ def _make_xurl_payload(
                       
             ulogger.info(f"==== pin_response: {pin_response}")
 
-            return make_share_postal_address_payload(xurl=xurl, postal_address=postal_address, shop_wallet=shop_wallet, customer_wallet=customer_wallet, verb=xurl.verb_type, ipfsHash=pin_response['IpfsHash'])
+            # xurl: Xurl, shop_wallet: Wallet, customer_wallet: Wallet, ipfsHash: str, postal_address: PostalAddress
+            return make_share_postal_address_payload(xurl=xurl, postal_address=postal_address, shop_wallet=shop_wallet, customer_wallet=customer_wallet, ipfsHash=pin_response['IpfsHash'])
 
 
         else:
