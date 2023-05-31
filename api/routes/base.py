@@ -445,8 +445,8 @@ def make_share_postal_address_payload(xurl: Xurl, shop_wallet: Wallet, customer_
         'uuid': uuid.uuid4().hex,
         'txjson': nft_mint_tx.to_xrpl(),
         'custom_meta': {
-            'identifier': f'mintProjectNft_{uuid.uuid4().hex[:8]}',
-            'instruction':'Please sign this transaction to mint the Graphene Project NFT.'
+            'identifier': f'mintPostalAddressNft_{uuid.uuid4().hex[:8]}',
+            'instruction':'Please sign this transaction to mint and share the postal address NFT.'
         }
     }
 
@@ -1177,7 +1177,7 @@ def xumm_xapp(xAppStyle: str,
         return JSONResponse(status_code=HTTPStatus.NOT_IMPLEMENTED, content={"message": "invalid xurl, not implemented"})
 
     # return xumm_payload
-    ulogger.info(f"xumm_payload:{xumm_payload}")
+    ulogger.info(f"xumm_payload: {xumm_payload}")
     return RedirectResponse(xumm_payload['next']['always'])
 
 
