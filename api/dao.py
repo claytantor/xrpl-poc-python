@@ -270,7 +270,7 @@ class AddressDao:
 class PostalAddressDao:
     @staticmethod
     def fetch_by_id(db:Session, postal_address_id:int):
-        return db.query(PostalAddressDao).filter(PostalAddress.id == postal_address_id).first()
+        return db.query(PostalAddress).filter(PostalAddress.id == postal_address_id).first()
     
     @staticmethod
     def fetch_by_wallet_id(db:Session, wallet_id:int):
