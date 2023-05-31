@@ -445,7 +445,7 @@ def make_share_postal_address_payload(xurl: Xurl, shop_wallet: Wallet, customer_
     nft_mint_tx = xrpl.models.transactions.NFTokenMint(
         account=customer_wallet.classic_address,
         uri=xrpl.utils.str_to_hex(nft_uri),
-        flags=NFTokenMintFlag.TF_BURNABLE,
+        flags=[NFTokenMintFlag.TF_BURNABLE, NFTokenMintFlag.TF_TRANSFERABLE],
         # transfer_fee=1000,
         nftoken_taxon=0,
         memos=tx_memos
