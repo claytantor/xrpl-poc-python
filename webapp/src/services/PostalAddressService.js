@@ -9,21 +9,21 @@ export const PostalAddressService = {
         console.log("getById", id);
         return AxiosService.get(`/postal_address/${id}`);
     },
-    createAddressItem(formData) {
-        return AxiosService.post(`/address`, formData, {
+    createAddressItem(address_id, shop_id) {
+        return AxiosService.post(`/postal_address`, {address_id, shop_id}, {
             headers: {'Content-Type': 'multipart/form-data'}
         });
     },
-    updateAddressItem(formData) {
-        return AxiosService.put(`/address`, formData, {
+    updateAddressItem(id, address_id, shop_id) {
+        return AxiosService.put(`/postal_address`, {id, address_id, shop_id}, {
             headers: {'Content-Type': 'multipart/form-data'}
         });
     },
-    deleteAddressItem(addressId) {
-        return AxiosService.del(`/address/${addressId}`);
+    deleteAddressItem(postal_addressId) {
+        return AxiosService.del(`/postal_address/${postal_addressId}`);
     },
     getAddressItems (){
-        return AxiosService.get(`/address`);
+        return AxiosService.get(`/postal_address`);
     },
     
 };

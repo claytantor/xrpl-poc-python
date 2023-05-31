@@ -4,6 +4,9 @@ import Page from "../components/Page";
 import AddressForm from "../components/AddressForm";
 import { useStore } from "../zstore"
 import { AddressService } from "../services/AddressService";
+import { PostalAddressService } from "../services/PostalAddressService";
+import { CustomerAccountService } from "../services/CustomerAccountService";
+
 import XummQrCode from "../components/XummQrCode";
 
 
@@ -101,11 +104,11 @@ const PostalAddressList = ({addressItems}) => {
 };
 
 const SellersListDropdown = ({ shops, selection, setSelection }) => {
+
   const [open, setOpen] = useState(false);
-  // const [dropdownStyle, setDropdownStyle] = useState({});
 
   useEffect(() => {
-    //style={open ? '' : 'display: none'}
+    console.log("shops", shops);
   }, [open]);
 
   const setSelect = (e) => {
@@ -155,22 +158,23 @@ const Address = ({xummState}) => {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState('view');
   const [selection, setSelection] = useState();
+  const [postalAddress, setPostalAddress] = useState();
 
   const shop_id = useStore(state => state.shop_id);
 
-  // let fetchCustomerShops = () => {
-  //   setLoading(true);
-  //   CustomerAccountService.getCustomerShops().then(res => {
-  //       setCustomerShops(res.data);
-  //       setLoading(false);
-  //   }).catch(err => {      
-  //       console.error(err);
-  //   });       
-  // };
+  let fetchCustomerShops = () => {
+    setLoading(true);
+    CustomerAccountService.getCustomerShops().then(res => {
+        setCustomerShops(res.data);
+        setLoading(false);
+    }).catch(err => {      
+        console.error(err);
+    });       
+  };
 
   useEffect(() => {
     fetchAddress(id);
-    // fetchCustomerShops();
+    fetchCustomerShops();
   },[id]);
 
   let fetchAddress = (id) => {
@@ -195,6 +199,16 @@ const Address = ({xummState}) => {
 
   const handleShare = (selectedValue) => {
     console.log("share", selectedValue);
+    // const pa_data ={
+    //   address_id: address.id,
+    //   shop_id: selectedValue
+    // };
+    PostalAddressService.createAddressItem(address.id, selectedValue).then((res) => {
+      console.log("postal address",res.data);
+      setPostalAddress(res.data);
+    }).catch((err) => {
+      console.log(err);
+    });
     setMode('view');
   };
 
