@@ -1159,11 +1159,15 @@ def xumm_xapp(xAppStyle: str,
         db.commit()
     elif xurl.subject_type == XurlSubjectType.postal_address and xurl.verb_type.lower() == XurlVerbType.SHARE.lower():
 
+
+        postal_address = PostalAddressDao.fetch_by_id(
+            db=db, postal_address_id=xurl.subject_id)
+        
         # get the shop id from the xurl
         created = sdk.payload.create(xumm_payload)
         xumm_payload = created.to_dict()
         p_xumm_payload = XummPayload(payload_body=json.dumps(xumm_payload),
-                                     wallet_id=wallet.id,
+                                     wallet_id=postal_address.wallet_id,
                                      payload_uuidv4=xumm_payload['uuid'])
 
         db.add(p_xumm_payload)
