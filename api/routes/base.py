@@ -431,11 +431,13 @@ def make_share_postal_address_payload(xurl: Xurl, shop_wallet: Wallet, customer_
     nft_uri = f"ipfs://{ipfsHash}"
     ulogger.info(f"nft uri {nft_uri}")
 
+    flags=[NFTokenMintFlag.TF_BURNABLE, NFTokenMintFlag.TF_TRANSFERABLE],
+
     # lets mint the nft
     nft_mint_tx = xrpl.models.transactions.NFTokenMint(
         account=customer_wallet.classic_address,
         uri=xrpl.utils.str_to_hex(nft_uri),
-        flags=[NFTokenMintFlag.TF_BURNABLE],
+        flags=NFTokenMintFlag.TF_BURNABLE,
         transfer_fee=1000,
         nftoken_taxon=0,
         memos=tx_memos
@@ -921,6 +923,8 @@ async def _process_payload_verb(payload: XummPayload,
 
     # get the payload body
     payload_body = json.loads(payload.webhook_body)
+
+    ulogger.info(f"==== payload_body: {payload_body}")
 
     # determine the verb type from the payload custom_meta
     custom_meta = json.loads(payload_body['custom_meta']['blob'])
