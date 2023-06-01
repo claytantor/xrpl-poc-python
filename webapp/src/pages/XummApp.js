@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from 'react-router-dom';
 
 import Page from "../components/Page";
 import { Alert } from "../components/Base";
@@ -12,6 +13,13 @@ import xummLogo from "../assets/img/xumm_logo.png"
 
 const XummApp = ({xummState, xAppLoginError}) => {
 
+  const { payloadid } = useParams();
+
+  useEffect(() => {
+    console.log(`SignPayload useEffect`, payloadid);
+  }, [payloadid]);
+  
+
   return (
     <>
       <Page xummState={xummState}>
@@ -22,6 +30,7 @@ const XummApp = ({xummState, xAppLoginError}) => {
                 </div>
           </div>
           {xAppLoginError && <Alert background="bg-red-100" text="text-red-800">{xAppLoginError}</Alert>}
+          {payloadid && <div>payloadid: {payloadid}</div>}
 
         </div>
       </Page>

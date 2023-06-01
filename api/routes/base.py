@@ -527,7 +527,7 @@ def make_payment_item_payload(
 
 #     # return xumm_payload
 #     ulogger.info(f"xumm_payload:{xumm_payload}")
-#     return RedirectResponse(xumm_payload['next']['always'])
+#     return RedirectResponse(redirect_uri)
 
 
 @router.post('/payment_item')
@@ -1188,9 +1188,11 @@ def xumm_xapp(xAppStyle: str,
     else:
         return JSONResponse(status_code=HTTPStatus.NOT_IMPLEMENTED, content={"message": "invalid xurl, not implemented"})
 
-    # return xumm_payload
+    # return xumm_payload id and let the app handle the 
+    # push notification (I dont like this)
     ulogger.info(f"xumm_payload: {xumm_payload}")
-    return RedirectResponse(xumm_payload['next']['always'])
+    redirect_uri = f'{config["APP_BASEURL"]}/sign/{xumm_payload["uuid"]}'
+    return RedirectResponse(redirect_uri)
 
 
 @router.get('/xumm/qr')

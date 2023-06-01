@@ -1,0 +1,31 @@
+@startuml
+participant User as "User\n(NFT Issuer)"
+participant Owner as "Owner\n(NFT Owner)"
+
+participant Server as "Server\n(JWKs Public Key Provider)"
+participant IPFS as "IPFS\n(InterPlanetary File System)"
+participant Blockchain as "Blockchain\n(NFT Minting Platform)"
+
+
+group Mint and Transfer NFT
+    User -> Server: Request for JWKs Public Key
+    Server --> User: Response with JWKs Public Key
+    User -> User: Encrypts address info with Public Key
+    User -> IPFS: Pins the encrypted JSON data
+    IPFS --> User: Provides pinned data CID
+    User -> Blockchain: Mints NFT using IPFS CID as its URI
+    Blockchain --> User: Provides NFT transaction receipt
+    User -> Owner: Transfer NFT to New Owner
+    Owner --> User: Accepts NFT
+end
+
+
+group Decrypt NFT
+    Owner -> Blockchain: Lookup NFT by Token ID
+    Blockchain --> Owner: Returns NFT details including URI (IPFS CID)
+    Owner -> IPFS: Request data by CID
+    IPFS --> Owner: Returns encrypted JSON data
+    Owner -> Owner: Decrypts JSON data with Private Key
+end
+
+@enduml

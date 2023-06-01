@@ -18,3 +18,4 @@ psycopg2 # may require sudo apt install libpq-dev python3-dev
 cryptography
 cffi
 pinatapy-vourhey==0.1.8
+python-jose
