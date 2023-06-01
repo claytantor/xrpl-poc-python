@@ -289,7 +289,7 @@ const App = () => {
             xAppLoginError={xAppLoginError}/>} />
 
           <Route path="/xapp" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} /> 
-          <Route path="/xapp/:payloadid" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} /> 
+          <Route path="/xapp/sign/:payloadid" element={<XummApp xummState={xummState} xAppLoginError={xAppLoginError}/>} /> 
 
 
 
