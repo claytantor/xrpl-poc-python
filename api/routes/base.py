@@ -1192,6 +1192,7 @@ def xumm_xapp(xAppStyle: str,
     # push notification (I dont like this)
     ulogger.info(f"xumm_payload: {xumm_payload}")
     redirect_uri = f'{config["APP_BASEURL"]}/sign/{xumm_payload["uuid"]}'
+    ulogger.info(f"redirect_uri: {redirect_uri}")
     return RedirectResponse(redirect_uri)
 
 
