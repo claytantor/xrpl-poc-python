@@ -38,10 +38,10 @@ const xummPkce = new XummPkce(xummConfig["api-key"]);
 const { XummSdkJwt } = require('xumm-sdk')
 const url = new URL(window.location.href);
 const xAppToken = url.searchParams.get("xAppToken") || '';
-const xummSdkJwt = new XummSdkJwt(xummConfig["api-key"], xAppToken);
 
 
-const getSdkJwtStorage = () => {
+
+export const getSdkJwtStorage = () => {
   const ls_sdk = localStorage.getItem('XummSdkJwt');
   if (ls_sdk) {
     const sdk = JSON.parse(ls_sdk.substring("121f6616-f25d-45fc-a258-b5bac5b03609:".length, ls_sdk.length));

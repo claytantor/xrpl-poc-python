@@ -76,7 +76,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=config['API_TOKEN_PATH'])
 
 
 @router.get("/xurl-shop-jwks.json")
-def get_api_info():
+def get_api_info(
+    shop_id: str,
+    request: Request
+):
     # ulogger.info(f"get_api_info {ApiInfo().to_dict()}")
     # return ApiInfo().to_dict()
 
@@ -1188,12 +1191,17 @@ def xumm_xapp(xAppStyle: str,
     else:
         return JSONResponse(status_code=HTTPStatus.NOT_IMPLEMENTED, content={"message": "invalid xurl, not implemented"})
 
+    # was return RedirectResponse(xumm_payload['next']['always'])
+
     # return xumm_payload id and let the app handle the 
     # push notification (I dont like this)
-    ulogger.info(f"xumm_payload: {xumm_payload}")
-    redirect_uri = f'{config["APP_BASEURL"]}/xapp/sign/{xumm_payload["uuid"]}'
-    ulogger.info(f"redirect_uri: {redirect_uri}")
-    return RedirectResponse(redirect_uri)
+    # ulogger.info(f"xumm_payload: {xumm_payload}")
+    # redirect_uri = f'{config["APP_BASEURL"]}/xapp/sign/{xumm_payload["uuid"]}'
+    # ulogger.info(f"redirect_uri: {redirect_uri}")
+    # return RedirectResponse(redirect_uri)
+
+    # /xumm/signpayload.html
+    return RedirectResponse(f'{config["APP_BASEURL"]}/xumm/signpayload.html')
 
 
 @router.get('/xumm/qr')

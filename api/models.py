@@ -104,6 +104,9 @@ class Wallet(Base):
     shop_id = Column(String(10))
     shop_name = Column(String(100))
     shop_description = Column(String(1000))
+
+    public_key = Column(String(1000))
+    private_key = Column(String(1000))
     
     ## adding fiat currency
     fiat_i8n_currency = Column(String(3))
