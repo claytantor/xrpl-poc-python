@@ -1201,7 +1201,7 @@ def xumm_xapp(xAppStyle: str,
     # return RedirectResponse(redirect_uri)
 
     # /xumm/signpayload.html
-    return RedirectResponse(f'{config["APP_BASEURL"]}/xumm/signpayload.html')
+    return RedirectResponse(f'https://s3.us-west-2.amazonaws.com/dev.xurlpay.org/xumm/signpayload.html')
 
 
 @router.get('/xumm/qr')
