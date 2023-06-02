@@ -105,8 +105,8 @@ class Wallet(Base):
     shop_name = Column(String(100))
     shop_description = Column(String(1000))
 
-    public_key = Column(String(1000))
-    private_key = Column(String(1000))
+    # public_key = Column(String(1000))
+    # private_key = Column(String(1000))
     
     ## adding fiat currency
     fiat_i8n_currency = Column(String(3))
@@ -121,8 +121,8 @@ class Wallet(Base):
                  shop_description=None):
                  
         self.seed = seed
-        self.private_key = private_key
-        self.public_key = public_key
+        # self.private_key = private_key
+        # self.public_key = public_key
         self.classic_address = classic_address 
         self.fiat_i8n_currency = "USD" 
         self.shop_id = shop_id
